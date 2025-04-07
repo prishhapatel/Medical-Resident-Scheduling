@@ -1,5 +1,4 @@
 PITCH
-
 * Create a scheduling application for medical residents that auto-generates a call schedule:
 * Residents schedule changes monthly
 * Be able to enter schedule of residents in order for the application to know who to pick from
