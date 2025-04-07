@@ -68,7 +68,7 @@ export default function Home() {
         <div className="flex justify-center items-center space-x-6 mb-1">
           <Image
             src="/UCF-College-of-Medicine-Footer.png"
-            alt="UCF Footer Logo"
+            alt="UCF Footer"
             width={150}
             height={75}
             className="object-contain"
@@ -76,7 +76,7 @@ export default function Home() {
           <div className="h-16 w-px bg-gray-400" />
           <Image
             src="/HCAFooter.png"
-            alt="HCA Footer Logo"
+            alt="HCA Footer"
             width={150}
             height={75}
             className="object-contain"
