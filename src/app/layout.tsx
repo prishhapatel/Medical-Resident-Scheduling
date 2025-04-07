@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pyscall",
+  title: "Psycall",
   description: "Scheduler app for HCA Florida Residents",
 };
 

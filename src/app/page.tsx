@@ -13,7 +13,7 @@ export default function Home() {
             height={50}
             className="mr-6"
           />
-          <h1 className="text-2xl font-bold">PYSCALL</h1>
+          <h1 className="text-2xl font-bold">PSYCALL</h1>
         </div>
         <div className="flex space-x-10 pr-5">
           <Button className="text-2xl font-medium bg-gray-100 text-black px-4 py-2 rounded-md hover:bg-gray-200 shadow-sm">
@@ -82,7 +82,7 @@ export default function Home() {
             className="object-contain"
           />
         </div>
-        <p className="text-sm">&copy; 2025 PYSCALL. All rights reserved.</p>
+        <p className="text-sm">&copy; 2025 PSYCALL. All rights reserved.</p>
       </footer>
     </div>
   );
