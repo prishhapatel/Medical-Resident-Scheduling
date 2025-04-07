@@ -2,7 +2,6 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 export default function Home() {
-  
   return (
     <div className="flex flex-col min-h-screen">
       <header className="bg-gray-100 text-black p-5 flex items-center justify-between border-b border-gray-300 shadow-lg">
