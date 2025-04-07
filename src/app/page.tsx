@@ -7,7 +7,7 @@ export default function Home() {
       <header className="bg-gray-150 text-black p-5 flex items-center justify-between border-b border-gray-300 shadow-lg">
         <div className="flex items-center">
           <Image
-            src="/HCA.png"
+            src="/HCAHeader.png"
             alt="HCA Logo"
             width={50}
             height={50}
