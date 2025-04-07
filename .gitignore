@@ -334,30 +334,62 @@ __pycache__/
 
 # OpenCover UI analysis results
 OpenCover/
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # Azure Stream Analytics local run output
 ASALocalRun/
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
 # MSBuild Binary and Structured Log
 *.binlog
+# testing
+/coverage
 
 # NVidia Nsight GPU debugger configuration file
 *.nvuser
+# next.js
+/.next/
+/out/
 
 # MFractors (Xamarin productivity tool) working folder
 .mfractor/
+# production
+/build
 
 # Local History for Visual Studio
 .localhistory/
+# misc
+.DS_Store
+*.pem
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
 # Backup folder for Package Reference Convert tool in Visual Studio 2017
 MigrationBackup/
+# env files (can opt-in for committing if needed)
+.env*
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+# vercel
+.vercel
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# typescript
+*.tsbuildinfo
+next-env.d.ts
