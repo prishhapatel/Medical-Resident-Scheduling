@@ -16,13 +16,13 @@ export default function Home() {
           <h1 className="text-2xl font-bold">PSYCALL</h1>
         </div>
         <div className="flex space-x-10 pr-5">
-          <Button className="text-2xl font-medium bg-orange-600 text-black px-4 py-2 rounded-md hover:bg-orange-400 shadow-md">
+          <Button className="text-2xl font-medium bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-400 shadow-md">
             Contact
           </Button>
-          <Button className="text-2xl font-medium bg-orange-600 text-black px-4 py-2 rounded-md hover:bg-orange-400 shadow-md">
+          <Button className="text-2xl font-medium bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-400 shadow-md">
             About
           </Button>
-          <Button className="text-2xl font-medium bg-orange-600 text-black px-4 py-2 rounded-md hover:bg-orange-400 shadow-md">
+          <Button className="text-2xl font-medium bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-400 shadow-md">
             Location
           </Button>
         </div>
