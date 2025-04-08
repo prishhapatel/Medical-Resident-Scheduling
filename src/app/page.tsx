@@ -16,13 +16,13 @@ export default function Home() {
           <h1 className="text-2xl font-bold">PSYCALL</h1>
         </div>
         <div className="flex space-x-10 pr-5">
-          <Button className="text-2xl font-medium bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-400 shadow-md">
+          <Button className="text-2xl font-medium bg-orange-600 text-white px-4 py-2 pb-3 rounded-md hover:bg-orange-400 shadow-md">
             Contact
           </Button>
-          <Button className="text-2xl font-medium bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-400 shadow-md">
+          <Button className="text-2xl font-medium bg-orange-600 text-white px-4 py-2 pb-3 rounded-md hover:bg-orange-400 shadow-md">
             About
           </Button>
-          <Button className="text-2xl font-medium bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-400 shadow-md">
+          <Button className="text-2xl font-medium bg-orange-600 text-white px-4 py-2 pb-3 rounded-md hover:bg-orange-400 shadow-md">
             Location
           </Button>
         </div>
@@ -57,7 +57,7 @@ export default function Home() {
                 className="mt-1 block w-full px-3 py-2 border border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-            <Button className="w-full bg-gray-500 text-white py-3 rounded-md hover:bg-gray-800">
+            <Button className="w-full bg-orange-500 text-white py-3 rounded-md hover:bg-gray-800">
               Login
             </Button>
           </form>
