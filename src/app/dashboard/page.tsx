@@ -15,6 +15,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+
 import { Card } from "@/components/ui/card";
 import { url } from "inspector";
 
@@ -47,17 +55,30 @@ const items = [
 function page({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <div>
-        <Card className="flex text-black font-bold bg-gray-200 ml-300 mt-50 mr-40 px-60 py-30 shadow:lg">
-          Calendar
-        </Card>
-
-        <Card className="flex text-black font-bold bg-gray-200 ml-300 mt-50 mr-40 px-60 py-30 shadow:lg">
-          Reminders
-        </Card>
+      {/*Hamburger*/}
+      <div className="md:hidden p-5">
+        <Sheet>
+          <SheetTrigger asChild>
+            <button className="text-xl font-bold">☰</button>
+          </SheetTrigger>
+          <SheetContent side="left">
+            <SheetHeader>
+              <SheetTitle className="text-xl">Hamburger For Ricky</SheetTitle>
+            </SheetHeader>
+            <ul className="mt-3 space-y-4 p-4">
+              {items.map((item) => (
+                <li key={item.title}>
+                  <button className="text-lg font-medium w-full text-left">
+                    {item.title}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </SheetContent>
+        </Sheet>
       </div>
-
-      <div>
+      {/*Sidebar */}
+      <div className="hidden md:block">
         <SidebarProvider defaultOpen={true}>
           <Sidebar>
             <SidebarContent>
@@ -87,5 +108,6 @@ function page({ children }: { children: React.ReactNode }) {
     </>
   );
 }
+
 
 export default page;
