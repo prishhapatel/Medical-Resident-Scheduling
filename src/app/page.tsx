@@ -19,17 +19,13 @@ export default function Home() {
           <Button className="text-2xl font-medium bg-orange-600 text-white px-4 py-2 pb-3 rounded-md hover:bg-orange-400 shadow-md">
             Contact
           </Button>
-          <Button className="text-2xl font-medium bg-orange-600 text-white px-4 py-2 pb-3 rounded-md hover:bg-orange-400 shadow-md">
-            About
-          </Button>
-          <Button className="text-2xl font-medium bg-orange-600 text-white px-4 py-2 pb-3 rounded-md hover:bg-orange-400 shadow-md">
-            Location
-          </Button>
         </div>
       </header>
       <div className="flex-grow flex items-center justify-center pt-15 bg-blue-950">
         <Card className="p-10 bg-white shadow-lg rounded-4xl w-[400px]">
-          <h2 className="text-2xl font-bold mb-4 text-center text-black">Login</h2>
+          <h2 className="text-2xl font-bold mb-4 text-center text-black">
+            Login
+          </h2>
           <form className="space-y-4">
             <div>
               <label
