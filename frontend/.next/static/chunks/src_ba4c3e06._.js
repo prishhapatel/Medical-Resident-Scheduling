@@ -1605,7 +1605,7 @@ function page() {
         switch(selected){
             case "Settings":
                 return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
-                    className: "p-8 bg-gray-100 shadow-lg rounded-2xl w-full h-[400px] flex flex-col justify-start",
+                    className: "p-8 bg-gray-100 dark:bg-neutral-900 shadow-lg rounded-2xl w-full h-[400px] flex flex-col justify-start",
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
                             className: "text-xl font-bold mb-4",
@@ -1631,7 +1631,7 @@ function page() {
                 }, this);
             case "Swap Calls":
                 return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
-                    className: "p-8 bg-gray-100 shadow-lg rounded-2xl w-[400px] h-[400px] flex flex-col justify-start",
+                    className: "p-8 bg-gray-100 dark:bg-neutral-900 shadow-lg rounded-2xl w-[400px] h-[400px] flex flex-col justify-start",
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
                             className: "text-xl font-bold mb-4",
@@ -1657,7 +1657,7 @@ function page() {
                 }, this);
             case "Request Off":
                 return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
-                    className: "p-8 bg-gray-100 shadow-lg rounded-2xl w-[400px] h-[400px] flex flex-col justify-start",
+                    className: "p-8 bg-gray-100 dark:bg-neutral-900 shadow-lg rounded-2xl w-[400px] h-[400px] flex flex-col justify-start",
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
                             className: "text-xl font-bold mb-4",
@@ -1683,7 +1683,7 @@ function page() {
                 }, this);
             case "Check My Schedule":
                 return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
-                    className: "p-8 bg-gray-100 shadow-lg rounded-2xl w-[400px] h-[400px] flex flex-col justify-start",
+                    className: "p-8 bg-gray-100 dark:bg-neutral-900 shadow-lg rounded-2xl w-[400px] h-[400px] flex flex-col justify-start",
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
                             className: "text-xl font-bold mb-4",
@@ -1709,7 +1709,7 @@ function page() {
                 }, this);
             case "Admin":
                 return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
-                    className: "p-8 bg-gray-100 shadow-lg rounded-2xl w-[400px] h-[400px] flex flex-col justify-start",
+                    className: "p-8 bg-gray-100 dark:bg-neutral-900 shadow-lg rounded-2xl w-[400px] h-[400px] flex flex-col justify-start",
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
                             className: "text-xl font-bold mb-4",
@@ -1867,7 +1867,7 @@ function page() {
                     className: "flex-1 flex flex-col w-full",
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("header", {
-                            className: "w-full flex items-center justify-between py-6 px-8 border-b bg-white",
+                            className: "w-full flex items-center justify-between py-6 px-8 border-b border-border bg-background transition-colors",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                     className: "text-2xl font-bold tracking-wide"
@@ -1913,7 +1913,7 @@ function page() {
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
                                             variant: "outline",
-                                            className: "ml-4 bg-black text-white",
+                                            className: "ml-4 bg-black text-white dark:bg-white dark:text-black",
                                             children: "Log out"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/dashboard/page.tsx",

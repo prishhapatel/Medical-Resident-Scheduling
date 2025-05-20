@@ -33,35 +33,35 @@ function page() {
     switch (selected) {
       case "Settings":
         return (
-          <Card className="p-8 bg-gray-100 shadow-lg rounded-2xl w-full h-[400px] flex flex-col justify-start">
+          <Card className="p-8 bg-gray-100 dark:bg-neutral-900 shadow-lg rounded-2xl w-full h-[400px] flex flex-col justify-start">
             <h2 className="text-xl font-bold mb-4">Settings</h2>
             <p className="text-base">Settings content goes here.</p>
           </Card>
         );
       case "Swap Calls":
         return (
-          <Card className="p-8 bg-gray-100 shadow-lg rounded-2xl w-[400px] h-[400px] flex flex-col justify-start">
+          <Card className="p-8 bg-gray-100 dark:bg-neutral-900 shadow-lg rounded-2xl w-[400px] h-[400px] flex flex-col justify-start">
             <h2 className="text-xl font-bold mb-4">Swap Calls</h2>
             <p className="text-base">This is your card content.</p>
           </Card>
         );
       case "Request Off":
         return (
-          <Card className="p-8 bg-gray-100 shadow-lg rounded-2xl w-[400px] h-[400px] flex flex-col justify-start">
+          <Card className="p-8 bg-gray-100 dark:bg-neutral-900 shadow-lg rounded-2xl w-[400px] h-[400px] flex flex-col justify-start">
             <h2 className="text-xl font-bold mb-4">Request Off</h2>
             <p className="text-base">Request off content.</p>
           </Card>
         );
       case "Check My Schedule":
         return (
-          <Card className="p-8 bg-gray-100 shadow-lg rounded-2xl w-[400px] h-[400px] flex flex-col justify-start">
+          <Card className="p-8 bg-gray-100 dark:bg-neutral-900 shadow-lg rounded-2xl w-[400px] h-[400px] flex flex-col justify-start">
             <h2 className="text-xl font-bold mb-4">Check My Schedule</h2>
             <p className="text-base">Schedule content.</p>
           </Card>
         );
       case "Admin":
         return (
-          <Card className="p-8 bg-gray-100 shadow-lg rounded-2xl w-[400px] h-[400px] flex flex-col justify-start">
+          <Card className="p-8 bg-gray-100 dark:bg-neutral-900 shadow-lg rounded-2xl w-[400px] h-[400px] flex flex-col justify-start">
             <h2 className="text-xl font-bold mb-4">Admin</h2>
             <p className="text-base">Admin content.</p>
           </Card>
@@ -130,7 +130,7 @@ function page() {
         {/* Main */}
         <div className="flex-1 flex flex-col w-full">
           {/* Header */}
-          <header className="w-full flex items-center justify-between py-6 px-8 border-b bg-white">
+          <header className="w-full flex items-center justify-between py-6 px-8 border-b border-border bg-background transition-colors">
             <span className="text-2xl font-bold tracking-wide"></span>
             <div className="flex items-center gap-4">
               <Avatar className="w-12 h-12">
@@ -138,7 +138,7 @@ function page() {
                 <AvatarFallback>CN</AvatarFallback>
               </Avatar>
               <span className="text-lg font-semibold">John Doe</span>
-              <Button variant="outline" className="ml-4 bg-black text-white">
+              <Button variant="outline" className="ml-4 bg-black text-white dark:bg-white dark:text-black">
                 Log out
               </Button>
             </div>
