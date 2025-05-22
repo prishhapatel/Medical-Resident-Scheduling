@@ -11,6 +11,8 @@ namespace MedicalDemo.Data.Models
 
         public DbSet<Resident> residents { get; set; }
 
+        public DbSet<Rotations> rotations { get; set; }
+
         public MedicalContext(DbContextOptions options) : base(options)
         {
 
