@@ -13,6 +13,9 @@ namespace MedicalDemo.Data.Models
 
         public DbSet<Rotations> rotations { get; set; }
 
+        public DbSet<Date> dates { get; set; }
+
+
         public MedicalContext(DbContextOptions options) : base(options)
         {
 
