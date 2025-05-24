@@ -17,7 +17,7 @@ namespace MedicalDemo.Server.Controllers
             _context = context;
         }
 
-        // GET: api/Admins
+        // GET: api/dates
         [HttpGet]
         public IActionResult GetDates()
         {
@@ -26,7 +26,7 @@ namespace MedicalDemo.Server.Controllers
         }
 
 
-        // GET: api/Admins/5
+        // GET: api/dates/5
         [HttpGet("{date_id}")]
         public IActionResult GetDateByDateId(string date_id)
         {
@@ -36,7 +36,7 @@ namespace MedicalDemo.Server.Controllers
             return Ok(date);
         }
 
-        // POST: api/Admins
+        // POST: api/dates
         [HttpPost]
         public IActionResult CreateDate([FromBody] Date date)
         {
@@ -49,7 +49,7 @@ namespace MedicalDemo.Server.Controllers
             return CreatedAtAction(nameof(GetDates), new { id = date.date_id}, date);
         }
 
-        // DELETE: api/Admins/5
+        // DELETE: api/dates/5
         [HttpDelete("{date_id}")]
         public IActionResult DeleteAdmin(string date_id)
         {

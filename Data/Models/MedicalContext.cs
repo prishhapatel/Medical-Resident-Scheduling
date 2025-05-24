@@ -17,6 +17,7 @@ namespace MedicalDemo.Data.Models
 
         public DbSet<Schedule> schedules{ get; set; }
 
+        public DbSet<Blackout> blackouts { get; set; }
 
 
         public MedicalContext(DbContextOptions options) : base(options)
