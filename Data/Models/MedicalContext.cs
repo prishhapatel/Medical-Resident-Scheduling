@@ -15,6 +15,9 @@ namespace MedicalDemo.Data.Models
 
         public DbSet<Date> dates { get; set; }
 
+        public DbSet<Schedule> schedules{ get; set; }
+
+
 
         public MedicalContext(DbContextOptions options) : base(options)
         {
