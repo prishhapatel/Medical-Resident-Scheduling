@@ -25,8 +25,8 @@ export default function Home() {
       </header>
 
       {/*Login Card*/}
-      <div className="flex-grow flex items-center justify-center pt-15 bg-blue-950">
-        <Card className="p-10 bg-white shadow-lg rounded-4xl w-[400px]">
+      <div className="flex-grow flex items-center justify-center pt-8 bg-blue-950">
+        <Card className="p-6 sm:p-10 bg-white shadow-lg rounded-3xl w-full max-w-[400px] mx-4">
           <h2 className="text-2xl font-bold mb-4 text-center text-black">
             Login
           </h2>

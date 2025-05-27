@@ -1,7 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "src/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "src/components/ui/avatar";
 import { Card } from "src/components/ui/card";
 import {
   SidebarProvider,
@@ -16,6 +15,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "src/components/ui/sidebar";
+import { SidebarUserCard } from "src/components/ui/SidebarUserCard";
 import { Repeat, CalendarDays, UserCheck, Shield, Settings } from "lucide-react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -30,52 +30,51 @@ const items = [
   { title: "Settings", icon: <Settings className="w-6 h-6 mr-3" /> },
 ];
 
-export function SidebarUserCard({ name, email, imageUrl, status = "online" }) {
-  const statusColors = {
-    online: "bg-green-500",
-    "be right back": "bg-yellow-400",
-    offline: "bg-gray-400",
-  };
-
-  return (
-    <div className="flex items-center bg-gray-200 rounded-xl shadow p-3 w-full">
-      <Avatar className="h-10 w-10">
-        <AvatarImage src={imageUrl} alt={name} />
-        <AvatarFallback>{name[0]}</AvatarFallback>
-      </Avatar>
-      <div className="ml-3 flex-1">
-        <div className="font-semibold text-sm">{name}</div>
-        <div className="flex items-center text-xs text-gray-500">
-          <span className={`w-2 h-2 rounded-full mr-2 ${statusColors[status]}`} />
-          {email}
-        </div>
-      </div>
-      <button className="ml-2 text-gray-400 hover:text-gray-600">
-        <svg width="16" height="16" fill="none" viewBox="0 0 20 20">
-          <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-    </div>
-  );
-}
-
 function page() {
   const [selected, setSelected] = useState("Swap Calls");
   const [activeTab, setActiveTab] = useState("All events");
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("online");
+  const activityTimeout = useRef<NodeJS.Timeout | null>(null);
+  const brbTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const handleActivity = () => {
+      setStatus("online");
+      if (activityTimeout.current) clearTimeout(activityTimeout.current);
+      if (brbTimeout.current) clearTimeout(brbTimeout.current);
+
+      // After 5 minutes of inactivity, set to be right back
+      brbTimeout.current = setTimeout(() => setStatus("be right back"), 5 * 60 * 1000);
+      // After 15 minutes of inactivity, set to "ffline
+      activityTimeout.current = setTimeout(() => setStatus("offline"), 15 * 60 * 1000);
+    };
+
+    window.addEventListener("mousemove", handleActivity);
+    window.addEventListener("keydown", handleActivity);
+
+    handleActivity(); // Initialize timers
+
+    return () => {
+      window.removeEventListener("mousemove", handleActivity);
+      window.removeEventListener("keydown", handleActivity);
+      if (activityTimeout.current) clearTimeout(activityTimeout.current);
+      if (brbTimeout.current) clearTimeout(brbTimeout.current);
+    };
+  }, []);
 
   const renderMainContent = () => {
     switch (selected) {
       case "Calendar":
         return (
-          <div className="w-full">
+          <div className="w-full pt-4 h-[calc(100vh-4rem)] flex flex-col">
             <h1 className="text-2xl font-bold mb-4">Calendar</h1>
-            <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full max-w-8xl mx-auto h-[640px] flex flex-col justify-start">
+            <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full max-w-8xl mx-auto flex-1 flex flex-col justify-start">
               <FullCalendar
                 plugins={[dayGridPlugin]}
                 initialView="dayGridMonth"
-                height="auto"
-                contentHeight="auto"
+                height="100%"
+                contentHeight="100%"
                 headerToolbar={{
                   left: "dayGridMonth,dayGridWeek,dayGridDay",
                   center: "title",
@@ -171,14 +170,14 @@ function page() {
               name="John Doe"
               email="john@doe.com"
               imageUrl="https://github.com/shadcn.png"
-              status="online"
+              status={status}
             />
           </SidebarFooter>
         </Sidebar>
 
         {/* Main */}
         <div className="flex-1 flex flex-col w-full">
-          {/* Header: only shows if not on calendar */}
+          {/* Header*/}
           {selected !== "Calendar" && (
             <header className="w-full flex items-center justify-between py-6 px-8 border-b border-border bg-background transition-colors">
               <span className="text-2xl font-bold tracking-wide"></span>
