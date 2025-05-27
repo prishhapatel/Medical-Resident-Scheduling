@@ -1,9 +1,8 @@
 "use client";
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar } from "@/components/ui/calendar";
-import { Card } from "@/components/ui/card";
+import { Button } from "src/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "src/components/ui/avatar";
+import { Card } from "src/components/ui/card";
 import {
   SidebarProvider,
   Sidebar,
@@ -16,21 +15,82 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar";
+} from "src/components/ui/sidebar";
 import { Repeat, CalendarDays, UserCheck, Shield, Settings } from "lucide-react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import "@fullcalendar/common/main.css";
 
 const items = [
+  { title: "Calendar", icon: <CalendarDays className="w-6 h-6 mr-3" /> },
   { title: "Swap Calls", icon: <Repeat className="w-6 h-6 mr-3" /> },
   { title: "Request Off", icon: <CalendarDays className="w-6 h-6 mr-3" /> },
   { title: "Check My Schedule", icon: <UserCheck className="w-6 h-6 mr-3" /> },
   { title: "Admin", icon: <Shield className="w-6 h-6 mr-3" /> },
+  { title: "Settings", icon: <Settings className="w-6 h-6 mr-3" /> },
 ];
+
+export function SidebarUserCard({ name, email, imageUrl, status = "online" }) {
+  const statusColors = {
+    online: "bg-green-500",
+    "be right back": "bg-yellow-400",
+    offline: "bg-gray-400",
+  };
+
+  return (
+    <div className="flex items-center bg-gray-200 rounded-xl shadow p-3 w-full">
+      <Avatar className="h-10 w-10">
+        <AvatarImage src={imageUrl} alt={name} />
+        <AvatarFallback>{name[0]}</AvatarFallback>
+      </Avatar>
+      <div className="ml-3 flex-1">
+        <div className="font-semibold text-sm">{name}</div>
+        <div className="flex items-center text-xs text-gray-500">
+          <span className={`w-2 h-2 rounded-full mr-2 ${statusColors[status]}`} />
+          {email}
+        </div>
+      </div>
+      <button className="ml-2 text-gray-400 hover:text-gray-600">
+        <svg width="16" height="16" fill="none" viewBox="0 0 20 20">
+          <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+    </div>
+  );
+}
 
 function page() {
   const [selected, setSelected] = useState("Swap Calls");
+  const [activeTab, setActiveTab] = useState("All events");
+  const [search, setSearch] = useState("");
 
   const renderMainContent = () => {
     switch (selected) {
+      case "Calendar":
+        return (
+          <div className="w-full">
+            <h1 className="text-2xl font-bold mb-4">Calendar</h1>
+            <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full max-w-8xl mx-auto h-[640px] flex flex-col justify-start">
+              <FullCalendar
+                plugins={[dayGridPlugin]}
+                initialView="dayGridMonth"
+                height="auto"
+                contentHeight="auto"
+                headerToolbar={{
+                  left: "dayGridMonth,dayGridWeek,dayGridDay",
+                  center: "title",
+                  right: "prev,today,next",
+                }}
+                buttonText={{
+                  today: "Today",
+                  month: "Month",
+                  week: "Week",
+                  day: "Day",
+                }}
+              />
+            </Card>
+          </div>
+        );
       case "Settings":
         return (
           <Card className="p-8 bg-gray-100 dark:bg-neutral-900 shadow-lg rounded-2xl w-full h-[400px] flex flex-col justify-start">
@@ -78,7 +138,7 @@ function page() {
         <Sidebar>
           <SidebarHeader>
             <div className="flex items-center justify-center py-2">
-              <span className="text-3xl font-bold tracking-wide">PYSCALL</span>
+              <span className="text-3xl font-bold tracking-wide">PSYCALL</span>
             </div>
           </SidebarHeader>
           <SidebarContent>
@@ -92,7 +152,7 @@ function page() {
                           className={`flex items-center text-xl cursor-pointer rounded-lg px-2 py-1 transition-colors ${
                             selected === item.title
                               ? "font-bold text-gray-800 bg-gray-300"
-                              : "hover:bg-gray-200"
+                              : "hover:bg-gray-900"
                           }`}
                           onClick={() => setSelected(item.title)}
                         >
@@ -107,49 +167,34 @@ function page() {
             </SidebarGroup>
           </SidebarContent>
           <SidebarFooter>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <span
-                    className={`flex items-center text-xl cursor-pointer rounded-lg px-2 py-1 transition-colors ${
-                      selected === "Settings"
-                        ? "font-bold text-gray-800 bg-gray-300"
-                        : "hover:bg-gray-200"
-                    }`}
-                    onClick={() => setSelected("Settings")}
-                  >
-                    <Settings className="w-6 h-6 mr-3" />
-                    Settings
-                  </span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
+            <SidebarUserCard
+              name="John Doe"
+              email="john@doe.com"
+              imageUrl="https://github.com/shadcn.png"
+              status="online"
+            />
           </SidebarFooter>
         </Sidebar>
 
         {/* Main */}
         <div className="flex-1 flex flex-col w-full">
-          {/* Header */}
-          <header className="w-full flex items-center justify-between py-6 px-8 border-b border-border bg-background transition-colors">
-            <span className="text-2xl font-bold tracking-wide"></span>
-            <div className="flex items-center gap-4">
-              <Avatar className="w-12 h-12">
-                <AvatarImage src="https://github.com/shadcn.png" alt="User Avatar" />
-                <AvatarFallback>CN</AvatarFallback>
-              </Avatar>
-              <span className="text-lg font-semibold">John Doe</span>
-              <Button variant="outline" className="ml-4 bg-black text-white dark:bg-white dark:text-black">
-                Log out
-              </Button>
-            </div>
-          </header>
-          <main className="flex flex-row gap-8 p-8 w-full">
-            {renderMainContent()}
-            {selected !== "Settings" && (
-              <div className="bg-gray-100 rounded-2xl shadow-lg p-8 h-[400px] flex items-start">
-                <Calendar />
+          {/* Header: only shows if not on calendar */}
+          {selected !== "Calendar" && (
+            <header className="w-full flex items-center justify-between py-6 px-8 border-b border-border bg-background transition-colors">
+              <span className="text-2xl font-bold tracking-wide"></span>
+              <div className="flex items-center gap-4">
+                <Button variant="outline" className="ml-4 bg-black text-white dark:bg-white dark:text-black">
+                  Log out
+                </Button>
               </div>
-            )}
+            </header>
+          )}
+          <main
+            className={`flex flex-row gap-8 w-full ${
+              selected === "Calendar" ? "pt-4 px-8" : "p-8"
+            }`}
+          >
+            {renderMainContent()}
           </main>
         </div>
       </div>

@@ -1,9 +1,11 @@
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button } from "src/components/ui/button";
+import { Card } from "src/components/ui/card";
+
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
+      {/*Header Section*/}
       <header className="bg-gray-100 text-black p-5 flex items-center justify-between border-b border-gray-300 shadow-lg">
         <div className="flex items-center">
           <Image
@@ -21,12 +23,15 @@ export default function Home() {
           </Button>
         </div>
       </header>
+
+      {/*Login Card*/}
       <div className="flex-grow flex items-center justify-center pt-15 bg-blue-950">
         <Card className="p-10 bg-white shadow-lg rounded-4xl w-[400px]">
           <h2 className="text-2xl font-bold mb-4 text-center text-black">
             Login
           </h2>
           <form className="space-y-4">
+            {/* Username Field*/}
             <div>
               <label
                 htmlFor="username"
@@ -37,9 +42,11 @@ export default function Home() {
               <input
                 type="text"
                 id="username"
+                placeholder="Username"
                 className="mt-1 block w-full px-3 py-2 border border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
+            {/* Password Field*/}
             <div>
               <label
                 htmlFor="password"
@@ -50,16 +57,18 @@ export default function Home() {
               <input
                 type="password"
                 id="password"
+                placeholder="Password"
                 className="mt-1 block w-full px-3 py-2 border border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
+            {/* Login Button */}
             <Button className="w-full bg-orange-500 text-white py-3 rounded-md hover:bg-orange-400">
               Login
             </Button>
           </form>
         </Card>
       </div>
-      <div className="bg-blue-950 flex-grow" />
+      {/*Footer Section*/}
       <footer className="bg-gray-100 text-black p-2 text-center">
         <div className="flex justify-center items-center space-x-6 mb-1">
           <Image

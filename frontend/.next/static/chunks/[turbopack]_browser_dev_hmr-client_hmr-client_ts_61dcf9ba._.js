@@ -1,4 +1,4 @@
-(globalThis.TURBOPACK = globalThis.TURBOPACK || []).push(["static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_61dcf9ba._.js", {
+(globalThis.TURBOPACK = globalThis.TURBOPACK || []).push([typeof document === "object" ? document.currentScript : undefined, {
 
 "[turbopack]/browser/dev/hmr-client/hmr-client.ts [app-client] (ecmascript)": ((__turbopack_context__) => {
 "use strict";
