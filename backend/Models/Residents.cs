@@ -9,35 +9,34 @@ namespace MedicalDemo.Data.Models
     public class Resident
     {
         [Key]
-        [Column("resident_id")] // Maps to varchar(15) PK
-        public string ResidentId { get; set; }
+        [Column("resident_id")]
+        public string resident_id { get; set; }
 
         [Column("first_name")]
-        public string FirstName { get; set; }
+        public string first_name { get; set; }
 
         [Column("last_name")]
-        public string LastName { get; set; }
+        public string last_name { get; set; }
 
         [Column("graduate_yr")]
-        public int GraduateYr { get; set; }
+        public int graduate_yr { get; set; }
 
         [Column("email")]
-        public string Email { get; set; }
+        public string email { get; set; }
 
         [Column("password")]
-        public string Password { get; set; }
+        public string password { get; set; }
 
         [Column("phone_num")]
-        public string PhoneNum { get; set; }
+        public string phone_num { get; set; }
 
         [Column("weekly_hours")]
-        public int WeeklyHours { get; set; }
+        public int weekly_hours { get; set; }
 
         [Column("total_hours")]
-        public int TotalHours { get; set; }
+        public int total_hours { get; set; }
 
-        // If the actual column name has a space (e.g. "bi yearly hours"), do this:
         [Column("bi_yearly_hours")]
-        public int BiYearlyHours { get; set; }
+        public int bi_yearly_hours { get; set; }
     }
 }

@@ -24,7 +24,7 @@ import ProtectedRoute from '../../components/ProtectedRoute';
 import { useRouter } from "next/navigation";
 import { toast } from '../../hooks/use-toast';
 import { Toaster } from '../../components/ui/toaster';
-import { removeAuthToken } from '../../utils/auth';
+import { removeAuthToken, getUser, getAuthHeaders } from '../../utils/auth';
 
 type MenuItem = {
   title: string;
@@ -43,7 +43,14 @@ const menuItems: MenuItem[] = [
   { title: "Settings", icon: <Settings className="w-6 h-6 mr-3" /> },
 ];
 
- //dashboard
+interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
+//dashboard
 function Dashboard() {
   const router = useRouter();
   const [selected, setSelected] = useState<string>("Swap Calls");
@@ -51,6 +58,8 @@ function Dashboard() {
   const [search, setSearch] = useState<string>("");
   const [status, setStatus] = useState<UserStatus>("online");
   const [isLoggedOut, setIsLoggedOut] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // activity tracking timeouts
   const activityTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -99,6 +108,13 @@ function Dashboard() {
       if (brbTimeout.current) clearTimeout(brbTimeout.current);
     };
   }, [isLoggedOut]);
+
+  useEffect(() => {
+    const userData = getUser();
+    console.log('User data from localStorage:', userData);
+    setUser(userData);
+    setLoading(false);
+  }, []);
 
   const handleLogout = async () => {
     setIsLoggedOut(true);
@@ -196,6 +212,10 @@ function Dashboard() {
     }
   };
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <ProtectedRoute>
       <SidebarProvider defaultOpen={true}>
@@ -235,8 +255,8 @@ function Dashboard() {
             </SidebarContent>
             <SidebarFooter>
               <SidebarUserCard
-                name="John Doe"
-                email="john@doe.com"
+                name={user ? `${user.firstName} ${user.lastName}`.trim() : ''}
+                email={user?.email || ''}
                 imageUrl="https://github.com/shadcn.png"
                 status={status}
               />

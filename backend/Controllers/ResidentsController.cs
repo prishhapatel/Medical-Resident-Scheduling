@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MedicalDemo.Data.Models;  // Adjust namespace based on your project
+using System.Threading.Tasks;
 
 namespace MedicalDemo.Server.Controllers
 {
@@ -22,40 +23,27 @@ namespace MedicalDemo.Server.Controllers
             return await _context.residents.ToListAsync();
         }
 
-        // GET: api/Residents/{id}
+        // GET: api/Residents/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Resident>> GetResident(string id)
         {
             var resident = await _context.residents.FindAsync(id);
+
             if (resident == null)
             {
                 return NotFound();
             }
+
             return resident;
         }
 
-        // POST: api/Residents
-        [HttpPost]
-        public async Task<ActionResult<Resident>> CreateResident([FromBody] Resident resident)
+        // PUT: api/Residents/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutResident(string id, Resident resident)
         {
-            if (resident == null)
+            if (id != resident.resident_id)
             {
                 return BadRequest();
-            }
-
-            _context.residents.Add(resident);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetResident), new { id = resident.ResidentId }, resident);
-        }
-
-        // PUT: api/Residents/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateResident(string id, [FromBody] Resident resident)
-        {
-            if (id != resident.ResidentId)
-            {
-                return BadRequest("Resident ID mismatch.");
             }
 
             _context.Entry(resident).State = EntityState.Modified;
@@ -75,10 +63,21 @@ namespace MedicalDemo.Server.Controllers
                     throw;
                 }
             }
+
             return NoContent();
         }
 
-        // DELETE: api/Residents/{id}
+        // POST: api/Residents
+        [HttpPost]
+        public async Task<ActionResult<Resident>> PostResident(Resident resident)
+        {
+            _context.residents.Add(resident);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetResident", new { id = resident.resident_id }, resident);
+        }
+
+        // DELETE: api/Residents/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteResident(string id)
         {
@@ -96,7 +95,7 @@ namespace MedicalDemo.Server.Controllers
 
         private bool ResidentExists(string id)
         {
-            return _context.residents.Any(e => e.ResidentId == id);
+            return _context.residents.Any(e => e.resident_id == id);
         }
     }
 }

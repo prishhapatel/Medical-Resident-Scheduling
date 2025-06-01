@@ -9,11 +9,12 @@ import { useTheme } from "next-themes";
 import { setAuthToken } from '../utils/auth';
 import { useToast } from '../hooks/use-toast';
 import { Toaster } from '../components/ui/toaster';
+import { config } from '../config';
 
 export default function Home() {
   const { theme } = useTheme();
   const { toast } = useToast();
-  const [formData, setFormData] = useState({ username: "", password: "" });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,22 +29,33 @@ export default function Home() {
   // handle form submission and login
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Login attempt with email:', formData.email);
     setError("");
     setSuccess(false);
     setIsLoading(true);
 
     try {
-      // Dummy credentials for testing
-      const dummyUsername = "admin";
-      const dummyPassword = "password123";
+      console.log('Sending login request to:', `${config.apiUrl}/api/auth/login`);
+      const response = await fetch(`${config.apiUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
+      });
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const data = await response.json();
+      console.log('Login response status:', response.status);
+      console.log('Login response data:', { ...data, token: data.token ? '[REDACTED]' : null });
 
-      if (formData.username === dummyUsername && formData.password === dummyPassword) {
-        // Simulate successful login
-        setAuthToken("dummy-token-123");
+      if (response.ok) {
+        // Store the token
+        setAuthToken(data.token);
         setSuccess(true);
+        console.log('Login successful, token stored');
         
         // Show success toast
         toast({
@@ -57,18 +69,21 @@ export default function Home() {
 
         // force immediate navigation
         try {
+          console.log('Attempting navigation to dashboard...');
           await router.push("/dashboard");
         } catch (navError) {
           console.error("Navigation failed:", navError);
           // fallback navigation
+          console.log('Using fallback navigation method');
           window.location.href = "/dashboard";
         }
       } else {
-        setError('Invalid username or password');
+        console.log('Login failed:', data.message);
+        setError(data.message || 'Invalid username or password');
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Invalid username or password",
+          description: data.message || "Invalid username or password",
         });
       }
     } catch (error) {
@@ -77,7 +92,7 @@ export default function Home() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "An error occurred during login",
+        description: "An error occurred during login. Please try again later.",
       });
     } finally {
       setIsLoading(false);
@@ -112,14 +127,14 @@ export default function Home() {
           <h2 className="text-2xl font-bold mb-4 text-center text-black dark:text-white">Login</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-lg font-medium text-gray-700 dark:text-gray-200">Username</label>
+              <label htmlFor="email" className="block text-lg font-medium text-gray-700 dark:text-gray-200">Email</label>
               <input
-                type="text"
-                id="username"
-                name="username"
-                value={formData.username}
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
                 onChange={handleChange}
-                placeholder="Username"
+                placeholder="Email"
                 className="mt-1 block w-full px-3 py-2 border border-gray-500 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 text-black dark:text-white bg-white dark:bg-neutral-800"
                 required
                 disabled={isLoading}
