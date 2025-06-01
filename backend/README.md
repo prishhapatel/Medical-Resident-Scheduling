@@ -24,6 +24,6 @@ dotnet run
 .env
 
 # Edit .env.local with your settings
-NEXT_PUBLIC_API_URL=http://localhost:7000
+NEXT_PUBLIC_API_URL=http://localhost:YOUR_PORT
 DB_CONNECTION_STRING=Server=YOUR_SERVER;Port=YOUR_PORT;Database=YOUR_DB;User=YOUR_USER;Password=YOUR_PASSWORD;
 ```
