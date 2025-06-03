@@ -1,30 +1,31 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System;
 
 namespace MedicalDemo.Data.Models
 {
-
     public class MedicalContext : DbContext
     {
         public DbSet<Admins> admins { get; set; }
-
         public DbSet<Resident> residents { get; set; }
-
         public DbSet<Rotations> rotations { get; set; }
-
         public DbSet<Date> dates { get; set; }
-
-        public DbSet<Schedule> schedules{ get; set; }
-
+        public DbSet<Schedule> schedules { get; set; }
         public DbSet<Blackout> blackouts { get; set; }
+        public DbSet<Vacations> vacations { get; set; }
 
+        public MedicalContext(DbContextOptions options) : base(options) { }
 
-        public MedicalContext(DbContextOptions options) : base(options)
-        {
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+		{
+    		Console.WriteLine("Ensuring VacationId is mapped to binary(16) without byte reordering.");
 
+    		// This will correctly tell EF Core to map VacationId to binary(16)
+    		modelBuilder.Entity<Vacations>()
+        		.Property(v => v.VacationId)
+        		.HasColumnType("binary(16)");
 
-        }
-
+    		base.OnModelCreating(modelBuilder);
+		}
     }
 }
