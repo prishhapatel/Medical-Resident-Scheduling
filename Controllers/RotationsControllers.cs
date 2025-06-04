@@ -24,9 +24,43 @@ namespace MedicalDemo.Controllers
             return await _context.rotations.ToListAsync();
         }
 
+		// GET: api/rotations/filter?residentId=&month=&rotation=
+        [HttpGet("filter")]
+        public async Task<ActionResult<IEnumerable<Rotations>>> FilterRotations(
+            [FromQuery] string? residentId,
+            [FromQuery] string? month,
+            [FromQuery] string? rotation)
+        {
+            var query = _context.rotations.AsQueryable();
+
+            if (!string.IsNullOrEmpty(residentId))
+            {
+                query = query.Where(v => v.ResidentId == residentId);
+            }
+
+            if (!string.IsNullOrEmpty(month))
+            {
+                query = query.Where(v => v.Month == month);;
+            }
+
+            if (!string.IsNullOrEmpty(rotation))
+            {
+                query = query.Where(v => v.Rotation == rotation);
+            }
+
+            var results = await query.ToListAsync();
+
+            if (results.Count == 0)
+            {
+                return NotFound("No matching rotation records found.");
+            }
+
+            return Ok(results);
+        }
+
         // GET: api/rotations/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<Rotations>> GetRotationById(Guid id)
+        public async Task<ActionResult<Rotations>> GetRotationById(string id)
         {
             var rotation = await _context.rotations.FindAsync(id);
 

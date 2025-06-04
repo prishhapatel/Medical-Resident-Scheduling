@@ -17,38 +17,72 @@ namespace MedicalDemo.Controllers
             _context = context;
         }
 
-        // GET: api/Admins
+		// POST: api/schedules
+		[HttpPost]
+		public async Task<IActionResult> CreateSchedule([FromBody] Schedule schedule)
+		{
+    		if (schedule == null)
+    		{
+        		return BadRequest("Schedule object is null.");
+    		}
+
+    		if (schedule.ScheduleId == Guid.Empty)
+    		{
+        		schedule.ScheduleId = Guid.NewGuid();
+    		}
+
+    		_context.schedules.Add(schedule);
+    		await _context.SaveChangesAsync();
+
+    		return CreatedAtAction(nameof(GetAllSchedules), new { id = schedule.ScheduleId }, schedule);
+		}
+
+         // GET: api/schedules
         [HttpGet]
-        public IActionResult GetSchedules()
+        public async Task<ActionResult<IEnumerable<Schedule>>> GetAllSchedules()
         {
-            var schedules = _context.schedules.ToList();  // 
+            var schedules = await _context.schedules.ToListAsync();
             return Ok(schedules);
         }
 
-        // GET: api/Admins/5
-        [HttpGet("{schedule_id}")]
-        public IActionResult GetScheduleByScheduleId(string schedule_id)
-        {
-            var schedule = _context.schedules.Find(schedule_id);
-            if (schedule == null) return NotFound();
-            return Ok(schedule);
-        }
+        // PUT: api/schedules/{id}
+		[HttpPut("{id}")]
+		public async Task<IActionResult> UpdateSchedule(Guid id, [FromBody] Schedule updatedSchedule)
+		{
+    		if (id != updatedSchedule.ScheduleId)
+    		{
+        		return BadRequest("Schedule ID in URL and body do not match.");
+    		}
 
-        // DELETE: api/Admins/5
-        [HttpDelete("{schedule_id}")]
-        public IActionResult DeleteSchedule(string schedule_id)
-        {
-            var schedule = _context.schedules.Find(schedule_id);
-            if (schedule == null)
-                return NotFound();
+    		var existingSchedule = await _context.schedules.FindAsync(id);
 
-            _context.schedules.Remove(schedule);
-            _context.SaveChanges();
+    		if (existingSchedule == null)
+    		{
+        		return NotFound("Schedule not found.");
+    		}
 
-            return NoContent();
-        }
+    		existingSchedule.Status = updatedSchedule.Status;
 
+    		await _context.SaveChangesAsync();
 
+    		return NoContent(); // 204 No Content
+		}
 
+		// DELETE: api/schedules/{id}
+		[HttpDelete("{id}")]
+		public async Task<IActionResult> DeleteSchedule(Guid id)
+		{
+    		var schedule = await _context.schedules.FindAsync(id);
+
+    		if (schedule == null)
+    		{
+        		return NotFound("Schedule not found.");
+    		}
+
+    		_context.schedules.Remove(schedule);
+    		await _context.SaveChangesAsync();
+
+    		return NoContent(); // 204 No Content
+		}
     }
 }

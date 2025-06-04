@@ -18,9 +18,13 @@ namespace MedicalDemo.Data.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
-    		Console.WriteLine("Ensuring VacationId is mapped to binary(16) without byte reordering.");
 
-    		// This will correctly tell EF Core to map VacationId to binary(16)
+    		// Map ScheduleId as binary(16)
+    		modelBuilder.Entity<Schedule>()
+        		.Property(s => s.ScheduleId)
+        		.HasColumnType("binary(16)");
+
+			// This will correctly tell EF Core to map VacationId to binary(16)
     		modelBuilder.Entity<Vacations>()
         		.Property(v => v.VacationId)
         		.HasColumnType("binary(16)");
