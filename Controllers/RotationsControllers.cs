@@ -17,6 +17,26 @@ namespace MedicalDemo.Controllers
             _context = context;
         }
 
+		// POST: api/rotations
+		[HttpPost]
+		public async Task<IActionResult> CreateRotation([FromBody] Rotations rotation)
+		{
+    		if (rotation == null)
+    		{
+        		return BadRequest("Rotation object is null.");
+    		}
+
+    		if (rotation.RotationId == Guid.Empty)
+    		{
+        		rotation.RotationId = Guid.NewGuid();
+    		}
+
+    		_context.rotations.Add(rotation);
+    		await _context.SaveChangesAsync();
+
+    		return CreatedAtAction(nameof(FilterRotations), new { id = rotation.RotationId }, rotation);
+		}
+
         // GET: api/rotations
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Rotations>>> GetAllRotations()
@@ -57,36 +77,46 @@ namespace MedicalDemo.Controllers
 
             return Ok(results);
         }
+		
+		// PUT: api/rotations/{id}
+		[HttpPut("{id}")]
+		public async Task<IActionResult> UpdateRotation(Guid id, [FromBody] Rotations updatedRotation)
+		{
+    		if (id != updatedRotation.RotationId)
+    		{
+        		return BadRequest("Rotation ID in URL and body do not match.");
+    		}
 
-        // GET: api/rotations/{id}
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Rotations>> GetRotationById(string id)
-        {
-            var rotation = await _context.rotations.FindAsync(id);
+    		var existingRotation = await _context.rotations.FindAsync(id);
+    		if (existingRotation == null)
+    		{
+        		return NotFound("Rotation not found.");
+    		}
 
-            if (rotation == null)
-            {
-                return NotFound();
-            }
+    		// Update the fields
+    		existingRotation.ResidentId = updatedRotation.ResidentId;
+    		existingRotation.Month = updatedRotation.Month;
+    		existingRotation.Rotation = updatedRotation.Rotation;
 
-            return rotation;
-        }
+    		await _context.SaveChangesAsync();
+    		return NoContent(); // 204
+		}
 
-        // DELETE: api/rotations/{id}
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteRotationById(Guid id)
-        {
-            var rotation = await _context.rotations.FindAsync(id);
+		// DELETE: api/rotations/{id}
+		[HttpDelete("{id}")]
+		public async Task<IActionResult> DeleteRotation(Guid id)
+		{
+    		var rotation = await _context.rotations.FindAsync(id);
 
-            if (rotation == null)
-            {
-                return NotFound();
-            }
+    		if (rotation == null)
+    		{
+        		return NotFound("Rotation not found.");
+    		}
 
-            _context.rotations.Remove(rotation);
-            await _context.SaveChangesAsync();
+    		_context.rotations.Remove(rotation);
+    		await _context.SaveChangesAsync();
 
-            return NoContent();
-        }
+    		return NoContent(); // 204
+		}
     }
 }
