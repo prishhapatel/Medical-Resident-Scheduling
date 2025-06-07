@@ -120,3 +120,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* FullCalendar current day background color override */
+td.fc-daygrid-day.fc-day.fc-day-today {
+  background-color: #e0f2f7 !important; /* Light blue */
+}

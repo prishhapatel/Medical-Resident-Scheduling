@@ -1,24 +1,53 @@
-import { Avatar, AvatarFallback, AvatarImage } from "src/components/ui/avatar";
+"use client";
 
-export function SidebarUserCard({ name, email, imageUrl, status = "online" }) {
-  const statusColors = {
-    online: "bg-green-500",
-    "be right back": "bg-yellow-400",
-    offline: "bg-gray-400",
+import React from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
+
+interface SidebarUserCardProps {
+  name: string;
+  email: string;
+  imageUrl: string;
+  status: "online" | "be right back" | "offline";
+}
+
+export function SidebarUserCard({ name, email, imageUrl, status }: SidebarUserCardProps) {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "online":
+        return "bg-green-500";
+      case "be right back":
+        return "bg-yellow-500";
+      case "offline":
+        return "bg-gray-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
   };
 
   return (
-    <div className="flex items-center bg-gray-200 dark:bg-gray-800 rounded-xl shadow p-3 w-full">
-      <Avatar className="h-10 w-10">
-        <AvatarImage src={imageUrl} alt={name || 'User'} />
-        <AvatarFallback>{name ? name[0].toUpperCase() : 'U'}</AvatarFallback>
-      </Avatar>
-      <div className="ml-3 flex-1">
-        <div className="font-semibold text-sm dark:text-gray-200">{name || 'User'}</div>
-        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-          <span className={`w-2 h-2 rounded-full mr-2 ${statusColors[status]}`} />
-          {status.charAt(0).toUpperCase() + status.slice(1)}
-        </div>
+    <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+      <div className="relative">
+        <Avatar>
+          <AvatarImage src={imageUrl} alt={name} />
+          <AvatarFallback>{getInitials(name)}</AvatarFallback>
+        </Avatar>
+        <span
+          className={`absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-gray-800 ${getStatusColor(
+            status
+          )}`}
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{name}</p>
+        <p className="text-xs text-gray-500 truncate">{email}</p>
       </div>
     </div>
   );
