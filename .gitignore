@@ -340,7 +340,6 @@ OpenCover/
 # Azure Stream Analytics local run output
 ASALocalRun/
 # dependencies
-/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -348,6 +347,7 @@ ASALocalRun/
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+node_modules/
 
 # MSBuild Binary and Structured Log
 *.binlog
@@ -394,3 +394,61 @@ FodyWeavers.xsd
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local env files
+.env*.local
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Testing
+coverage/
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backend
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.dbmdl
+*.jfm
+*.pfx
+*.publishsettings
+orleans.codegen.cs
+
+# Logs
+logs/
+*.log
