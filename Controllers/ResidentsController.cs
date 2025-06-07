@@ -22,17 +22,59 @@ namespace MedicalDemo.Server.Controllers
             return await _context.residents.ToListAsync();
         }
 
-        // GET: api/Residents/{id}
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Resident>> GetResident(string id)
-        {
-            var resident = await _context.residents.FindAsync(id);
-            if (resident == null)
-            {
-                return NotFound();
-            }
-            return resident;
-        }
+		// GET: api/residents/filter?residentID=&firstName=&lastName=&graduateYr=2&email=&password=&phoneNum=&weeklyHours=&totalHours=&biYearlyHours
+		[HttpGet("filter")]
+		public async Task<ActionResult<IEnumerable<Resident>>> FilterResidents(
+    		[FromQuery] string? residentId,
+    		[FromQuery] string? firstName,
+    		[FromQuery] string? lastName,
+    		[FromQuery] int? graduateYr,
+    		[FromQuery] string? email,
+    		[FromQuery] string? password,
+    		[FromQuery] string? phoneNum,
+    		[FromQuery] int? weeklyHours,
+    		[FromQuery] int? totalHours,
+    		[FromQuery] int? biYearlyHours)
+		{
+    		var query = _context.residents.AsQueryable();
+
+    		if (!string.IsNullOrEmpty(residentId))
+        		query = query.Where(r => r.ResidentId == residentId);
+
+    		if (!string.IsNullOrEmpty(firstName))
+        		query = query.Where(r => r.FirstName.Contains(firstName));
+
+    		if (!string.IsNullOrEmpty(lastName))
+        		query = query.Where(r => r.LastName.Contains(lastName));
+
+    		if (graduateYr.HasValue)
+        		query = query.Where(r => r.GraduateYr == graduateYr.Value);
+
+    		if (!string.IsNullOrEmpty(email))
+        		query = query.Where(r => r.Email.Contains(email));
+
+    		if (!string.IsNullOrEmpty(password))
+        		query = query.Where(r => r.Password == password); // Consider hashing or not exposing this
+
+    		if (!string.IsNullOrEmpty(phoneNum))
+        		query = query.Where(r => r.PhoneNum.Contains(phoneNum));
+
+    		if (weeklyHours.HasValue)
+        		query = query.Where(r => r.WeeklyHours == weeklyHours.Value);
+
+    		if (totalHours.HasValue)
+        		query = query.Where(r => r.TotalHours == totalHours.Value);
+
+    		if (biYearlyHours.HasValue)
+        		query = query.Where(r => r.BiYearlyHours == biYearlyHours.Value);
+
+    		var results = await query.ToListAsync();
+
+    		if (!results.Any())
+        		return NotFound("No residents matched the filter criteria.");
+
+    		return Ok(results);
+		}
 
         // POST: api/Residents
         [HttpPost]
@@ -46,7 +88,7 @@ namespace MedicalDemo.Server.Controllers
             _context.residents.Add(resident);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetResident), new { id = resident.ResidentId }, resident);
+            return CreatedAtAction(nameof(GetResidents), new { id = resident.ResidentId }, resident);
         }
 
         // PUT: api/Residents/{id}

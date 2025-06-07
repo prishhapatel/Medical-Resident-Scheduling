@@ -38,11 +38,12 @@ namespace MedicalDemo.Controllers
             return CreatedAtAction(nameof(FilterVacations), new { id = vacation.VacationId }, vacation);
         }
 
-        // GET: api/vacations/filter?residentId=&date=&status=
+        // GET: api/vacations/filter?residentId=&date=&reason=&status=
         [HttpGet("filter")]
         public async Task<ActionResult<IEnumerable<Vacations>>> FilterVacations(
             [FromQuery] string? residentId,
             [FromQuery] DateTime? date,
+			[FromQuery] string? reason,
             [FromQuery] string? status)
         {
             var query = _context.vacations.AsQueryable();
@@ -55,6 +56,11 @@ namespace MedicalDemo.Controllers
             if (date.HasValue)
             {
                 query = query.Where(v => v.Date.Date == date.Value.Date);
+            }
+
+			if (!string.IsNullOrEmpty(reason))
+            {
+                query = query.Where(v => v.Reason == reason);
             }
 
             if (!string.IsNullOrEmpty(status))
@@ -91,6 +97,7 @@ namespace MedicalDemo.Controllers
     		// Update the fields
     		existingVacation.ResidentId = updatedVacation.ResidentId;
     		existingVacation.Date = updatedVacation.Date;
+			existingVacation.Reason = updatedVacation.Reason;
     		existingVacation.Status = updatedVacation.Status;
 
     		await _context.SaveChangesAsync();

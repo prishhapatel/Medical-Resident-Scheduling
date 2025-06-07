@@ -18,6 +18,10 @@ namespace MedicalDemo.Data.Models
         [Column("date")]
         public DateTime Date { get; set; }
 
+		[Column("reason")]
+        [MaxLength(45)]
+        public string Reason { get; set; }
+
         [Column("status")]
         [MaxLength(45)]
         public string Status { get; set; }
