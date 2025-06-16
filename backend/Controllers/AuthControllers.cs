@@ -18,7 +18,7 @@ namespace MedicalDemo.Server.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] Resident resident)
+        public async Task<IActionResult> Register([FromBody] Residents resident)
         {
             // Check if email already exists
             var exists = await _context.residents
@@ -33,7 +33,7 @@ namespace MedicalDemo.Server.Controllers
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(resident.password);
 
             // Create new Resident instance
-            var newResident = new Resident
+            var newResident = new Residents
             {
                 resident_id = resident.resident_id,
                 first_name = resident.first_name,

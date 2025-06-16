@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MedicalDemo.Data.Models
 {
-    public class Blackout
+    public class Blackouts
     {
 
         [Key]

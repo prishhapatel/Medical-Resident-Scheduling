@@ -31,7 +31,7 @@ namespace MedicalDemo.Controllers
 
         // GET: api/blackouts/{id}
         [HttpGet("{blackout_id}")]
-        public async Task<ActionResult<Blackout>> GetBlackoutByBlackoutId(string blackout_id)
+        public async Task<ActionResult<Blackouts>> GetBlackoutByBlackoutId(string blackout_id)
         {
             var blackout = await _context.blackouts.FindAsync(blackout_id);
             if (blackout == null)
