@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
 import { useTheme } from "next-themes";
+import { useAuth } from "@/context/AuthContext";
 
 type MenuItem = {
   title: string;
@@ -218,7 +219,7 @@ function Dashboard() {
   const brbTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Default display name/email if user is missing
-  const displayName = user?.firstName?.trim() || "John Doe";
+  const displayName = user ? `${user.firstName} ${user.lastName}` : "John Doe";
   const displayEmail = user?.email || "john.doe@email.com";
 
   const { setTheme, theme } = useTheme();
