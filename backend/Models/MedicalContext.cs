@@ -18,7 +18,11 @@ namespace MedicalDemo.Data.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
-
+			// Map BlackoutId as binary(16)
+			modelBuilder.Entity<Blackouts>()
+				.Property(s => s.BlackoutId)
+				.HasColumnType("binary(16)");
+		
 			// Map DateId as binary(16)
 			modelBuilder.Entity<Dates>()
 				.Property(s => s.DateId)

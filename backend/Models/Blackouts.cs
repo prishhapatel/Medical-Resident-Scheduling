@@ -1,21 +1,21 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-
 
 namespace MedicalDemo.Data.Models
 {
+    [Table("blackouts")]
     public class Blackouts
     {
-
         [Key]
+        [Column("blackout_id")]
+        public Guid BlackoutId { get; set; }  // binary(16)
 
-        public Guid blackout_id { get; set; }
+        [Column("resident_id")]
+        [MaxLength(15)]
+        public string ResidentId { get; set; }
 
-        public string resident_id { get; set; }
-
-        public DateTime date { get; set; }
-
-
-
+        [Column("date")]
+        public DateTime Date { get; set; }
     }
 }
