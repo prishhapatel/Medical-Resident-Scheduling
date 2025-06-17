@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
 
 // Load .env file
-Env.Load();
+DotNetEnv.Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<IMedicalRepository, MedicalDataRepository>();
 
 // Add CORS configuration
 builder.Services.AddCors(options =>
@@ -24,7 +25,11 @@ builder.Services.AddCors(options =>
 });
 
 //connect to DB
+
 var MySqlConnectString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+
+Console.WriteLine($"Loaded DB_CONNECTION_STRING: {MySqlConnectString}");
+
 
 if (string.IsNullOrEmpty(MySqlConnectString))
 {
@@ -65,5 +70,18 @@ app.MapControllers();
 // Use the port from environment variable or default to 5109
 var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
 app.Urls.Add($"http://localhost:{port}");
+
+
+using (var scope = app.Services.CreateScope())
+{
+    var repo = scope.ServiceProvider.GetRequiredService<IMedicalRepository>();
+    var admins = await repo.GetAllAdminsAsync();
+
+    Console.WriteLine("Loaded Admins:");
+    foreach (var admin in admins)
+    {
+        Console.WriteLine($"ID: {admin.admin_id}, Name: {admin.first_name}");
+    }
+}
 
 app.Run();
