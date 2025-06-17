@@ -89,17 +89,22 @@ namespace MedicalDemo.Controllers
 
     		var existingRotation = await _context.rotations.FindAsync(id);
     		if (existingRotation == null)
-    		{
         		return NotFound("Rotation not found.");
-    		}
 
     		// Update the fields
     		existingRotation.ResidentId = updatedRotation.ResidentId;
     		existingRotation.Month = updatedRotation.Month;
     		existingRotation.Rotation = updatedRotation.Rotation;
 
-    		await _context.SaveChangesAsync();
-    		return NoContent(); // 204
+			try
+			{
+				await _context.SaveChangesAsync();
+				return Ok(existingRotation); // returns updated object
+			}
+    		catch (DbUpdateException ex)
+    		{
+        		return StatusCode(500, $"An error occurred while updating the date: {ex.Message}");
+    		}
 		}
 
 		// DELETE: api/rotations/{id}

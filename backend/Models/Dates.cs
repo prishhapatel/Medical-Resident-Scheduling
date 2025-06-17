@@ -1,24 +1,28 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-
 
 namespace MedicalDemo.Data.Models
 {
-    public class Date
+    [Table("dates")]
+    public class Dates
     {
         [Key]
+        [Column("date_id")]
+        public Guid DateId { get; set; }  // binary(16) typically maps to Guid in EF Core
 
-        public Guid date_id { get; set; }
+        [Column("schedule_id")]
+        public Guid ScheduleId { get; set; }
 
-        public Guid schedule_id { get; set; }
+        [Column("resident_id")]
+        [MaxLength(15)]
+        public string ResidentId { get; set; }
 
-        public string resident_id { get; set; }
+        [Column("date")]
+        public DateTime Date { get; set; }
 
-        public DateTime date { get; set; }
-
-        public string call_type { get; set; }
-
-
-
+        [Column("call_type")]
+        [MaxLength(45)]
+        public string CallType { get; set; }
     }
 }
