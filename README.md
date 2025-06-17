@@ -46,3 +46,37 @@ BLACKOUT DAYS
 * Day before and after night rotation
 * Emergency Medicine rotation (one month)
 * IM inpatient rotation (one month)
+
+Codebase Structure
+
+Project Layers
+1. Models
+Located in: MedicalDemo.Data.Models
+
+Represents the database tables using C# classes (e.g., Admins, Residents, Rotations, etc.)
+
+Managed through Entity Framework Core
+
+Configured via MedicalContext.cs
+
+2. Repositories
+Located in: Repositories/
+
+IMedicalRepository.cs – Interface that defines methods for accessing all major tables.
+
+MedicalDataRepository.cs – Implements the data access logic using EF Core (e.g., fetch all residents, update admins).
+
+Serves as a bridge between the database and higher-level application logic (controllers/services).
+
+3. API Controllers
+Located in: Controllers/
+
+Handles HTTP requests from the React frontend
+
+Uses MedicalRepository to access data
+
+Example: AdminController exposes /api/admin/all to get all admins
+
+
+Frontend (React) → API Controller → Repository → Database
+
