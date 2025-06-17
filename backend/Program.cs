@@ -71,17 +71,17 @@ app.MapControllers();
 var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
 app.Urls.Add($"http://localhost:{port}");
 
+//test
+//using (var scope = app.Services.CreateScope())
+//{
+//    var repo = scope.ServiceProvider.GetRequiredService<IMedicalRepository>();
+//    var admins = await repo.GetAllAdminsAsync();
 
-using (var scope = app.Services.CreateScope())
-{
-    var repo = scope.ServiceProvider.GetRequiredService<IMedicalRepository>();
-    var admins = await repo.GetAllAdminsAsync();
-
-    Console.WriteLine("Loaded Admins:");
-    foreach (var admin in admins)
-    {
-        Console.WriteLine($"ID: {admin.admin_id}, Name: {admin.first_name}");
-    }
-}
+//    Console.WriteLine("Loaded Admins:");
+//    foreach (var admin in admins)
+//    {
+//        Console.WriteLine($"ID: {admin.admin_id}, Name: {admin.first_name}");
+//    }
+//}
 
 app.Run();
