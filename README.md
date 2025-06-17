@@ -50,32 +50,37 @@ BLACKOUT DAYS
 Codebase Structure
 
 Project Layers
-1. Models
-Located in: MedicalDemo.Data.Models
+  frontend/
+    (React)
 
-Represents the database tables using C# classes (e.g., Admins, Residents, Rotations, etc.)
 
-Managed through Entity Framework Core
+  backend/
+* 1. Models
+    Located in: MedicalDemo.Data.Models
 
-Configured via MedicalContext.cs
+    Represents the database tables using C# classes (e.g., Admins, Residents, Rotations, etc.)
 
-2. Repositories
-Located in: Repositories/
+    Managed through Entity Framework Core
 
-IMedicalRepository.cs – Interface that defines methods for accessing all major tables.
+    Configured via MedicalContext.cs
 
-MedicalDataRepository.cs – Implements the data access logic using EF Core (e.g., fetch all residents, update admins).
+* 2. Repositories
+    Located in: Repositories/
 
-Serves as a bridge between the database and higher-level application logic (controllers/services).
+    IMedicalRepository.cs – Interface that defines methods for accessing all major tables.
 
-3. API Controllers
-Located in: Controllers/
+    MedicalDataRepository.cs – Implements the data access logic using EF Core (e.g., fetch all residents, update admins).
 
-Handles HTTP requests from the React frontend
+    Serves as a bridge between the database and higher-level application logic (controllers/services).
 
-Uses MedicalRepository to access data
+* 3. API Controllers
+    Located in: Controllers/
 
-Example: AdminController exposes /api/admin/all to get all admins
+    Handles HTTP requests from the React frontend
+
+    Uses MedicalRepository to access data
+
+    Example: AdminController exposes /api/admin/all to get all admins
 
 
 Frontend (React) → API Controller → Repository → Database
