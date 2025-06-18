@@ -72,16 +72,34 @@ var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
 app.Urls.Add($"http://localhost:{port}");
 
 //test
-//using (var scope = app.Services.CreateScope())
-//{
-//    var repo = scope.ServiceProvider.GetRequiredService<IMedicalRepository>();
-//    var admins = await repo.GetAllAdminsAsync();
+//Call your functions here to run the functions.
+//Run it on console line to see the output.
+using (var scope = app.Services.CreateScope())
+{
+    var repo = scope.ServiceProvider.GetRequiredService<IMedicalRepository>();
+    var admins = await repo.GetAllAdminsAsync();
+    var residents = await repo.GetAllResidentsAsync();
 
-//    Console.WriteLine("Loaded Admins:");
-//    foreach (var admin in admins)
-//    {
-//        Console.WriteLine($"ID: {admin.admin_id}, Name: {admin.first_name}");
-//    }
-//}
+
+    Console.WriteLine("Loaded Admins:");
+    foreach (var admin in admins)
+    {
+        Console.WriteLine($"ID: {admin.admin_id}, Name: {admin.first_name}");
+    }
+
+
+    Console.WriteLine("Loaded residents:");
+    foreach (var resident in residents)
+    {
+        Console.WriteLine($"ID: {resident.resident_id}, Name: {resident.first_name}");
+    }
+
+ 
+
+
+
+
+
+}
 
 app.Run();
