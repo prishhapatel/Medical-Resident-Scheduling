@@ -9,7 +9,6 @@ public class MedicalDataRepository : IMedicalRepository
     private List<Residents> _residents;
     private List<Rotations> _rotations;
 
-    private List<PGY> _pgy1;
 
 
     public MedicalDataRepository(MedicalContext contextFactory)
@@ -37,6 +36,8 @@ public class MedicalDataRepository : IMedicalRepository
         return _residents;
     }
 
+
+
     public async Task<List<Rotations>> GetAllRotationsAsync()
     {
         if (_rotations == null)
@@ -48,17 +49,60 @@ public class MedicalDataRepository : IMedicalRepository
     }
 
 
+    //PGY 1
+    public async Task<List<Residents>> LoadPGYOne()
+    {
+        if(_residents == null)
+        {
+           _residents = await _context.residents.ToListAsync();
+        }
+        return _residents.Where(r => r.graduate_yr == 1).ToList();
+
+    }
+
+    //PGY 2
+    public async Task<List<Residents>> LoadPGYTwo()
+    {
+        if (_residents == null)
+        {
+            _residents = await _context.residents.ToListAsync();
+        }
+        return _residents.Where(r => r.graduate_yr == 2).ToList();
+
+    }
+
+    //PGY 3
+    public async Task<List<Residents>> LoadPGYThree()
+    {
+        if (_residents == null)
+        {
+            _residents = await _context.residents.ToListAsync();
+        }
+        return _residents.Where(r => r.graduate_yr == 3).ToList();
+
+    }
+
+
+    //REISDENTS ROTATIONS ByIDByMonths
+    public async Task<Dictionary<string, List<Rotations>>> GetResidentRolesByMonthAsync()
+    {
+
+        if(_rotations == null) 
+        {
+            _rotations = await _context.rotations.ToListAsync();
+        }
+
+        return _rotations
+             .OrderBy(r => r.ResidentId)
+             .ThenBy(r => r.Month)
+             .GroupBy(r => r.ResidentId)
+             .ToDictionary(g => g.Key, g => g.ToList());
+    }
 
 
 
 
 
-
-    //public async Task<List<Residents>> GetSortedSchedAsync()
-    //{
-
-
-    //}
 
 
 

@@ -79,7 +79,12 @@ using (var scope = app.Services.CreateScope())
     var repo = scope.ServiceProvider.GetRequiredService<IMedicalRepository>();
     var admins = await repo.GetAllAdminsAsync();
     var residents = await repo.GetAllResidentsAsync();
+    var rotations = await repo.GetAllRotationsAsync();
+    var pgy1 = await repo.LoadPGYOne();
 
+    var pgy2 = await repo.LoadPGYTwo();
+    var pgy3 = await repo.LoadPGYThree();
+    var residentRolesByMonth = await repo.GetResidentRolesByMonthAsync();
 
     Console.WriteLine("Loaded Admins:");
     foreach (var admin in admins)
@@ -94,7 +99,25 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"ID: {resident.resident_id}, Name: {resident.first_name}");
     }
 
- 
+    Console.WriteLine("Loaded residents by month:");
+    foreach (var entry in residentRolesByMonth)
+    {
+        string residentId = entry.Key;
+        var rotationsValue = entry.Value;
+
+
+        if (residentId == "JXU4079")
+        {
+            foreach (var item in entry.Value) {
+                Console.WriteLine($"ID: {item.ResidentId}, Month: {item.Month}, Rotations: {item.Rotation}");
+
+            }
+        }
+        //var resident = residents.FirstOrDefault(r => r.resident_id == residentId);
+        //string name = resident != null ? $"{resident.first_name} {resident.last_name}" : "Unknown";
+
+        //Console.WriteLine($"ID: {residentId}, Name: {name}");
+    }
 
 
 
