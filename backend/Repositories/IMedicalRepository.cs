@@ -16,5 +16,8 @@ public interface IMedicalRepository
     Task<List<Residents>> LoadPGYThree();
 
     Task<Dictionary<string, List<Rotations>>> GetResidentRolesByMonthAsync();
+    Task<List<Dates>> GenerateTrainingDatesAsync();
+
+    Task<List<Dates>> GenerateTrainingScheduleAsync();
 
 }

@@ -86,6 +86,8 @@ using (var scope = app.Services.CreateScope())
     var pgy3 = await repo.LoadPGYThree();
     var residentRolesByMonth = await repo.GetResidentRolesByMonthAsync();
 
+    var trainingDates = await repo.GenerateTrainingScheduleAsync();
+
     Console.WriteLine("Loaded Admins:");
     foreach (var admin in admins)
     {
@@ -99,26 +101,12 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"ID: {resident.resident_id}, Name: {resident.first_name}");
     }
 
-    Console.WriteLine("Loaded residents by month:");
-    foreach (var entry in residentRolesByMonth)
+  
+    Console.WriteLine("Loaded Training Schedule: ");
+    foreach( var date in trainingDates)
     {
-        string residentId = entry.Key;
-        var rotationsValue = entry.Value;
-
-
-        if (residentId == "JXU4079")
-        {
-            foreach (var item in entry.Value) {
-                Console.WriteLine($"ID: {item.ResidentId}, Month: {item.Month}, Rotations: {item.Rotation}");
-
-            }
-        }
-        //var resident = residents.FirstOrDefault(r => r.resident_id == residentId);
-        //string name = resident != null ? $"{resident.first_name} {resident.last_name}" : "Unknown";
-
-        //Console.WriteLine($"ID: {residentId}, Name: {name}");
+        Console.WriteLine($"Resident ID: {date.ResidentId}, Date: {date.Date}, Call Type: {date.CallType}");
     }
-
 
 
 
