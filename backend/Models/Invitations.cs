@@ -9,15 +9,15 @@ namespace MedicalDemo.Data.Models
     {
         [Key]
         [Column("token")]
-        public string token { get; set; }
+        public string token{ get; set; }
 
         [Column("resident_id")]
-        public string resident_id { get; set; }
+        public string resident_id{ get; set; }
 
         [Column("expires")]
-        public DateTime expires { get; set; }
+        public DateTime expires{ get; set; }
 
         [Column("used")]
-        public bool used { get; set; }
+        public bool used{ get; set; }
     }
 }
