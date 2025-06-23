@@ -5,34 +5,34 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
 namespace MedicalDemo.Server.Controllers
-{
+{//Base url and and class for the controller
     [ApiController]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly MedicalContext _context;
+        private readonly MedicalContext _context; 
 
-        public AuthController(MedicalContext context)
+        public AuthController(MedicalContext context)//Allow to make queries to db
         {
             _context = context;
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] Resident resident)
+        [HttpPost("register")]//api/auth/register
+        public async Task<IActionResult> Register([FromBody] Resident resident)//parse through JSON request and maps to resident object
         {
-            // Check if email already exists
+            //Check if email already exists
             var exists = await _context.residents
                 .AnyAsync(r => r.email == resident.email);
 
-            if (exists)
+            if(exists)
             {
                 return Conflict(new { success = false, message = "Email already registered" });
             }
 
-            // Hash the password
+            //Hash the password
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(resident.password);
 
-            // Create new Resident instance
+            //Create new resident
             var newResident = new Resident
             {
                 resident_id = resident.resident_id,
@@ -46,32 +46,32 @@ namespace MedicalDemo.Server.Controllers
                 total_hours = 0,
                 bi_yearly_hours = 0
             };
-
+            //Add to db
             _context.residents.Add(newResident);
             await _context.SaveChangesAsync();
 
-            return StatusCode(201, new { success = true });
+            return StatusCode(201, new {success = true});
         }
 
-        [HttpPost("login")]
+        [HttpPost("login")]//api/auth/login
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var resident = await _context.residents
+            var resident = await _context.residents//search for resident email
                 .FirstOrDefaultAsync(r => r.email == request.email);
 
-            if (resident == null)
+            if(resident == null)
             {
                 return Unauthorized(new { success = false, message = "Invalid credentials" });
             }
 
-            bool passwordMatch = BCrypt.Net.BCrypt.Verify(request.password, resident.password);
+            bool passwordMatch = BCrypt.Net.BCrypt.Verify(request.password, resident.password);//compare to hash
 
-            if (!passwordMatch)
+            if(!passwordMatch)
             {
                 return Unauthorized(new { success = false, message = "Invalid credentials" });
             }
 
-            // Generate a simple token (you might want to use JWT in production)
+            //Generate a token
             string token = Guid.NewGuid().ToString();
 
             return Ok(new { 
@@ -87,9 +87,9 @@ namespace MedicalDemo.Server.Controllers
         }
     }
 
-    public class LoginRequest
+    public class LoginRequest//json body for requests
     {
-        public string email { get; set; }
-        public string password { get; set; }
+        public string email{ get; set; }
+        public string password{ get; set; }
     }
 }

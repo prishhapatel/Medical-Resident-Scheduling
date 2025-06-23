@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System;
+using MedicalDemo.Data.Models;
+
 
 namespace MedicalDemo.Data.Models
 {
@@ -13,6 +15,8 @@ namespace MedicalDemo.Data.Models
         public DbSet<Schedule> schedules { get; set; }
         public DbSet<Blackout> blackouts { get; set; }
         public DbSet<Vacations> vacations { get; set; }
+		public DbSet<Invitation> Invitations { get; set; }
+
 
         public MedicalContext(DbContextOptions options) : base(options) { }
 

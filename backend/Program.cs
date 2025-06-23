@@ -1,6 +1,8 @@
 using MedicalDemo.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
+using MedicalDemo.Services;
+
 
 // Load .env file
 Env.Load();
@@ -11,6 +13,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+
 
 // Add CORS configuration
 builder.Services.AddCors(options =>
@@ -38,6 +42,9 @@ try
         Console.WriteLine("Attempting to connect to database...");
         options.UseMySql(MySqlConnectString, ServerVersion.AutoDetect(MySqlConnectString));
     });
+
+    builder.Services.AddScoped<PostmarkService>();
+
 }
 catch (Exception ex)
 {
