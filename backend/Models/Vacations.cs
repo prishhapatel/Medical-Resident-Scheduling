@@ -4,15 +4,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MedicalDemo.Data.Models
 {
-    [Table("dates")]
-    public class Dates
+    [Table("vacations")]
+    public class Vacations
     {
         [Key]
-        [Column("date_id")]
-        public Guid DateId { get; set; }  // binary(16) typically maps to Guid in EF Core
-
-        [Column("schedule_id")]
-        public Guid ScheduleId { get; set; }
+        [Column("vacation_id")]
+        public Guid VacationId { get; set; }  // binary(16) typically maps to Guid in EF Core
 
         [Column("resident_id")]
         [MaxLength(15)]
@@ -21,8 +18,12 @@ namespace MedicalDemo.Data.Models
         [Column("date")]
         public DateTime Date { get; set; }
 
-        [Column("call_type")]
+		[Column("reason")]
         [MaxLength(45)]
-        public string CallType { get; set; }
+        public string Reason { get; set; }
+
+        [Column("status")]
+        [MaxLength(45)]
+        public string Status { get; set; }
     }
 }

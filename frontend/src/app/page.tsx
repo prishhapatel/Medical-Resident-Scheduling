@@ -10,6 +10,8 @@ import { setAuthToken } from '../lib/auth';
 import { useToast } from '../lib/use-toast';
 import { Toaster } from '../components/ui/toaster';
 import { config } from '../config';
+import { useAuth } from "@/context/AuthContext";
+
 
 export default function Home() {
   const { theme } = useTheme();
@@ -19,6 +21,7 @@ export default function Home() {
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { setUser } = useAuth();
 
   // handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,32 +55,27 @@ export default function Home() {
       console.log('Login response data:', { ...data, token: data.token ? '[REDACTED]' : null });
 
       if (response.ok) {
-        // Store the token
         setAuthToken(data.token);
+        localStorage.setItem("user", JSON.stringify(data.resident));
+        setUser(data.resident);
+      
         setSuccess(true);
         console.log('Login successful, token stored');
-        
-        // Show success toast
+      
         toast({
           variant: "success",
           title: "Success",
           description: "Login successful! Redirecting to dashboard...",
         });
-
-        // delay before redirecting
+      
         await new Promise(resolve => setTimeout(resolve, 1500));
-
-        // force immediate navigation
+      
         try {
-          console.log('Attempting navigation to dashboard...');
           await router.push("/dashboard");
         } catch (navError) {
-          console.error("Navigation failed:", navError);
-          // fallback navigation
-          console.log('Using fallback navigation method');
           window.location.href = "/dashboard";
         }
-      } else {
+      }else {
         console.log('Login failed:', data.message);
         setError(data.message || 'Invalid username or password');
         toast({

@@ -1,16 +1,18 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+
 namespace MedicalDemo.Data.Models
 {
-    public class Schedule
+    [Table("schedules")]
+    public class Schedules
     {
-
         [Key]
+        [Column("schedule_id")]
+        public Guid ScheduleId { get; set; }
 
-        public Guid schedule_id { get; set; }
-        public string status { get; set; }
-
-
+        [Column("status")]
+        [MaxLength(45)]
+        public string Status { get; set; }
     }
 }

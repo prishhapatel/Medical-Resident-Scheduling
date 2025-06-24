@@ -236,7 +236,7 @@ function Dashboard() {
   };
 
   // Default display name/email if user is missing
-  const displayName = user?.firstName?.trim() || "John Doe";
+  const displayName = user ? `${user.firstName} ${user.lastName}` : "John Doe";
   const displayEmail = user?.email || "john.doe@email.com";
 
   useEffect(() => {
