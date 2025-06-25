@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace MedicalDemo.Data.Models
 {
     [Table("schedules")]
-    public class Schedule
+    public class Schedules
     {
         [Key]
         [Column("schedule_id")]

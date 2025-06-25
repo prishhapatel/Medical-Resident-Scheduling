@@ -17,8 +17,8 @@ namespace MedicalDemo.Server.Controllers
             _context = context;
         }
 
-        [HttpPost("register")]//api/auth/register
-        public async Task<IActionResult> Register([FromBody] Resident resident)//parse through JSON request and maps to resident object
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] Residents resident)
         {
             //Check if email already exists
             var exists = await _context.residents
@@ -32,8 +32,8 @@ namespace MedicalDemo.Server.Controllers
             //Hash the password
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(resident.password);
 
-            //Create new resident
-            var newResident = new Resident
+            // Create new Resident instance
+            var newResident = new Residents
             {
                 resident_id = resident.resident_id,
                 first_name = resident.first_name,

@@ -19,7 +19,7 @@ namespace MedicalDemo.Controllers
 
 		// POST: api/schedules
 		[HttpPost]
-		public async Task<IActionResult> CreateSchedule([FromBody] Schedule schedule)
+		public async Task<IActionResult> CreateSchedule([FromBody] Schedules schedule)
 		{
     		if (schedule == null)
     		{
@@ -37,9 +37,9 @@ namespace MedicalDemo.Controllers
     		return CreatedAtAction(nameof(GetAllSchedules), new { id = schedule.ScheduleId }, schedule);
 		}
 
-         // GET: api/schedules
+        // GET: api/schedules
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Schedule>>> GetAllSchedules()
+        public async Task<ActionResult<IEnumerable<Schedules>>> GetAllSchedules()
         {
             var schedules = await _context.schedules.ToListAsync();
             return Ok(schedules);
@@ -47,7 +47,7 @@ namespace MedicalDemo.Controllers
 
         // PUT: api/schedules/{id}
 		[HttpPut("{id}")]
-		public async Task<IActionResult> UpdateSchedule(Guid id, [FromBody] Schedule updatedSchedule)
+		public async Task<IActionResult> UpdateSchedule(Guid id, [FromBody] Schedules updatedSchedule)
 		{
     		if (id != updatedSchedule.ScheduleId)
     		{
@@ -57,15 +57,19 @@ namespace MedicalDemo.Controllers
     		var existingSchedule = await _context.schedules.FindAsync(id);
 
     		if (existingSchedule == null)
-    		{
         		return NotFound("Schedule not found.");
-    		}
 
     		existingSchedule.Status = updatedSchedule.Status;
 
-    		await _context.SaveChangesAsync();
-
-    		return NoContent(); // 204 No Content
+    		try
+			{
+				await _context.SaveChangesAsync();
+				return Ok(existingSchedule); // returns updated object
+			}
+    		catch (DbUpdateException ex)
+    		{
+        		return StatusCode(500, $"An error occurred while updating the date: {ex.Message}");
+    		}
 		}
 
 		// DELETE: api/schedules/{id}

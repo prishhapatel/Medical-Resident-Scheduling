@@ -37,6 +37,14 @@ namespace MedicalDemo.Controllers
 
             return CreatedAtAction(nameof(FilterVacations), new { id = vacation.VacationId }, vacation);
         }
+        
+        // GET: api/vacations
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Vacations>>> GetAllVacations()
+        {
+	        var vacations = await _context.vacations.ToListAsync();
+	        return Ok(vacations);
+        }
 
         // GET: api/vacations/filter?residentId=&date=&reason=&status=
         [HttpGet("filter")]
@@ -90,9 +98,7 @@ namespace MedicalDemo.Controllers
     		var existingVacation = await _context.vacations.FindAsync(id);
 
     		if (existingVacation == null)
-    		{
         		return NotFound("Vacation not found.");
-    		}
 
     		// Update the fields
     		existingVacation.ResidentId = updatedVacation.ResidentId;
@@ -100,9 +106,15 @@ namespace MedicalDemo.Controllers
 			existingVacation.Reason = updatedVacation.Reason;
     		existingVacation.Status = updatedVacation.Status;
 
-    		await _context.SaveChangesAsync();
-
-    		return NoContent(); // 204
+		    try
+		    {
+			    await _context.SaveChangesAsync();
+			    return Ok(existingVacation); // returns updated object
+		    }
+		    catch (DbUpdateException ex)
+		    {
+			    return StatusCode(500, $"An error occurred while updating the date: {ex.Message}");
+		    }
 		}
 
 		// DELETE: api/vacations/{id}

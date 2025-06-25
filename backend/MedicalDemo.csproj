@@ -18,6 +18,9 @@
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
     <PackageReference Include="Postmark" Version="5.2.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.0" />
+	  <None Update=".env">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
   </ItemGroup>
 
 </Project>

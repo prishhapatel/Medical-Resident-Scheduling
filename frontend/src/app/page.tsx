@@ -2,12 +2,12 @@
 
 import Image from "next/image";
 import { Button } from "src/components/ui/button";
-import { Card } from "src/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "src/components/ui/card";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { setAuthToken } from '../utils/auth';
-import { useToast } from '../hooks/use-toast';
+import { setAuthToken } from '../lib/auth';
+import { useToast } from '../lib/use-toast';
 import { Toaster } from '../components/ui/toaster';
 import { config } from '../config';
 import { useAuth } from "@/context/AuthContext";
@@ -111,11 +111,6 @@ export default function Home() {
             className="mr-6" 
           />
           <h1 className="text-2xl font-bold">PSYCALL</h1>
-        </div>
-        <div className="flex space-x-10 pr-5">
-          <Button className="text-2xl font-medium bg-orange-600 text-white px-4 py-2 pb-3 rounded-md hover:bg-orange-400 shadow-md">
-            Contact
-          </Button>
         </div>
       </header>
 
