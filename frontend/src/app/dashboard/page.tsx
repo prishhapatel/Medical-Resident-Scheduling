@@ -115,6 +115,8 @@ function Dashboard() {
   const myTimeOffRequests: { id: string; startDate: string; endDate: string; resident: string; reason: string; status: string; }[] = [];
 
   const [inviteEmail, setInviteEmail] = useState<string>("");
+  const [inviteResidentId, setInviteResidentId] = useState<string>("");
+
   const [userInvitations, setUserInvitations] = useState<{
     id: string;
     email: string;
@@ -327,22 +329,25 @@ function Dashboard() {
       case "Check My Schedule":
         return <CheckSchedulePage mySchedule={[]} />;
 
-      case "Admin":
-        return (
-          <AdminPage
-            residents={[]}
-            adminSwapRequests={[]}
-            myTimeOffRequests={[]}
-            shifts={[]}
-            handleApproveRequest={handleApproveRequest}
-            handleDenyRequest={handleDenyRequest}
-            userInvitations={userInvitations}
-            inviteEmail={inviteEmail}
-            setInviteEmail={setInviteEmail}
-            handleSendInvite={handleSendInvite}
-            handleResendInvite={handleResendInvite}
-          />
-        );
+        case "Admin":
+          return (
+            <AdminPage
+              residents={[]}
+              adminSwapRequests={[]}
+              myTimeOffRequests={[]}
+              shifts={[]}
+              handleApproveRequest={handleApproveRequest}
+              handleDenyRequest={handleDenyRequest}
+              userInvitations={userInvitations}
+              inviteEmail={inviteEmail}
+              setInviteEmail={setInviteEmail}
+              inviteResidentId={inviteResidentId}
+              setInviteResidentId={setInviteResidentId}
+              handleSendInvite={handleSendInvite}
+              handleResendInvite={handleResendInvite}
+            />
+          );
+        
 
       default:
         return null;
