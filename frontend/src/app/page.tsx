@@ -10,7 +10,7 @@ import { setAuthToken } from '../utils/auth';
 import { useToast } from '../hooks/use-toast';
 import { Toaster } from '../components/ui/toaster';
 import { config } from '../config';
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 
 
 export default function Home() {

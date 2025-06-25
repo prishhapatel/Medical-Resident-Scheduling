@@ -88,23 +88,26 @@ using (var scope = app.Services.CreateScope())
 
     var trainingDates = await repo.GenerateTrainingScheduleAsync();
 
-    Console.WriteLine("Loaded Admins:");
-    foreach (var admin in admins)
-    {
-        Console.WriteLine($"ID: {admin.admin_id}, Name: {admin.first_name}");
-    }
+    //Console.WriteLine("Loaded Admins:");
+    //foreach (var admin in admins)
+    //{
+    //    Console.WriteLine($"ID: {admin.admin_id}, Name: {admin.first_name}");
+    //}
 
 
-    Console.WriteLine("Loaded residents:");
-    foreach (var resident in residents)
-    {
-        Console.WriteLine($"ID: {resident.resident_id}, Name: {resident.first_name}");
-    }
+    //Console.WriteLine("Loaded residents:");
+    //foreach (var resident in residents)
+    //{
+    //    Console.WriteLine($"ID: {resident.resident_id}, Name: {resident.first_name}");
+    //}
 
-  
+
     Console.WriteLine("Loaded Training Schedule: ");
-    foreach( var date in trainingDates)
+    foreach (var date in trainingDates)
     {
+
+
+
         Console.WriteLine($"Resident ID: {date.ResidentId}, Date: {date.Date}, Call Type: {date.CallType}");
     }
 

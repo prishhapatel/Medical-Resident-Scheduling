@@ -11,6 +11,7 @@ public class MedicalDataRepository : IMedicalRepository
     private List<Residents> _residents;
     private List<Rotations> _rotations;
     private List<ResidentData> _residentData;
+    private List<Vacations> _vacations;
 
 
     public MedicalDataRepository(MedicalContext contextFactory)
@@ -51,6 +52,16 @@ public class MedicalDataRepository : IMedicalRepository
     }
 
 
+    public async Task<List<Vacations>> GetAllVacationsAsync()
+    {
+        if (_vacations == null)
+        {
+            _vacations = await _context.vacations.ToListAsync();
+        }
+
+        return _vacations;
+    }
+
     //PGY 1
     public async Task<List<Residents>> LoadPGYOne()
     {
@@ -84,6 +95,9 @@ public class MedicalDataRepository : IMedicalRepository
 
     }
 
+
+
+
     //ResidentData
     public async Task LoadResidentDataAsync()
     {
@@ -110,7 +124,7 @@ public class MedicalDataRepository : IMedicalRepository
     }
 
 
-    //REISDENTS ROTATIONS ByIDByMonths
+    //REISDENTS ROTATIONS ByIDByMonths i dont think we use this
     public async Task<Dictionary<string, List<Rotations>>> GetResidentRolesByMonthAsync()
     {
 
@@ -129,7 +143,7 @@ public class MedicalDataRepository : IMedicalRepository
         Guid scheduleId = Guid.NewGuid(); // New schedule session
         List<Dates> trainingDates = new List<Dates>();
 
-        DateTime currentDay = new DateTime(DateTime.Now.Year, 7, 1);
+        DateTime currentDay = new DateTime(DateTime.Now.Year, 7, 5);
         DateTime endDay = new DateTime(DateTime.Now.Year, 8, 31);
 
         while (currentDay <= endDay)
@@ -197,8 +211,15 @@ public class MedicalDataRepository : IMedicalRepository
             shortCallGraph.addEdge(shortSource, shortCallAmt * 2 + pgy3 + i, 3);
 
         for (int i = 0; i < pgy1; i++)
+        {
             for (int j = 0; j < shortCallAmt; j++)
-                shortCallGraph.addEdge(shortCallAmt * 2 + pgy3 + i, 2 * j, 1);
+            {
+                var shortDay = shortCalls[j].Date;
+                string shortMonth = shortDay.ToString("MMMM");
+                if (IsEligibleForShortCall(pgy1s[i].resident_id, shortMonth, allRotations))
+                    shortCallGraph.addEdge(shortCallAmt * 2 + pgy3 + i, 2 * j, 1);
+            }
+        }
 
         for (int i = 0; i < shortCallAmt; i++)
             shortCallGraph.addEdge(i * 2, i * 2 + 1, 1);
@@ -223,15 +244,29 @@ public class MedicalDataRepository : IMedicalRepository
             satGraph.addEdge(satSource, satCallAmt * 2 + pgy2 + i, 1);
 
         for (int i = 0; i < pgy1; i++)
+        {
             for (int j = 0; j < satCallAmt; j++)
-                satGraph.addEdge(satCallAmt * 2 + pgy2 + i, 2 * j, 1);
+            {
+                var satDay = saturdays[j].Date;
+                string satMonth = satDay.ToString("MMMM");
+                if (IsEligibleForLongCall(pgy1s[i].resident_id, satMonth, allRotations))
+                    satGraph.addEdge(satCallAmt * 2 + pgy2 + i, 2 * j, 1);
+            }
+        }
 
         for (int i = 0; i < satCallAmt; i++)
             satGraph.addEdge(i * 2, i * 2 + 1, 1);
 
         for (int i = 0; i < pgy2; i++)
+        {
             for (int j = 0; j < satCallAmt; j++)
-                satGraph.addEdge(2 * j + 1, satCallAmt * 2 + i, 1);
+            {
+                var satDay = saturdays[j].Date;
+                string satMonth = satDay.ToString("MMMM");
+                if (IsEligibleForLongCall(pgy2s[i].resident_id, satMonth, allRotations))
+                    satGraph.addEdge(2 * j + 1, satCallAmt * 2 + i, 1);
+            }
+        }
 
         int estPgy2Sat = (pgy1 + pgy2 - 1) / pgy2;
         for (int i = 0; i < pgy2; i++)
@@ -249,15 +284,29 @@ public class MedicalDataRepository : IMedicalRepository
             sunGraph.addEdge(sunSource, sunCallAmt * 2 + pgy2 + i, 1);
 
         for (int i = 0; i < pgy1; i++)
+        {
             for (int j = 0; j < sunCallAmt; j++)
-                sunGraph.addEdge(sunCallAmt * 2 + pgy2 + i, 2 * j, 1);
+            {
+                var sunDay = sundays[j].Date;
+                string sunMonth = sunDay.ToString("MMMM");
+                if (IsEligibleForLongCall(pgy1s[i].resident_id, sunMonth, allRotations))
+                    sunGraph.addEdge(sunCallAmt * 2 + pgy2 + i, 2 * j, 1);
+            }
+        }
 
         for (int i = 0; i < sunCallAmt; i++)
             sunGraph.addEdge(i * 2, i * 2 + 1, 1);
 
         for (int i = 0; i < pgy2; i++)
+        {
             for (int j = 0; j < sunCallAmt; j++)
-                sunGraph.addEdge(2 * j + 1, sunCallAmt * 2 + i, 1);
+            {
+                var sunDay = sundays[j].Date;
+                string sunMonth = sunDay.ToString("MMMM");
+                if (IsEligibleForLongCall(pgy2s[i].resident_id, sunMonth, allRotations))
+                    sunGraph.addEdge(2 * j + 1, sunCallAmt * 2 + i, 1);
+            }
+        }
 
         int estPgy2Sun = (pgy1 + pgy2 - 1) / pgy2;
         for (int i = 0; i < pgy2; i++)
@@ -265,7 +314,7 @@ public class MedicalDataRepository : IMedicalRepository
 
         sunGraph.getFlow(sunSource, sunSink);
 
-        // === MAP FLOW RESULTS TO RESIDENTS ===
+        // MAP FLOW RESULTS
         var pgy1Map = shortCallGraph.MapIndexToResidentIds(pgy1s.Select(r => r.resident_id).ToList(), shortCallAmt * 2 + pgy3);
         shortCallGraph.AssignResidentIdsToDates(shortCalls, pgy1Map, true);
         var pgy3Map = shortCallGraph.MapIndexToResidentIds(pgy3s.Select(r => r.resident_id).ToList(), shortCallAmt * 2);
@@ -281,9 +330,71 @@ public class MedicalDataRepository : IMedicalRepository
         var pgy2SunMap = sunGraph.MapIndexToResidentIds(pgy2s.Select(r => r.resident_id).ToList(), sunCallAmt * 2);
         sunGraph.AssignResidentIdsToDates(sundays, pgy2SunMap, false);
 
+        await FixPGY1WeekendConflicts(trainingDates, pgy1s.Select(r => r.resident_id).ToList());
+        await FixPGY2WeekendConflicts(trainingDates, pgy2s.Select(r => r.resident_id).ToList());
+
         return trainingDates;
     }
 
+
+
+    private async Task FixPGY1WeekendConflicts(List<Dates> dates, List<string> pgy1Ids)
+    {
+        var saturdayDates = dates.Where(d => d.CallType == "Saturday").ToList();
+        var sundayDates = dates.Where(d => d.CallType == "Sunday").ToList();
+
+        foreach (var resId in pgy1Ids)
+        {
+            var weekendAssignments = dates.Where(d => d.ResidentId != null && d.ResidentId.Contains(resId) && (d.CallType == "Saturday" || d.CallType == "Sunday"));
+            foreach (var conflictDay in weekendAssignments)
+            {
+                var otherDay = (conflictDay.CallType == "Saturday") ? conflictDay.Date.AddDays(1) : conflictDay.Date.AddDays(-1);
+                var match = dates.FirstOrDefault(d => d.Date.Date == otherDay.Date && d.CallType == conflictDay.CallType);
+
+                if (match == null || !pgy1Ids.Contains(match.ResidentId)) continue;
+
+                string tmp = match.ResidentId;
+                match.ResidentId = conflictDay.ResidentId;
+                conflictDay.ResidentId = tmp;
+            }
+        }
+    }
+
+    private async Task FixPGY2WeekendConflicts(List<Dates> dates, List<string> pgy2Ids)
+    {
+        var saturdayDates = dates.Where(d => d.CallType == "Saturday").ToList();
+        var sundayDates = dates.Where(d => d.CallType == "Sunday").ToList();
+
+        foreach (var resId in pgy2Ids)
+        {
+            var weekendAssignments = dates.Where(d => d.ResidentId != null && d.ResidentId.Contains(resId) && (d.CallType == "Saturday" || d.CallType == "Sunday"));
+            foreach (var conflictDay in weekendAssignments)
+            {
+                var otherDay = (conflictDay.CallType == "Saturday") ? conflictDay.Date.AddDays(1) : conflictDay.Date.AddDays(-1);
+                var match = dates.FirstOrDefault(d => d.Date.Date == otherDay.Date && d.CallType == conflictDay.CallType);
+
+                if (match == null || !pgy2Ids.Contains(match.ResidentId)) continue;
+
+                string tmp = match.ResidentId;
+                match.ResidentId = conflictDay.ResidentId;
+                conflictDay.ResidentId = tmp;
+            }
+        }
+    }
+
+    private bool IsEligibleForShortCall(string residentId, string month, List<Rotations> allRotations)
+    {
+        return allRotations.Any(r =>
+            r.ResidentId == residentId &&
+            r.Month.Equals(month, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool IsEligibleForLongCall(string residentId, string month, List<Rotations> allRotations)
+    {
+        return allRotations.Any(r =>
+            r.ResidentId == residentId &&
+            r.Month.Equals(month, StringComparison.OrdinalIgnoreCase));
+    }
 
 
 
@@ -419,6 +530,8 @@ public class MedicalDataRepository : IMedicalRepository
 
             } while (currFlow != 0);
 
+
+
             return totalFlow;
         }
 
@@ -456,6 +569,8 @@ public class MedicalDataRepository : IMedicalRepository
 
         public void AssignResidentIdsToDates(List<Dates> dates, Dictionary<int, string> nodeToResidentMap, bool outgoing)
         {
+
+
             foreach (var kvp in nodeToResidentMap)
             {
                 var node = kvp.Key;
@@ -473,6 +588,15 @@ public class MedicalDataRepository : IMedicalRepository
                     }
                 }
             }
+
+            //for (int i = 0; i < dates.Count; i++)
+            //{
+            //    if (string.IsNullOrEmpty(dates[i].ResidentId))
+            //        Console.WriteLine($"Date at index {i} ({dates[i].Date}) was not assigned a resident.");
+            //}
+
+
+
         }
     }
 

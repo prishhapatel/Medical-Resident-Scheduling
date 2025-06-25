@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MedicalDemo.Server.Controllers
 {
-    [ApiController]
     [Route("api/[controller]")]
+    [ApiController]
     public class AuthController : ControllerBase
     {
         private readonly MedicalContext _context;
