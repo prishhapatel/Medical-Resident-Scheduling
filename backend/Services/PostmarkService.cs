@@ -31,6 +31,8 @@ namespace MedicalDemo.Services
             };
 
             Console.WriteLine($"Sending FROM: {_fromEmail} TO: {toEmail}");
+            Console.WriteLine($"Loaded FROM_EMAIL: {_fromEmail}");
+
 
             var response = await client.SendMessageAsync(message);
 

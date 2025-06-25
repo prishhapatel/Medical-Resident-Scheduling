@@ -4,7 +4,7 @@ using MedicalDemo.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace MedicalDemo.Server.Controllers
-{
+{//Base url and class for controller
     [ApiController]
     [Route("api/[controller]")]
     public class InviteController : ControllerBase
@@ -12,13 +12,13 @@ namespace MedicalDemo.Server.Controllers
         private readonly MedicalContext _context;
         private readonly PostmarkService _postmark;
 
-        public InviteController(MedicalContext context, PostmarkService postmark)
+        public InviteController(MedicalContext context, PostmarkService postmark)//Make queries to PM
         {
             _context = context;
             _postmark = postmark;
         }
 
-        [HttpPost("send")]
+        [HttpPost("send")]//api/invite/send
         public async Task<IActionResult> SendInvitation([FromBody] InviteRequest request)
         {
             var token = Guid.NewGuid().ToString();
@@ -36,7 +36,7 @@ namespace MedicalDemo.Server.Controllers
             _context.Invitations.Add(invitation);
             await _context.SaveChangesAsync();
 
-            // Send the email
+            //Send the email
             var success = await _postmark.SendInvitationEmailAsync(request.Email, $"{request.FirstName} {request.LastName}", token);
 
             if(!success)

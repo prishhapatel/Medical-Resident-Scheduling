@@ -6,6 +6,11 @@ using MedicalDemo.Services;
 
 // Load .env file
 Env.Load();
+DotNetEnv.Env.Load(".env.local");
+Console.WriteLine("ENV CHECK:");
+Console.WriteLine("FROM_EMAIL = " + Environment.GetEnvironmentVariable("FROM_EMAIL"));
+Console.WriteLine("POSTMARK_API_KEY = " + Environment.GetEnvironmentVariable("POSTMARK_API_KEY"));
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,7 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddScoped<PostmarkService>();
 
 
 // Add CORS configuration
