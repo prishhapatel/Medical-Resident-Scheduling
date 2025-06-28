@@ -83,6 +83,29 @@ const sampleEvents = [
   },
 ];
 
+const sendInvitation = async (email: string, residentId: string) => {
+  try{
+    const res = await fetch("http://localhost:5109/api/invite/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, residentId }),
+    });
+
+    if(!res.ok){
+      throw new Error(`Error ${res.status}: ${await res.text()}`);
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (error: any) {
+    console.error("Send Invitation Error:", error);
+    throw error;
+  }
+};
+
+
 //dashboard
 function Dashboard() {
   const router = useRouter();
@@ -140,8 +163,8 @@ function Dashboard() {
     });
   };
 
-  const handleSendInvite = () => {
-    if (!inviteEmail) {
+  const handleSendInvite = async () => {
+    if(!inviteEmail || !inviteResidentId){
       toast({
         variant: "destructive",
         title: "Error",
@@ -149,18 +172,41 @@ function Dashboard() {
       });
       return;
     }
-    const newInvitation = {
-      id: Date.now().toString(),
-      email: inviteEmail,
-      status: "Pending" as "Pending",
-    };
-    setUserInvitations((prev) => [...prev, newInvitation]);
-    setInviteEmail("");
-    toast({
-      variant: "success",
-      title: "Invitation Sent",
-      description: `Invitation sent to ${inviteEmail}.`, 
-    });
+    try{
+      const res = await fetch("http://localhost:5109/api/invite/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: inviteEmail,
+          residentId: inviteResidentId,
+        }),
+      });
+      if(!res.ok){
+        throw new Error(`API returned ${res.status}`);
+      }
+      const newInvitation ={
+        id: Date.now().toString(),
+        email: inviteEmail,
+        status: "Pending" as "Pending",
+      };
+      setUserInvitations((prev) => [...prev, newInvitation]);
+      setInviteEmail("");
+      setInviteResidentId("");
+      toast({
+        variant: "success",
+        title: "Invitation Sent",
+        description: `Invitation sent to ${inviteEmail}.`,
+      });
+    }catch (error){
+      console.error("Send invitation error:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter an email address.",
+      });
+    }
   };
 
   const handleResendInvite = (id: string) => {

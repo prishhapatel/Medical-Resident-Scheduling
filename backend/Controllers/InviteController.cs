@@ -4,7 +4,7 @@ using MedicalDemo.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace MedicalDemo.Server.Controllers
-{//Base url and class for controller
+{
     [ApiController]
     [Route("api/[controller]")]
     public class InviteController : ControllerBase
@@ -12,19 +12,18 @@ namespace MedicalDemo.Server.Controllers
         private readonly MedicalContext _context;
         private readonly PostmarkService _postmark;
 
-        public InviteController(MedicalContext context, PostmarkService postmark)//Make queries to PM
+        public InviteController(MedicalContext context, PostmarkService postmark)
         {
             _context = context;
             _postmark = postmark;
         }
 
-        [HttpPost("send")]//api/invite/send
+        [HttpPost("send")]
         public async Task<IActionResult> SendInvitation([FromBody] InviteRequest request)
         {
             var token = Guid.NewGuid().ToString();
-            var expires = DateTime.UtcNow.AddHours(48); //two days from now
+            var expires = DateTime.UtcNow.AddHours(48);
 
-            //Save to database
             var invitation = new Invitation
             {
                 token = token,
@@ -36,10 +35,9 @@ namespace MedicalDemo.Server.Controllers
             _context.Invitations.Add(invitation);
             await _context.SaveChangesAsync();
 
-            //Send the email
-            var success = await _postmark.SendInvitationEmailAsync(request.Email, $"{request.FirstName} {request.LastName}", token);
+            var success = await _postmark.SendInvitationEmailAsync(request.Email, request.ResidentId, token);
 
-            if(!success)
+            if (!success)
             {
                 return StatusCode(500, new { success = false, message = "Email sending failed." });
             }
@@ -50,9 +48,7 @@ namespace MedicalDemo.Server.Controllers
 
     public class InviteRequest
     {
-        public string ResidentId{ get; set; }
-        public string FirstName{ get; set; }
-        public string LastName{ get; set; }
-        public string Email{ get; set; }
+        public string ResidentId { get; set; }
+        public string Email { get; set; }
     }
 }

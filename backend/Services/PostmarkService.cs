@@ -17,29 +17,37 @@ namespace MedicalDemo.Services
             _fromName = config["FROM_NAME"];
         }
 
-        public async Task<bool> SendInvitationEmailAsync(string toEmail, string toName, string token)
-        {
-            var client = new PostmarkClient(_apiKey);
+public async Task<bool> SendInvitationEmailAsync(string toEmail, string residentId, string token)
+{
+    var client = new PostmarkClient(_apiKey);
 
-            var message = new PostmarkMessage
-            {
-                From = _fromEmail,
-                To = toEmail,
-                Subject = "You're invited to join PSYCALL",
-                HtmlBody = $"<h3>Hello {toName},</h3><p>Please <a href='http://localhost:3000/register?token={token}'>click here to complete your registration</a>.</p>",
-                TextBody = $"Hello {toName},\n\nPlease use the following link to complete registration:\nhttp://localhost:3000/register?token={token}"
-            };
+var message = new PostmarkMessage
+{//Using html and text to support different platforms
+    From = _fromEmail,
+    To = toEmail,
+    Subject = "Psycall Invitation to Register",
+    HtmlBody = $@"
+        <h3>Hello!</h3>
+        <p>Admin at HCA North Florida would like you to create a Psycall account. Please click the link below to complete your registration using resident ID <strong>{residentId}</strong>:</p>
+        <p><a href='http://localhost:3000/register?token={token}'>Complete Registration</a></p>
+        <p>Thank you,<br/>Psycall Admin</p>
+    ",
+    TextBody = $@"
+Hello!
 
-            Console.WriteLine($"Sending FROM: {_fromEmail} TO: {toEmail}");
-            Console.WriteLine($"Loaded FROM_EMAIL: {_fromEmail}");
+Admin HCA North Florida would like you to create a Psycall account. Please use the following link to complete your registration using resident ID {residentId}:
+
+http://localhost:3000/register?token={token}
+
+Thank you,  
+Psycall Admin"
+};
 
 
-            var response = await client.SendMessageAsync(message);
+    var response = await client.SendMessageAsync(message);
 
-            Console.WriteLine($"Postmark status: {response.Status}");
-            Console.WriteLine($"Postmark message: {response.Message}");
+    return response.Status == PostmarkStatus.Success;
+}
 
-            return response.Status == PostmarkStatus.Success;
-        }
     }
 }
