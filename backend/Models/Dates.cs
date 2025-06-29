@@ -1,6 +1,8 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+
 
 namespace MedicalDemo.Data.Models
 {
@@ -26,6 +28,7 @@ namespace MedicalDemo.Data.Models
         public string CallType { get; set; }
 
         [ForeignKey("ResidentId")]
+        [ValidateNever] 
         public Residents Resident { get; set; }  // <-- Navigation property
     }
 }
