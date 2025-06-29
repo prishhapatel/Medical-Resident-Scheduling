@@ -33,11 +33,19 @@ import SwapCallsPage from "./components/SwapCallsPage";
 import RequestOffPage from "./components/RequestOffPage";
 import CheckSchedulePage from "./components/CheckSchedulePage";
 import AdminPage from "./components/AdminPage";
+import { EventSourceInput } from "@fullcalendar/core";
 
 type MenuItem = {
   title: string;
   icon: ReactElement;
 };
+
+interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+}
 
 // menu items
 const menuItems: MenuItem[] = [
@@ -50,65 +58,40 @@ const menuItems: MenuItem[] = [
   { title: "Settings", icon: <Settings className="w-6 h-6 mr-3" /> },
 ];
 
-interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-}
-
-const sampleEvents = [
-  {
-    title: "test 1",
-    start: "2025-06-02T09:00:00",
-    end: "2025-06-02T17:00:00",
-    backgroundColor: "#1a73e8",
-    borderColor: "#1a73e8",
-  },
-  {
-    title: "test 2",
-    start: "2025-06-03T19:00:00",
-    end: "2025-06-04T07:00:00",
-    backgroundColor: "#ff9800",
-    borderColor: "#ff9800",
-  },
-  {
-    title: "test 3",
-    start: "2025-06-05T08:00:00",
-    end: "2025-06-05T16:00:00",
-    backgroundColor: "#4CAF50",
-    borderColor: "#4CAF50",
-  },
+const leaveReasons = [
+  { id: "vacation", name: "Vacation" },
+  { id: "sick", name: "Sick Leave" },
+  { id: "cme", name: "ED (Education Days)" },
+  { id: "personal", name: "Personal Leave" },
+  { id: "other", name: "Other" },
 ];
 
-//dashboard
 function Dashboard() {
   const router = useRouter();
+  const { setTheme } = useTheme();
+  
+  // Core state
   const [selected, setSelected] = useState<string>("Home");
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const { setTheme } = useTheme();
   const [phoneNumber, setPhoneNumber] = useState<string>("");
 
-  // Swap calls form state and data
+  // Calendar state
+  const [calendarEvents, setCalendarEvents] = useState<EventSourceInput>([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+
+  // Swap calls form state
   const [selectedResident, setSelectedResident] = useState<string>("");
   const [selectedShift, setSelectedShift] = useState<string>("");
   const [shiftDate, setShiftDate] = useState<string>("");
 
-  // request off form state and data
+  // Request off form state
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [reason, setReason] = useState<string>("");
   const [description, setDescription] = useState<string>("");
 
-  const leaveReasons = [
-    { id: "vacation", name: "Vacation" },
-    { id: "sick", name: "Sick Leave" },
-    { id: "cme", name: "ED (Education Days)" },
-    { id: "personal", name: "Personal Leave" },
-    { id: "other", name: "Other" },
-  ];
-
+  // Admin state
   const [inviteEmail, setInviteEmail] = useState<string>("");
   const [userInvitations, setUserInvitations] = useState<{
     id: string;
@@ -116,6 +99,65 @@ function Dashboard() {
     status: "Pending" | "Member" | "Not Invited";
   }[]>([]);
 
+  // Helper functions
+  const getEventColor = (callType: string) => {
+    switch (callType) {
+      case 'Short':
+        return '#3b82f6'; // blue
+      case 'Saturday':
+        return '#10b981'; // green
+      case 'Sunday':
+        return '#f59e0b'; // amber
+      default:
+        return '#6b7280'; // gray
+    }
+  };
+
+  // API functions
+  const fetchCalendarEvents = async () => {
+    setLoadingEvents(true);
+    try {
+      const response = await fetch('http://localhost:5109/api/dates');
+      if (response.ok) {
+        const dates = await response.json();
+        
+        const events = dates.map((date: any) => ({
+          id: date.dateId,
+          title: `${date.callType} Call${date.residentId ? ` - ${date.residentId}` : ''}`,
+          start: date.date,
+          end: date.date,
+          backgroundColor: getEventColor(date.callType),
+          borderColor: getEventColor(date.callType),
+          extendedProps: {
+            scheduleId: date.scheduleId,
+            residentId: date.residentId,
+            callType: date.callType,
+            dateId: date.dateId
+          }
+        }));
+        
+        setCalendarEvents(events);
+      } else {
+        console.error('Failed to fetch calendar events');
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load calendar events",
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching calendar events:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load calendar events",
+      });
+    } finally {
+      setLoadingEvents(false);
+    }
+  };
+
+  // Event handlers
   const handleUpdatePhoneNumber = () => {
     const phoneRegex = /^\(?(\d{3})\)?[- ]?(\d{3})[- ]?(\d{4})$/;
     if (!phoneRegex.test(phoneNumber)) {
@@ -230,38 +272,20 @@ function Dashboard() {
     setDescription("");
   };
 
-  // Default display name/email if user is missing
-  const displayName = user ? `${user.firstName} ${user.lastName}` : "John Doe";
-  const displayEmail = user?.email || "john.doe@email.com";
-
-  useEffect(() => {
-    const userData = getUser();
-    setUser(userData);
-    setLoading(false);
-  }, []);
-
   const handleLogout = async () => {
-    // remove auth token
     removeAuthToken();
     
-    // show success toast
     toast({
       variant: "success",
       title: "Success",
       description: "Logged out successfully",
     });
 
-    // delay before redirecting
     await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // redirect to home page
     router.push("/");
   };
 
-  /**
-   * renders the main content based on the selected menu item
-   * @returns JSX.Element 
-   */
+  // Render main content based on selected menu item
   const renderMainContent = () => {
     switch (selected) {
       case "Home":
@@ -276,7 +300,7 @@ function Dashboard() {
         );
 
       case "Calendar":
-        return <CalendarPage events={sampleEvents} />;
+        return <CalendarPage events={calendarEvents} />;
 
       case "Settings":
         return (
@@ -343,6 +367,23 @@ function Dashboard() {
         return null;
     }
   };
+
+  // Effects
+  useEffect(() => {
+    const userData = getUser();
+    setUser(userData);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (selected === "Calendar") {
+      fetchCalendarEvents();
+    }
+  }, [selected]);
+
+  // Computed values
+  const displayName = user ? `${user.firstName} ${user.lastName}` : "John Doe";
+  const displayEmail = user?.email || "john.doe@email.com";
 
   if (loading) {
     return <div>Loading...</div>;
