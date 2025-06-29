@@ -594,10 +594,62 @@ public class MedicalDataRepository : IMedicalRepository
             //    if (string.IsNullOrEmpty(dates[i].ResidentId))
             //        Console.WriteLine($"Date at index {i} ({dates[i].Date}) was not assigned a resident.");
             //}
-
-
-
         }
     }
 
+	// Method to store the output into our database
+	public async Task InsertScheduleOutput(string inputText, Guid scheduleId, DbContext context)
+	{
+    	var lines = inputText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+    	foreach (var line in lines)
+    	{
+	        try
+	        {
+	            // Parse out resident ID part and the rest
+	            var resSplit = line.Split("Resident ID:")[1].Split(", Date:");
+	            var residentIdsRaw = resSplit[0].Trim();
+	
+	            // Parse and clean individual resident IDs
+	            var residentIds = residentIdsRaw
+	                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+	                .Select(id => id.Trim())
+	                .Where(id => !string.IsNullOrWhiteSpace(id))
+	                .ToList();
+	
+	            // Skip lines with no valid resident IDs
+	            if (!residentIds.Any())
+	                continue;
+	
+	            // Parse date and call type
+	            var dateSplit = resSplit[1].Split(", Call Type:");
+	            if (!DateTime.TryParse(dateSplit[0].Trim(), out DateTime date))
+	                continue;
+	
+	            var callType = dateSplit[1].Trim();
+	
+	            // Add each resident entry to the context
+	            foreach (var residentId in residentIds)
+	            {
+	                var newEntry = new Dates
+	                {
+	                    DateId = Guid.NewGuid(),
+	                    ScheduleId = scheduleId,
+	                    ResidentId = residentId,
+	                    Date = date,
+	                    CallType = callType
+	                };
+	
+	                context.Add(newEntry);
+	            }
+	        }
+	        catch (Exception ex)
+	        {
+	            // Optional: handle or log malformed line
+	            Console.WriteLine($"Error processing line: {line} - {ex.Message}");
+	        }
+    	}
+
+    	await context.SaveChangesAsync();
+	}
 }
