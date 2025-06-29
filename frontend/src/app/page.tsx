@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Button } from "src/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "src/components/ui/card";
+import { Card } from "src/components/ui/card";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -17,8 +17,6 @@ export default function Home() {
   const { theme } = useTheme();
   const { toast } = useToast();
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { setUser } = useAuth();
@@ -33,8 +31,6 @@ export default function Home() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Login attempt with email:', formData.email);
-    setError("");
-    setSuccess(false);
     setIsLoading(true);
 
     try {
@@ -59,7 +55,6 @@ export default function Home() {
         localStorage.setItem("user", JSON.stringify(data.resident));
         setUser(data.resident);
       
-        setSuccess(true);
         console.log('Login successful, token stored');
       
         toast({
@@ -72,12 +67,11 @@ export default function Home() {
       
         try {
           await router.push("/dashboard");
-        } catch (navError) {
+        } catch {
           window.location.href = "/dashboard";
         }
       }else {
         console.log('Login failed:', data.message);
-        setError(data.message || 'Invalid username or password');
         toast({
           variant: "destructive",
           title: "Error",
@@ -86,7 +80,6 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Login error:", error);
-      setError("An error occurred during login");
       toast({
         variant: "destructive",
         title: "Error",

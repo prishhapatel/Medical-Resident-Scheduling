@@ -17,7 +17,7 @@ const CheckSchedulePage: React.FC<CheckSchedulePageProps> = ({ mySchedule }) => 
   return (
     <div className="w-full pt-4 h-[calc(100vh-4rem)] flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-6">My Upcoming Schedule</h1>
-      <p className="text-center text-gray-600 dark:text-gray-400 mb-8 max-w-lg">Here's an overview of your upcoming shifts and rotations.</p>
+      <p className="text-center text-gray-600 dark:text-gray-400 mb-8 max-w-lg">Here&apos;s an overview of your upcoming shifts and rotations.</p>
       <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4">
         {mySchedule.length > 0 ? (
           <div className="space-y-4">

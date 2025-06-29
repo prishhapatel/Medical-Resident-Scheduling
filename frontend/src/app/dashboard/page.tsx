@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect, ReactElement } from "react";
-import { Button } from "src/components/ui/button";
 import {
   SidebarProvider,
   Sidebar,
@@ -9,18 +8,17 @@ import {
   SidebarGroup,
   SidebarHeader,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "src/components/ui/sidebar";
 import { SidebarUserCard } from "@/app/dashboard/components/SidebarUserCard";
-import { Repeat, CalendarDays, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Send, Check, X, Moon, Sun } from "lucide-react";
+import { Repeat, CalendarDays, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun } from "lucide-react";
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useRouter } from "next/navigation";
 import { toast } from '../../lib/use-toast';
 import { Toaster } from '../../components/ui/toaster';
-import { removeAuthToken, getUser, getAuthHeaders } from '../../lib/auth';
+import { removeAuthToken, getUser } from '../../lib/auth';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -89,7 +87,7 @@ function Dashboard() {
   const [selected, setSelected] = useState<string>("Home");
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const { setTheme, theme } = useTheme();
+  const { setTheme } = useTheme();
   const [phoneNumber, setPhoneNumber] = useState<string>("");
 
   // Swap calls form state and data
@@ -110,9 +108,6 @@ function Dashboard() {
     { id: "personal", name: "Personal Leave" },
     { id: "other", name: "Other" },
   ];
-
-  const adminSwapRequests: { id: string; date: string; originalShift: string; requestedShift: string; requester: string; responder: string; status: string; }[] = [];
-  const myTimeOffRequests: { id: string; startDate: string; endDate: string; resident: string; reason: string; status: string; }[] = [];
 
   const [inviteEmail, setInviteEmail] = useState<string>("");
   const [userInvitations, setUserInvitations] = useState<{
@@ -150,7 +145,7 @@ function Dashboard() {
     const newInvitation = {
       id: Date.now().toString(),
       email: inviteEmail,
-      status: "Pending" as "Pending",
+      status: "Pending" as const,
     };
     setUserInvitations((prev) => [...prev, newInvitation]);
     setInviteEmail("");
