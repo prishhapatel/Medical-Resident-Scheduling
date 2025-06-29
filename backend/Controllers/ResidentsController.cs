@@ -23,7 +23,7 @@ namespace MedicalDemo.Server.Controllers
             return await _context.residents.ToListAsync();
         }
 
-        // GET: api/residents/filter?resident_id=&first__name=&last_name=&graduate_yr=2&email=&password=&phone_num=&weekly_hours=&total_hours=&bi_yearly_hours
+        // GET: api/residents/filter?resident_id=&first_name=&last_name=&graduate_yr=2&email=&password=&phone_num=&weekly_hours=&total_hours=&bi_yearly_hours
         [HttpGet("filter")]
         public async Task<ActionResult<IEnumerable<Residents>>> FilterResidents(
             [FromQuery] string? resident_id,
@@ -79,34 +79,41 @@ namespace MedicalDemo.Server.Controllers
 
 
         
-        // PUT: api/Residents/5
+        // PUT: api/residents/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutResident(string id, Residents resident)
+        public async Task<IActionResult> UpdateResident(string id, [FromBody] Residents updatedResident)
         {
-            if (id != resident.resident_id)
+            if (id != updatedResident.resident_id)
             {
-                return BadRequest();
+                return BadRequest("Resident ID in URL and body do not match.");
             }
 
-            _context.Entry(resident).State = EntityState.Modified;
+            var existingResident = await _context.residents.FindAsync(id);
+            if (existingResident == null)
+            {
+                return NotFound("Resident not found.");
+            }
+
+            // Update fields
+            existingResident.first_name = updatedResident.first_name;
+            existingResident.last_name = updatedResident.last_name;
+            existingResident.graduate_yr = updatedResident.graduate_yr;
+            existingResident.email = updatedResident.email;
+            existingResident.password = updatedResident.password;
+            existingResident.phone_num = updatedResident.phone_num;
+            existingResident.weekly_hours = updatedResident.weekly_hours;
+            existingResident.total_hours = updatedResident.total_hours;
+            existingResident.bi_yearly_hours = updatedResident.bi_yearly_hours;
 
             try
             {
                 await _context.SaveChangesAsync();
+                return Ok(existingResident); // returns the updated resident object
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateException ex)
             {
-                if (!ResidentExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return StatusCode(500, $"An error occurred while updating the resident: {ex.Message}");
             }
-
-            return NoContent();
         }
 
         // POST: api/Residents
