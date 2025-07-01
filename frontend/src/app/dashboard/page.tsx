@@ -18,6 +18,7 @@ import ProtectedRoute from '../../components/ProtectedRoute';
 import { useRouter } from "next/navigation";
 import { toast } from '../../lib/use-toast';
 import { Toaster } from '../../components/ui/toaster';
+import { config } from '../../config';
 import { removeAuthToken, getUser } from '../../lib/auth';
 import {
   DropdownMenu,
@@ -126,7 +127,7 @@ function Dashboard() {
   // API functions
   const fetchCalendarEvents = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:5109/api/dates');
+      const response = await fetch(`${config.apiUrl}/api/dates`);
       if (response.ok) {
         const dates = await response.json();
         
