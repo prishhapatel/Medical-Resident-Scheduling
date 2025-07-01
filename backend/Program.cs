@@ -72,6 +72,7 @@ app.MapControllers();
 var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
 app.Urls.Add($"http://localhost:{port}");
 
+/* TODO: Re-enable this after fixing migrations
 //test
 //Call your functions here to run the functions.
 //Run it on console line to see the output.
@@ -130,5 +131,6 @@ using (var scope = app.Services.CreateScope())
     }
     await context.SaveChangesAsync();
 }
+*/
 app.Run();
 
