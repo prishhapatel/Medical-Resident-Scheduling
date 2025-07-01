@@ -76,15 +76,8 @@ app.MapControllers();
 // Use the port from environment variable or default to 5109
 var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
 
-// In production, bind to all interfaces so Coolify can reach it
-if (app.Environment.IsDevelopment())
-{
-    app.Urls.Add($"http://localhost:{port}");
-}
-else
-{
-    app.Urls.Add($"http://0.0.0.0:{port}");
-}
+// Always bind to all interfaces in production, localhost only for development
+app.Urls.Add($"http://0.0.0.0:{port}");
 
 //test
 //Call your functions here to run the functions.
