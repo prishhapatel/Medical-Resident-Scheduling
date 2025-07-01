@@ -18,7 +18,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "https://psycall.net")
+        policy.WithOrigins("http://localhost:3000", "https://psycall.net", "http://api.psycall.net", "https://api.psycall.net")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -61,7 +61,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// In production, Coolify handles HTTPS, so we don't need HTTPS redirection
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 // Add CORS middleware
 app.UseCors("AllowFrontend");
@@ -70,7 +74,16 @@ app.MapControllers();
 
 // Use the port from environment variable or default to 5109
 var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
-app.Urls.Add($"http://localhost:{port}");
+
+// In production, bind to all interfaces so Coolify can reach it
+if (app.Environment.IsDevelopment())
+{
+    app.Urls.Add($"http://localhost:{port}");
+}
+else
+{
+    app.Urls.Add($"http://0.0.0.0:{port}");
+}
 
 /* TODO: Re-enable this after fixing migrations
 //test
