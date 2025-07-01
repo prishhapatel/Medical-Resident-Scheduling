@@ -97,7 +97,7 @@ export default function Home() {
       <header className="bg-gray-100 dark:bg-neutral-900 text-black dark:text-white p-5 flex items-center justify-between border-b border-gray-300 dark:border-gray-700 shadow-lg">
         <div className="flex items-center">
           <Image 
-            src={theme === 'dark' ? "/HCAHeader-white.png" : "/HCAHeader.png"} 
+            src="/HCAHeader.png" 
             alt="HCA Logo" 
             width={50} 
             height={50} 
@@ -157,7 +157,7 @@ export default function Home() {
           <Image src="/UCF-College-of-Medicine-Footer.png" alt="UCF Footer Logo" width={150} height={75} className="object-contain" />
           <div className="h-16 w-px bg-gray-400 dark:bg-gray-700" />
           <Image 
-            src={theme === 'dark' ? "/HCAFooter-white.png" : "/HCAFooter.png"} 
+            src="/HCAFooter.png" 
             alt="HCA Footer Logo" 
             width={150} 
             height={75} 
