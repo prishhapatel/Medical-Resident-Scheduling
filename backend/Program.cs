@@ -18,7 +18,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "https://psycall.net", "http://api.psycall.net", "https://api.psycall.net")
+        policy.WithOrigins("http://localhost:3000", "https://psycall.net", 
+                          "http://api.psycall.net", "https://api.psycall.net")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -59,13 +60,9 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-}
-
-// In production, Coolify handles HTTPS, so we don't need HTTPS redirection
-if (app.Environment.IsDevelopment())
-{
     app.UseHttpsRedirection();
 }
+// In production, Coolify handles HTTPS, so we don't need HTTPS redirection
 
 // Add CORS middleware
 app.UseCors("AllowFrontend");
@@ -85,14 +82,13 @@ else
     app.Urls.Add($"http://0.0.0.0:{port}");
 }
 
-/* TODO: Re-enable this after fixing migrations
 //test
 //Call your functions here to run the functions.
 //Run it on console line to see the output.
 using (var scope = app.Services.CreateScope())
 {
     var repo = scope.ServiceProvider.GetRequiredService<IMedicalRepository>();
-    var context = scope.ServiceProvider.GetRequiredService<MedicalContext>(); // <-- Add this line
+    var context = scope.ServiceProvider.GetRequiredService<MedicalContext>();
 
     var admins = await repo.GetAllAdminsAsync();
     var residents = await repo.GetAllResidentsAsync();
@@ -109,7 +105,7 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"Resident ID: {date.ResidentId}, Date: {date.Date}, Call Type: {date.CallType}");
     }
     
-    // Generate the new scheudleID
+    // Generate the new scheduleID
     var newSchedule = new Schedules
     {
         ScheduleId = Guid.NewGuid(),
@@ -144,6 +140,5 @@ using (var scope = app.Services.CreateScope())
     }
     await context.SaveChangesAsync();
 }
-*/
 app.Run();
 
