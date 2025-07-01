@@ -1,5 +1,5 @@
 import React from "react";
-import { Card } from "src/components/ui/card";
+import { Card } from "../../../components/ui/card";
 
 interface ScheduleEntry {
   id: string;

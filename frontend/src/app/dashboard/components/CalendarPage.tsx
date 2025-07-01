@@ -1,12 +1,11 @@
 "use client";
 
 import React from "react";
-import { Card } from "src/components/ui/card";
+import { Card } from "../../../components/ui/card";
 import FullCalendar from "@fullcalendar/react";
 import { EventSourceInput } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import "@fullcalendar/common/main.css";
 
 interface CalendarPageProps {
   events: EventSourceInput;

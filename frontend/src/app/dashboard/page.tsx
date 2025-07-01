@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, ReactElement } from "react";
+import React, { useState, useEffect, ReactElement, useCallback } from "react";
 import {
   SidebarProvider,
   Sidebar,
@@ -11,8 +11,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "src/components/ui/sidebar";
-import { SidebarUserCard } from "@/app/dashboard/components/SidebarUserCard";
+} from "../../components/ui/sidebar";
+import { SidebarUserCard } from "./components/SidebarUserCard";
 import { Repeat, CalendarDays, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun } from "lucide-react";
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useRouter } from "next/navigation";
@@ -39,6 +39,15 @@ type MenuItem = {
   title: string;
   icon: ReactElement;
 };
+
+// Define types for API responses
+interface DateEvent {
+  dateId: string;
+  callType: string;
+  residentId?: string;
+  date: string;
+  scheduleId: string;
+}
 
 interface User {
   id: string;
@@ -78,7 +87,6 @@ function Dashboard() {
 
   // Calendar state
   const [calendarEvents, setCalendarEvents] = useState<EventSourceInput>([]);
-  const [loadingEvents, setLoadingEvents] = useState(false);
 
   // Swap calls form state
   const [selectedResident, setSelectedResident] = useState<string>("");
@@ -114,27 +122,34 @@ function Dashboard() {
   };
 
   // API functions
-  const fetchCalendarEvents = async () => {
-    setLoadingEvents(true);
+  const fetchCalendarEvents = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:5109/api/dates');
       if (response.ok) {
         const dates = await response.json();
         
-        const events = dates.map((date: any) => ({
-          id: date.dateId,
-          title: `${date.callType} Call${date.residentId ? ` - ${date.residentId}` : ''}`,
-          start: date.date,
-          end: date.date,
-          backgroundColor: getEventColor(date.callType),
-          borderColor: getEventColor(date.callType),
-          extendedProps: {
-            scheduleId: date.scheduleId,
-            residentId: date.residentId,
-            callType: date.callType,
-            dateId: date.dateId
-          }
-        }));
+        const events = dates.map((date: any) => {
+          const fullName = date.firstName && date.lastName
+            ? `${date.firstName} ${date.lastName}`
+            : date.residentId;
+
+          return {
+            id: date.dateId,
+            title: `${date.callType} Call${fullName ? ` - ${fullName}` : ''}`,
+            start: date.date,
+            end: date.date,
+            backgroundColor: getEventColor(date.callType),
+            borderColor: getEventColor(date.callType),
+            extendedProps: {
+              scheduleId: date.scheduleId,
+              residentId: date.residentId,
+              firstName: date.firstName,
+              lastName: date.lastName,
+              callType: date.callType,
+              dateId: date.dateId
+            }
+          };
+        });
         
         setCalendarEvents(events);
       } else {
@@ -152,10 +167,8 @@ function Dashboard() {
         title: "Error",
         description: "Failed to load calendar events",
       });
-    } finally {
-      setLoadingEvents(false);
     }
-  };
+  }, []);
 
   // Event handlers
   const handleUpdatePhoneNumber = () => {
@@ -379,7 +392,7 @@ function Dashboard() {
     if (selected === "Calendar") {
       fetchCalendarEvents();
     }
-  }, [selected]);
+  }, [selected, fetchCalendarEvents]);
 
   // Computed values
   const displayName = user ? `${user.firstName} ${user.lastName}` : "John Doe";

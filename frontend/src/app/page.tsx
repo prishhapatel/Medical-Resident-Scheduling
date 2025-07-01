@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { Button } from "src/components/ui/button";
-import { Card } from "src/components/ui/card";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
