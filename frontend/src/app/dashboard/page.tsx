@@ -41,12 +41,14 @@ type MenuItem = {
 };
 
 // Define types for API responses
-interface DateEvent {
+interface DateResponse {
   dateId: string;
   callType: string;
   residentId?: string;
   date: string;
   scheduleId: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 interface User {
@@ -128,7 +130,7 @@ function Dashboard() {
       if (response.ok) {
         const dates = await response.json();
         
-        const events = dates.map((date: any) => {
+        const events = dates.map((date: DateResponse) => {
           const fullName = date.firstName && date.lastName
             ? `${date.firstName} ${date.lastName}`
             : date.residentId;
