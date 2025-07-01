@@ -5,13 +5,11 @@ const getApiUrl = () => {
     return process.env.NEXT_PUBLIC_API_URL;
   }
   
-  // In production, we need to work around mixed content restrictions
+  // In production, use HTTPS without port (Coolify SSL termination)
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     if (hostname === 'psycall.net' || hostname === 'www.psycall.net') {
-      // For now, use HTTP with port until SSL is properly configured
-      // This will require browser to allow mixed content or configure properly in Coolify
-      return 'http://api.psycall.net:5109';
+      return 'https://api.psycall.net';
     }
   }
   
