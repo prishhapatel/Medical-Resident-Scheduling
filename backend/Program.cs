@@ -60,9 +60,13 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+
+// Don't use HTTPS redirection in production - Coolify handles SSL termination
+if (app.Environment.IsDevelopment())
+{
     app.UseHttpsRedirection();
 }
-// In production, Coolify handles HTTPS, so we don't need HTTPS redirection
 
 // Add CORS middleware
 app.UseCors("AllowFrontend");
