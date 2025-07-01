@@ -18,8 +18,11 @@ ENV NODE_ENV production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Copy the standalone output
 COPY --from=builder /app/.next/standalone ./
+# Copy the static folder
 COPY --from=builder /app/.next/static ./.next/static
+# Copy public files
 COPY --from=builder /app/public ./public
 
 USER nextjs
