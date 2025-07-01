@@ -5,7 +5,6 @@ import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import { setAuthToken } from '../lib/auth';
 import { useToast } from '../lib/use-toast';
 import { Toaster } from '../components/ui/toaster';
@@ -14,7 +13,6 @@ import { useAuth } from "../context/AuthContext";
 
 
 export default function Home() {
-  const { theme } = useTheme();
   const { toast } = useToast();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [isLoading, setIsLoading] = useState(false);
