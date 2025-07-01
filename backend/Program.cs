@@ -30,7 +30,16 @@ builder.Services.AddCors(options =>
 
 var MySqlConnectString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 
-Console.WriteLine($"Loaded DB_CONNECTION_STRING: {MySqlConnectString}");
+Console.WriteLine($"Raw DB_CONNECTION_STRING: '{MySqlConnectString}'");
+Console.WriteLine($"DB_CONNECTION_STRING length: {MySqlConnectString?.Length ?? 0}");
+
+// Check if the connection string accidentally includes the variable name
+if (!string.IsNullOrEmpty(MySqlConnectString) && MySqlConnectString.StartsWith("DB_CONNECTION_STRING="))
+{
+    Console.WriteLine("Warning: Connection string contains variable name prefix, removing it...");
+    MySqlConnectString = MySqlConnectString.Substring("DB_CONNECTION_STRING=".Length);
+    Console.WriteLine($"Cleaned DB_CONNECTION_STRING: '{MySqlConnectString}'");
+}
 
 
 if (string.IsNullOrEmpty(MySqlConnectString))
