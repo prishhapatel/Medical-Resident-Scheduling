@@ -7,6 +7,14 @@ import { AuthProvider } from "@/context/AuthContext";
 export const metadata: Metadata = {
   title: "Psycall",
   description: "Scheduler app for HCA Florida Residents",
+  icons: {
+    icon: [
+      { url: '/HCAHeader.png', type: 'image/png' },
+      { url: '/favicon.png', type: 'image/png' }
+    ],
+    shortcut: '/HCAHeader.png',
+    apple: '/HCAHeader.png',
+  },
 };
 
 interface RootLayoutProps {
