@@ -5,10 +5,12 @@ const getApiUrl = () => {
     return process.env.NEXT_PUBLIC_API_URL;
   }
   
-  // When served by the backend (unified app), use relative paths
+  // In production, use HTTPS without port (Coolify SSL termination)
   if (typeof window !== 'undefined') {
-    // Use the current origin for API calls (same server)
-    return window.location.origin;
+    const hostname = window.location.hostname;
+    if (hostname === 'psycall.net' || hostname === 'www.psycall.net') {
+      return 'https://api.psycall.net';
+    }
   }
   
   // Default to localhost for development

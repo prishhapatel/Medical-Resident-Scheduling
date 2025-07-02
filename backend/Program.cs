@@ -33,8 +33,8 @@ var MySqlConnectString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRIN
 Console.WriteLine($"Raw DB_CONNECTION_STRING: '{MySqlConnectString}'");
 Console.WriteLine($"DB_CONNECTION_STRING length: {MySqlConnectString?.Length ?? 0}");
 
-// Check if the connection string accidentally includes the variable name (possibly multiple times)
-while (!string.IsNullOrEmpty(MySqlConnectString) && MySqlConnectString.StartsWith("DB_CONNECTION_STRING="))
+// Check if the connection string accidentally includes the variable name
+if (!string.IsNullOrEmpty(MySqlConnectString) && MySqlConnectString.StartsWith("DB_CONNECTION_STRING="))
 {
     Console.WriteLine("Warning: Connection string contains variable name prefix, removing it...");
     MySqlConnectString = MySqlConnectString.Substring("DB_CONNECTION_STRING=".Length);
@@ -77,35 +77,16 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-// Serve static files (frontend)
-app.UseDefaultFiles();
-app.UseStaticFiles();
-
-// Add CORS middleware (still needed for development)
+// Add CORS middleware
 app.UseCors("AllowFrontend");
 
-// Map API controllers
 app.MapControllers();
 
-// Fallback to serve the frontend for any non-API routes
-app.MapFallbackToFile("index.html");
+// Use the port from environment variable or default to 5109
+var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
 
-// Use the port from environment variable or default
-// Check ASPNETCORE_URLS first (set by Coolify), then PORT, then BACKEND_PORT, then default
-var aspnetUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
-if (!string.IsNullOrEmpty(aspnetUrls))
-{
-    Console.WriteLine($"Using ASPNETCORE_URLS: {aspnetUrls}");
-    // Don't add additional URLs, let ASP.NET Core handle it
-}
-else
-{
-    var port = Environment.GetEnvironmentVariable("PORT") ?? 
-               Environment.GetEnvironmentVariable("BACKEND_PORT") ?? 
-               "5109";
-    Console.WriteLine($"Using port: {port}");
-    app.Urls.Add($"http://0.0.0.0:{port}");
-}
+// Always bind to all interfaces in production, localhost only for development
+app.Urls.Add($"http://0.0.0.0:{port}");
 
 //test
 //Call your functions here to run the functions.
