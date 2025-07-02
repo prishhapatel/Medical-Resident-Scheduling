@@ -19,7 +19,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.WithOrigins("http://localhost:3000", "https://psycall.net", 
-                          "https://www.psycall.net", "http://localhost:3001")
+                          "https://www.psycall.net", "http://localhost:3001", "https://backend.psycall.net")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
