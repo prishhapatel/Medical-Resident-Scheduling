@@ -11,7 +11,7 @@ const getApiUrl = () => {
     const hostname = window.location.hostname;
     console.log('Current hostname:', hostname);
     if (hostname === 'psycall.net' || hostname === 'www.psycall.net') {
-      const apiUrl = 'https://api.psycall.net';
+      const apiUrl = 'https://backend.psycall.net';
       console.log('Using production API URL:', apiUrl);
       return apiUrl;
     }
