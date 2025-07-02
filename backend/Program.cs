@@ -19,7 +19,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.WithOrigins("http://localhost:3000", "https://psycall.net", 
-                          "http://api.psycall.net", "https://api.psycall.net")
+                          "https://www.psycall.net", "http://localhost:3001")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -82,69 +82,83 @@ app.UseCors("AllowFrontend");
 
 app.MapControllers();
 
-// Use the port from environment variable or default to 5109
-var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
+// Configure port binding for Coolify deployment
+var port = Environment.GetEnvironmentVariable("PORT") ?? "3000";
+var urls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
 
-// Always bind to all interfaces in production, localhost only for development
-app.Urls.Add($"http://0.0.0.0:{port}");
+if (!string.IsNullOrEmpty(urls))
+{
+    Console.WriteLine($"Using ASPNETCORE_URLS: {urls}");
+    // Let ASPNETCORE_URLS handle the binding
+}
+else
+{
+    // Fallback: bind to the port Coolify expects
+    Console.WriteLine($"Binding to port: {port}");
+    app.Urls.Add($"http://0.0.0.0:{port}");
+}
 
 //test
 //Call your functions here to run the functions.
 //Run it on console line to see the output.
-using (var scope = app.Services.CreateScope())
+// Only run test data generation in development environment
+if (app.Environment.IsDevelopment())
 {
-    var repo = scope.ServiceProvider.GetRequiredService<IMedicalRepository>();
-    var context = scope.ServiceProvider.GetRequiredService<MedicalContext>();
-
-    var admins = await repo.GetAllAdminsAsync();
-    var residents = await repo.GetAllResidentsAsync();
-    var rotations = await repo.GetAllRotationsAsync();
-    var pgy1 = await repo.LoadPGYOne();
-    var pgy2 = await repo.LoadPGYTwo();
-    var pgy3 = await repo.LoadPGYThree();
-    var residentRolesByMonth = await repo.GetResidentRolesByMonthAsync();
-    var trainingDates = await repo.GenerateTrainingScheduleAsync();
-
-    Console.WriteLine("Loaded Training Schedule: ");
-    foreach (var date in trainingDates)
+    using (var scope = app.Services.CreateScope())
     {
-        Console.WriteLine($"Resident ID: {date.ResidentId}, Date: {date.Date}, Call Type: {date.CallType}");
-    }
-    
-    // Generate the new scheduleID
-    var newSchedule = new Schedules
-    {
-        ScheduleId = Guid.NewGuid(),
-        Status = "Under review"
-    };
-    context.schedules.Add(newSchedule);
-    await context.SaveChangesAsync(); // Save so we can use the schedule_id as a foreign key
+        var repo = scope.ServiceProvider.GetRequiredService<IMedicalRepository>();
+        var context = scope.ServiceProvider.GetRequiredService<MedicalContext>();
 
-    // Insert the schedule dates into the database
-    foreach (var date in trainingDates)
-    {
-        if (!string.IsNullOrWhiteSpace(date.ResidentId))
+        var admins = await repo.GetAllAdminsAsync();
+        var residents = await repo.GetAllResidentsAsync();
+        var rotations = await repo.GetAllRotationsAsync();
+        var pgy1 = await repo.LoadPGYOne();
+        var pgy2 = await repo.LoadPGYTwo();
+        var pgy3 = await repo.LoadPGYThree();
+        var residentRolesByMonth = await repo.GetResidentRolesByMonthAsync();
+        var trainingDates = await repo.GenerateTrainingScheduleAsync();
+
+        Console.WriteLine("Loaded Training Schedule: ");
+        foreach (var date in trainingDates)
         {
-            // If ResidentId contains multiple IDs separated by commas, split them
-            var residentIds = date.ResidentId.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            Console.WriteLine($"Resident ID: {date.ResidentId}, Date: {date.Date}, Call Type: {date.CallType}");
+        }
+        
+        // Generate the new scheduleID
+        var newSchedule = new Schedules
+        {
+            ScheduleId = Guid.NewGuid(),
+            Status = "Under review"
+        };
+        context.schedules.Add(newSchedule);
+        await context.SaveChangesAsync(); // Save so we can use the schedule_id as a foreign key
 
-            foreach (var residentId in residentIds)
+        // Insert the schedule dates into the database
+        foreach (var date in trainingDates)
+        {
+            if (!string.IsNullOrWhiteSpace(date.ResidentId))
             {
-                var trimmedResidentId = residentId.Trim();
-                var entry = new Dates
-                {
-                    DateId = Guid.NewGuid(),
-                    ScheduleId = newSchedule.ScheduleId,
-                    ResidentId = trimmedResidentId,
-                    Date = date.Date,
-                    CallType = date.CallType
-                };
+                // If ResidentId contains multiple IDs separated by commas, split them
+                var residentIds = date.ResidentId.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
-                context.dates.Add(entry);
+                foreach (var residentId in residentIds)
+                {
+                    var trimmedResidentId = residentId.Trim();
+                    var entry = new Dates
+                    {
+                        DateId = Guid.NewGuid(),
+                        ScheduleId = newSchedule.ScheduleId,
+                        ResidentId = trimmedResidentId,
+                        Date = date.Date,
+                        CallType = date.CallType
+                    };
+
+                    context.dates.Add(entry);
+                }
             }
         }
+        await context.SaveChangesAsync();
     }
-    await context.SaveChangesAsync();
 }
 app.Run();
 
