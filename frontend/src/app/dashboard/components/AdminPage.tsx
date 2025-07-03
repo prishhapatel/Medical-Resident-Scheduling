@@ -15,8 +15,6 @@ interface AdminPageProps {
   userInvitations: { id: string; email: string; status: "Pending" | "Member" | "Not Invited"; }[];
   inviteEmail: string;
   setInviteEmail: (value: string) => void;
-  inviteResidentId: string;
-  setInviteResidentId: (value: string) => void;
   handleSendInvite: () => void;
   handleResendInvite: (id: string) => void;
 }
@@ -31,8 +29,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
   userInvitations,
   inviteEmail,
   setInviteEmail,
-  inviteResidentId,
-  setInviteResidentId,
   handleSendInvite,
   handleResendInvite,
 }) => {
@@ -187,13 +183,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
             className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
-          />
-          <input
-            type="text"
-            placeholder="Enter resident ID"
-            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
-            value={inviteResidentId}
-            onChange={(e) => setInviteResidentId(e.target.value)}
           />
           <Button onClick={handleSendInvite} className="py-2 flex items-center justify-center gap-2">
             <Send className="h-5 w-5" />

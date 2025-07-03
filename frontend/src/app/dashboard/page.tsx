@@ -164,7 +164,7 @@ function Dashboard() {
   };
 
   const handleSendInvite = async () => {
-    if(!inviteEmail || !inviteResidentId){
+    if(!inviteEmail.trim()){
       toast({
         variant: "destructive",
         title: "Error",
@@ -180,8 +180,7 @@ function Dashboard() {
         },
         body: JSON.stringify({
           email: inviteEmail,
-          residentId: inviteResidentId,
-        }),
+        }),        
       });
       if(!res.ok){
         throw new Error(`API returned ${res.status}`);
@@ -387,8 +386,6 @@ function Dashboard() {
               userInvitations={userInvitations}
               inviteEmail={inviteEmail}
               setInviteEmail={setInviteEmail}
-              inviteResidentId={inviteResidentId}
-              setInviteResidentId={setInviteResidentId}
               handleSendInvite={handleSendInvite}
               handleResendInvite={handleResendInvite}
             />
