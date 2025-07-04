@@ -67,19 +67,8 @@ namespace MedicalDemo.Server.Controllers
                     return Unauthorized(new { success = false, message = "Invalid credentials" });
                 }
 
-                bool passwordMatch = false;
-
-                // Check if the password is a BCrypt hash (starts with $2a$, $2b$, $2x$, or $2y$)
-                if (resident.password.StartsWith("$2"))
-                {
-                    // It's a BCrypt hash, use BCrypt.Verify
-                    passwordMatch = BCrypt.Net.BCrypt.Verify(request.password, resident.password);
-                }
-                else
-                {
-                    // It's a plain text password, do direct comparison
-                    passwordMatch = request.password == resident.password;
-                }
+                // Verify password using BCrypt
+                bool passwordMatch = BCrypt.Net.BCrypt.Verify(request.password, resident.password);
 
                 if (!passwordMatch)
                 {
