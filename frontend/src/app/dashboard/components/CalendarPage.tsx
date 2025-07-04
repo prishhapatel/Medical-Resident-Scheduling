@@ -51,34 +51,9 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
 
   // Helper function to get PGY color based on resident data
   const getPGYColor = (event: CalendarEvent): string => {
-    // Try to determine PGY from extendedProps first
-    const pgyLevel = event.extendedProps?.pgyLevel;
-    
-    // Reduced debug logging - only log unique events to avoid spam
-    if (Math.random() < 0.01) { // Log roughly 1% of events to see data structure
-      console.log('Sample Event:', event.title, 'PGY Level:', pgyLevel, 'Extended Props:', event.extendedProps);
-    }
-    
-    switch (pgyLevel) {
-      case 1:
-      case '1':
-      case 'PGY1':
-      case 'PGY 1':
-        return '#ef4444'; // Red for PGY 1
-      case 2:
-      case '2':
-      case 'PGY2':
-      case 'PGY 2':
-        return '#f97316'; // Orange for PGY 2
-      case 3:
-      case '3':
-      case 'PGY3':
-      case 'PGY 3':
-        return '#8b5cf6'; // Purple for PGY 3
-      default:
-        // If no PGY info found, fall back to existing backgroundColor or gray
-        return event.backgroundColor || '#6b7280'; // Gray for no PGY info
-    }
+    // Use the backgroundColor that was already calculated in the main dashboard
+    // This ensures consistency between PGY calculation and display
+    return event.backgroundColor || '#6b7280'; // Fallback to gray if no color set
   };
 
   // Navigation functions for different views

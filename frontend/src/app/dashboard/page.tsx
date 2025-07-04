@@ -159,18 +159,11 @@ function Dashboard() {
     }
   };
 
-  // Helper function to calculate PGY level from graduate year
-  const calculatePGY = (graduateYear: number): number => {
-    const currentYear = new Date().getFullYear();
-    const pgy = graduateYear - currentYear + 1;
-    return Math.max(1, Math.min(3, pgy)); // Clamp between 1 and 3
-  };
-
-  // Updated color function to prioritize PGY level over call type
-  const getEventColor = (callType: string, pgyLevel?: number) => {
-    // If PGY level is available, use PGY-based coloring
-    if (pgyLevel) {
-      switch (pgyLevel) {
+  // Updated color function to use graduate_yr directly
+  const getEventColor = (callType: string, graduateYear?: number) => {
+    // Use graduate_yr directly for PGY-based coloring
+    if (graduateYear) {
+      switch (graduateYear) {
         case 1:
           return '#ef4444'; // red for PGY 1
         case 2:
@@ -178,11 +171,11 @@ function Dashboard() {
         case 3:
           return '#8b5cf6'; // purple for PGY 3
         default:
-          return '#6b7280'; // gray for unknown PGY
+          return '#6b7280'; // gray for unknown
       }
     }
     
-    // Fallback to call type coloring if no PGY level
+    // Fallback to call type coloring if no graduate_yr
     switch (callType) {
       case 'Short':
         return '#3b82f6'; // blue
@@ -269,13 +262,14 @@ function Dashboard() {
             ? `${date.firstName} ${date.lastName}`
             : date.residentId;
 
-          // Find the resident to get PGY level
+          // Find the resident to get graduate_yr directly
           const resident = residents.find(r => r.resident_id === date.residentId);
-          const pgyLevel = resident ? calculatePGY(resident.graduate_yr) : undefined;
-          const eventColor = getEventColor(date.callType, pgyLevel);
+          
+          const graduateYear = resident?.graduate_yr;
+          const eventColor = getEventColor(date.callType, graduateYear);
           
           // Include PGY in the title if available
-          const pgyText = pgyLevel ? ` (PGY ${pgyLevel})` : '';
+          const pgyText = graduateYear ? ` (PGY ${graduateYear})` : '';
 
           return {
             id: date.dateId,
@@ -291,7 +285,7 @@ function Dashboard() {
               lastName: date.lastName,
               callType: date.callType,
               dateId: date.dateId,
-              pgyLevel: pgyLevel
+              pgyLevel: graduateYear
             }
           };
         });
