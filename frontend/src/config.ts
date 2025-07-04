@@ -17,9 +17,9 @@ const getApiUrl = () => {
     }
   }
   
-  // Default to localhost for development
+  // Default to 127.0.0.1 for development (better compatibility than localhost)
   console.log('Using localhost API URL');
-  return 'http://localhost:5109';
+  return 'http://127.0.0.1:5109';
 };
 
 export const config = {

@@ -19,7 +19,7 @@ import { useRouter } from "next/navigation";
 import { toast } from '../../lib/use-toast';
 import { Toaster } from '../../components/ui/toaster';
 import { config } from '../../config';
-import { removeAuthToken, getUser } from '../../lib/auth';
+import { removeAuthToken, getUser, verifyAdminStatus, User } from '../../lib/auth';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,7 +34,6 @@ import SwapCallsPage from "./components/SwapCallsPage";
 import RequestOffPage from "./components/RequestOffPage";
 import CheckSchedulePage from "./components/CheckSchedulePage";
 import AdminPage from "./components/AdminPage";
-import { EventSourceInput } from "@fullcalendar/core";
 
 type MenuItem = {
   title: string;
@@ -52,11 +51,39 @@ interface DateResponse {
   lastName?: string;
 }
 
-interface User {
+interface CalendarEvent {
   id: string;
+  title: string;
+  start: Date;
+  end: Date;
+  backgroundColor: string;
+  borderColor: string;
+  extendedProps: {
+    scheduleId: string;
+    residentId?: string;
+    firstName?: string;
+    lastName?: string;
+    callType: string;
+    dateId: string;
+    pgyLevel?: number;
+  };
+}
+
+interface Resident {
+  resident_id: string;
+  first_name: string;
+  last_name: string;
+  graduate_yr: number;
   email: string;
-  firstName: string;
-  lastName: string;
+  phone_number?: string;
+}
+
+interface ScheduleItem {
+  id: string;
+  date: string;
+  time: string;
+  shift: string;
+  location: string;
 }
 
 // menu items
@@ -87,9 +114,11 @@ function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [phoneNumber, setPhoneNumber] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   // Calendar state
-  const [calendarEvents, setCalendarEvents] = useState<EventSourceInput>([]);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
 
   // Swap calls form state
   const [selectedResident, setSelectedResident] = useState<string>("");
@@ -110,8 +139,50 @@ function Dashboard() {
     status: "Pending" | "Member" | "Not Invited";
   }[]>([]);
 
+  // Data state
+  const [residents, setResidents] = useState<Resident[]>([]);
+  const [mySchedule, setMySchedule] = useState<ScheduleItem[]>([]);
+
   // Helper functions
-  const getEventColor = (callType: string) => {
+  const formatPhoneNumber = (value: string) => {
+    if (!value) return "";
+    // Remove all non-digit characters
+    const phoneNumber = value.replace(/\D/g, '');
+    
+    // Format as XXX-XXX-XXXX
+    if (phoneNumber.length <= 3) {
+      return phoneNumber;
+    } else if (phoneNumber.length <= 6) {
+      return `${phoneNumber.slice(0, 3)}-${phoneNumber.slice(3)}`;
+    } else {
+      return `${phoneNumber.slice(0, 3)}-${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6, 10)}`;
+    }
+  };
+
+  // Helper function to calculate PGY level from graduate year
+  const calculatePGY = (graduateYear: number): number => {
+    const currentYear = new Date().getFullYear();
+    const pgy = graduateYear - currentYear + 1;
+    return Math.max(1, Math.min(3, pgy)); // Clamp between 1 and 3
+  };
+
+  // Updated color function to prioritize PGY level over call type
+  const getEventColor = (callType: string, pgyLevel?: number) => {
+    // If PGY level is available, use PGY-based coloring
+    if (pgyLevel) {
+      switch (pgyLevel) {
+        case 1:
+          return '#ef4444'; // red for PGY 1
+        case 2:
+          return '#f97316'; // orange for PGY 2
+        case 3:
+          return '#8b5cf6'; // purple for PGY 3
+        default:
+          return '#6b7280'; // gray for unknown PGY
+      }
+    }
+    
+    // Fallback to call type coloring if no PGY level
     switch (callType) {
       case 'Short':
         return '#3b82f6'; // blue
@@ -125,9 +196,71 @@ function Dashboard() {
   };
 
   // API functions
-  const fetchCalendarEvents = useCallback(async () => {
+  const fetchResidents = useCallback(async () => {
+    try {
+      const response = await fetch(`${config.apiUrl}/api/residents`);
+      if (response.ok) {
+        const residentsData = await response.json();
+        setResidents(residentsData);
+      } else {
+        console.error('Failed to fetch residents');
+      }
+    } catch (error) {
+      console.error('Error fetching residents:', error);
+    }
+  }, []);
+
+  const fetchMySchedule = useCallback(async () => {
+    if (!user?.id) return;
+    
     try {
       const response = await fetch(`${config.apiUrl}/api/dates`);
+      if (response.ok) {
+        const dates = await response.json();
+        const currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0); // Start of today
+        
+        // Filter dates for current user and future dates only
+        const userSchedule = dates
+          .filter((date: DateResponse) => {
+            const dateObj = new Date(date.date);
+            return date.residentId === user.id && dateObj >= currentDate;
+          })
+          .sort((a: DateResponse, b: DateResponse) => {
+            return new Date(a.date).getTime() - new Date(b.date).getTime();
+          })
+          .slice(0, 20) // Show next 20 shifts
+          .map((date: DateResponse) => ({
+            id: date.dateId,
+            date: date.date, // Keep ISO format for proper date handling
+            time: "All Day",
+            shift: `${date.callType} Call`,
+            location: "Hospital"
+          }));
+        
+        setMySchedule(userSchedule);
+      } else {
+        console.error('Failed to fetch schedule');
+      }
+    } catch (error) {
+      console.error('Error fetching schedule:', error);
+    }
+  }, [user?.id]);
+
+  const fetchCalendarEvents = useCallback(async (month?: number, year?: number) => {
+    try {
+      // Build URL with month and year parameters if provided
+      let url = `${config.apiUrl}/api/dates`;
+      const params = new URLSearchParams();
+      if (month !== undefined && year !== undefined) {
+        params.append('month', month.toString());
+        params.append('year', year.toString());
+      }
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+
+      const response = await fetch(url);
       if (response.ok) {
         const dates = await response.json();
         
@@ -136,20 +269,29 @@ function Dashboard() {
             ? `${date.firstName} ${date.lastName}`
             : date.residentId;
 
+          // Find the resident to get PGY level
+          const resident = residents.find(r => r.resident_id === date.residentId);
+          const pgyLevel = resident ? calculatePGY(resident.graduate_yr) : undefined;
+          const eventColor = getEventColor(date.callType, pgyLevel);
+          
+          // Include PGY in the title if available
+          const pgyText = pgyLevel ? ` (PGY ${pgyLevel})` : '';
+
           return {
             id: date.dateId,
-            title: `${date.callType} Call${fullName ? ` - ${fullName}` : ''}`,
-            start: date.date,
-            end: date.date,
-            backgroundColor: getEventColor(date.callType),
-            borderColor: getEventColor(date.callType),
+            title: `${date.callType} Call${fullName ? ` - ${fullName}${pgyText}` : ''}`,
+            start: new Date(date.date),
+            end: new Date(date.date),
+            backgroundColor: eventColor,
+            borderColor: eventColor,
             extendedProps: {
               scheduleId: date.scheduleId,
               residentId: date.residentId,
               firstName: date.firstName,
               lastName: date.lastName,
               callType: date.callType,
-              dateId: date.dateId
+              dateId: date.dateId,
+              pgyLevel: pgyLevel
             }
           };
         });
@@ -171,24 +313,165 @@ function Dashboard() {
         description: "Failed to load calendar events",
       });
     }
-  }, []);
+  }, [residents]);
 
   // Event handlers
-  const handleUpdatePhoneNumber = () => {
-    const phoneRegex = /^\(?(\d{3})\)?[- ]?(\d{3})[- ]?(\d{4})$/;
+  const handleUpdatePhoneNumber = async () => {
+    // Updated regex to match XXX-XXX-XXXX format
+    const phoneRegex = /^\d{3}-\d{3}-\d{4}$/;
     if (!phoneRegex.test(phoneNumber)) {
       toast({
         variant: "destructive",
         title: "Invalid Phone Number",
-        description: "Please enter a valid phone number.",
+        description: "Please enter a valid phone number in format 123-456-7890.",
       });
       return;
     }
-    toast({
-      variant: "success",
-      title: "Phone Number Updated",
-      description: `Your phone number has been updated to ${phoneNumber}.`,
-    });
+
+    if (!user?.id) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Unable to update phone number. Please try logging in again.",
+      });
+      return;
+    }
+
+    try {
+      // First, get the current resident data
+      const getResponse = await fetch(`${config.apiUrl}/api/residents/filter?resident_id=${user.id}`);
+      if (!getResponse.ok) {
+        throw new Error('Failed to fetch current resident data');
+      }
+      
+      const residentsData = await getResponse.json();
+      if (!residentsData || residentsData.length === 0) {
+        throw new Error('Resident not found');
+      }
+      
+      const currentResident = residentsData[0];
+
+      // Update with existing data but new phone number
+      const response = await fetch(`${config.apiUrl}/api/residents/${user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          resident_id: currentResident.resident_id,
+          first_name: currentResident.first_name,
+          last_name: currentResident.last_name,
+          email: currentResident.email,
+          password: currentResident.password, // Keep existing password
+          phone_num: phoneNumber, // Update phone number
+          graduate_yr: currentResident.graduate_yr,
+          weekly_hours: currentResident.weekly_hours,
+          total_hours: currentResident.total_hours,
+          bi_yearly_hours: currentResident.bi_yearly_hours
+        })
+      });
+
+      if (response.ok) {
+        // Update the user object in state and localStorage
+        const updatedUser = { ...user, phone_num: phoneNumber };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+
+        toast({
+          variant: "success",
+          title: "Phone Number Updated",
+          description: `Your phone number has been updated to ${phoneNumber}.`,
+        });
+      } else {
+        throw new Error('Failed to update phone number');
+      }
+    } catch (error) {
+      console.error('Error updating phone number:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update phone number. Please try again.",
+      });
+    }
+  };
+
+  const handleUpdateEmail = async () => {
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+      });
+      return;
+    }
+
+    if (!user?.id) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Unable to update email. Please try logging in again.",
+      });
+      return;
+    }
+
+    try {
+      // First, get the current resident data
+      const getResponse = await fetch(`${config.apiUrl}/api/residents/filter?resident_id=${user.id}`);
+      if (!getResponse.ok) {
+        throw new Error('Failed to fetch current resident data');
+      }
+      
+      const residentsData = await getResponse.json();
+      if (!residentsData || residentsData.length === 0) {
+        throw new Error('Resident not found');
+      }
+      
+      const currentResident = residentsData[0];
+
+      // Update with existing data but new email
+      const response = await fetch(`${config.apiUrl}/api/residents/${user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          resident_id: currentResident.resident_id,
+          first_name: currentResident.first_name,
+          last_name: currentResident.last_name,
+          email: email, // Update email
+          password: currentResident.password, // Keep existing password
+          phone_num: currentResident.phone_num,
+          graduate_yr: currentResident.graduate_yr,
+          weekly_hours: currentResident.weekly_hours,
+          total_hours: currentResident.total_hours,
+          bi_yearly_hours: currentResident.bi_yearly_hours
+        })
+      });
+
+      if (response.ok) {
+        // Update the user object in state and localStorage
+        const updatedUser = { ...user, email: email };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+
+        toast({
+          variant: "success",
+          title: "Email Updated",
+          description: `Your email has been updated to ${email}.`,
+        });
+      } else {
+        throw new Error('Failed to update email');
+      }
+    } catch (error) {
+      console.error('Error updating email:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update email. Please try again.",
+      });
+    }
   };
 
   const handleSendInvite = () => {
@@ -238,7 +521,7 @@ function Dashboard() {
     });
   };
 
-  const handleSubmitSwap = () => {
+  const handleSubmitSwap = async () => {
     if (!selectedResident || !selectedShift || !shiftDate) {
       toast({
         variant: "destructive",
@@ -248,17 +531,93 @@ function Dashboard() {
       return;
     }
 
-    toast({
-      variant: "success",
-      title: "Swap Request Submitted",
-      description: `Your request to swap ${selectedShift} on ${shiftDate} with ${selectedResident} has been submitted.`, 
-    });
+    try {
+      // Find the current user's shift on the selected date
+      const currentUserShift = calendarEvents.find((event: CalendarEvent) => 
+        event.extendedProps?.residentId === user?.id && 
+        event.start.toDateString() === new Date(shiftDate).toDateString() &&
+        event.extendedProps?.callType === selectedShift
+      );
+
+      // Find the target resident's shift on the same date  
+      const targetUserShift = calendarEvents.find((event: CalendarEvent) => 
+        event.extendedProps?.residentId === selectedResident && 
+        event.start.toDateString() === new Date(shiftDate).toDateString()
+      );
+
+      if (!currentUserShift || !targetUserShift) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Could not find shifts to swap. Both residents must have shifts on the selected date.",
+        });
+        return;
+      }
+
+      // Update current user's shift to target resident
+      const updateCurrentShift = fetch(`${config.apiUrl}/api/dates/${currentUserShift.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          dateId: currentUserShift.id,
+          scheduleId: currentUserShift.extendedProps.scheduleId,
+          residentId: selectedResident,
+          date: shiftDate,
+          callType: selectedShift
+        })
+      });
+
+      // Update target resident's shift to current user
+      const updateTargetShift = fetch(`${config.apiUrl}/api/dates/${targetUserShift.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          dateId: targetUserShift.id,
+          scheduleId: targetUserShift.extendedProps.scheduleId,
+          residentId: user?.id,
+          date: shiftDate,
+          callType: targetUserShift.extendedProps.callType
+        })
+      });
+
+      const [response1, response2] = await Promise.all([updateCurrentShift, updateTargetShift]);
+
+      if (response1.ok && response2.ok) {
+        const targetResident = residents.find(r => r.resident_id === selectedResident);
+        const targetName = targetResident ? `${targetResident.first_name} ${targetResident.last_name}` : selectedResident;
+        
+        toast({
+          variant: "success",
+          title: "Swap Request Completed",
+          description: `Your shift has been swapped with ${targetName}.`,
+        });
+        
+        // Refresh calendar events and user schedule
+        const now = new Date();
+        fetchCalendarEvents(now.getMonth() + 1, now.getFullYear());
+        fetchMySchedule();
+      } else {
+        throw new Error('Failed to complete swap');
+      }
+    } catch (error) {
+      console.error('Error swapping shifts:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to swap shifts. Please try again.",
+      });
+    }
+
     setSelectedResident("");
     setSelectedShift("");
     setShiftDate("");
   };
 
-  const handleSubmitRequestOff = () => {
+  const handleSubmitRequestOff = async () => {
     if (!startDate || !endDate || !reason) {
       toast({
         variant: "destructive",
@@ -277,11 +636,50 @@ function Dashboard() {
       return;
     }
 
-    toast({
-      variant: "success",
-      title: "Time Off Request Submitted",
-      description: `Your request for ${reason} from ${startDate} to ${endDate} has been submitted.`, 
-    });
+    try {
+      // Create vacation requests for each day in the range
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const requests = [];
+      
+      for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+        requests.push(
+          fetch(`${config.apiUrl}/api/vacations`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              residentId: user?.id,
+              date: date.toISOString().split('T')[0] + 'T00:00:00',
+              reason: reason,
+              status: 'Pending'
+            })
+          })
+        );
+      }
+
+      const responses = await Promise.all(requests);
+      const allSuccessful = responses.every(response => response.ok);
+
+      if (allSuccessful) {
+        toast({
+          variant: "success",
+          title: "Time Off Request Submitted",
+          description: `Your request for ${reason} from ${startDate} to ${endDate} has been submitted.`,
+        });
+      } else {
+        throw new Error('Some requests failed');
+      }
+    } catch (error) {
+      console.error('Error submitting vacation request:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to submit vacation request. Please try again.",
+      });
+    }
+
     setStartDate("");
     setEndDate("");
     setReason("");
@@ -312,16 +710,28 @@ function Dashboard() {
             rotationEndDate={null}
             monthlyHours={null}
             hasData={false}
+            onNavigateToSwapCalls={() => setSelected("Swap Calls")}
+            onNavigateToRequestOff={() => setSelected("Request Off")}
+            onNavigateToSchedule={() => setSelected("Check My Schedule")}
+            userId={user?.id || ""}
           />
         );
 
       case "Calendar":
-        return <CalendarPage events={calendarEvents} />;
+        return <CalendarPage 
+          events={calendarEvents} 
+          onNavigateToSwapCalls={() => setSelected("Swap Calls")}
+          onDateChange={(month, year) => fetchCalendarEvents(month, year)}
+        />;
 
       case "Settings":
         return (
           <SettingsPage
-            displayName={displayName}
+            firstName={user?.firstName || ""}
+            lastName={user?.lastName || ""}
+            email={email}
+            setEmail={setEmail}
+            handleUpdateEmail={handleUpdateEmail}
             phoneNumber={phoneNumber}
             setPhoneNumber={setPhoneNumber}
             handleUpdatePhoneNumber={handleUpdatePhoneNumber}
@@ -329,16 +739,29 @@ function Dashboard() {
         );
 
       case "Swap Calls":
+        const availableResidents = residents
+          .filter(resident => resident.resident_id !== user?.id)
+          .map(resident => ({
+            id: resident.resident_id,
+            name: `${resident.first_name} ${resident.last_name}`
+          }));
+        
+        const availableShifts = [
+          { id: "Short", name: "Short Call" },
+          { id: "Saturday", name: "Saturday Call" },
+          { id: "Sunday", name: "Sunday Call" }
+        ];
+        
         return (
           <SwapCallsPage
             shiftDate={shiftDate}
             setShiftDate={setShiftDate}
             selectedResident={selectedResident}
             setSelectedResident={setSelectedResident}
-            residents={[]}
+            residents={availableResidents}
             selectedShift={selectedShift}
             setSelectedShift={setSelectedShift}
-            shifts={[]}
+            shifts={availableShifts}
             handleSubmitSwap={handleSubmitSwap}
           />
         );
@@ -360,9 +783,19 @@ function Dashboard() {
         );
 
       case "Check My Schedule":
-        return <CheckSchedulePage mySchedule={[]} />;
+        return <CheckSchedulePage mySchedule={mySchedule} />;
 
       case "Admin":
+        if (!isAdmin) {
+          return (
+            <div className="w-full pt-4 flex flex-col items-center">
+              <h1 className="text-2xl font-bold mb-6">Access Denied</h1>
+              <p className="text-center text-gray-600 dark:text-gray-400">
+                You do not have permission to access the admin panel.
+              </p>
+            </div>
+          );
+        }
         return (
           <AdminPage
             residents={[]}
@@ -386,20 +819,48 @@ function Dashboard() {
 
   // Effects
   useEffect(() => {
-    const userData = getUser();
-    setUser(userData);
-    setLoading(false);
+    const initialize = async () => {
+      const userData = getUser();
+      setUser(userData);
+      
+      if (userData) {
+        const adminStatus = await verifyAdminStatus();
+        setIsAdmin(adminStatus);
+        // Initialize phone number with user's current phone number, formatted
+        setPhoneNumber(formatPhoneNumber(userData.phone_num || ""));
+        // Initialize email with user's current email
+        setEmail(userData.email || "");
+      }
+      
+      setLoading(false);
+    };
+    
+    initialize();
   }, []);
 
   useEffect(() => {
     if (selected === "Calendar") {
-      fetchCalendarEvents();
+      fetchResidents();
+    } else if (selected === "Swap Calls") {
+      fetchResidents();
+    } else if (selected === "Check My Schedule") {
+      fetchMySchedule();
     }
-  }, [selected, fetchCalendarEvents]);
+  }, [selected, fetchResidents, fetchMySchedule]);
+
+  // Fetch calendar events whenever residents data is updated and we're on Calendar or Swap Calls page
+  useEffect(() => {
+    if (residents.length > 0 && (selected === "Calendar" || selected === "Swap Calls")) {
+      // Load events for current month for better performance
+      const now = new Date();
+      fetchCalendarEvents(now.getMonth() + 1, now.getFullYear());
+    }
+  }, [residents, selected, fetchCalendarEvents]);
 
   // Computed values
   const displayName = user ? `${user.firstName} ${user.lastName}` : "John Doe";
   const displayEmail = user?.email || "john.doe@email.com";
+  const filteredMenuItems = menuItems.filter(item => item.title !== "Admin" || isAdmin);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -421,7 +882,7 @@ function Dashboard() {
               <SidebarGroup>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {menuItems.map((item) => (
+                    {filteredMenuItems.map((item) => (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton asChild>
                           <span
@@ -483,8 +944,8 @@ function Dashboard() {
           {/* Main Content Area */}
           <div className="flex-1 flex flex-col w-full">
             <main
-              className={`flex flex-row gap-8 w-full ${
-                selected === "Calendar" ? "pt-4 px-8" : "p-8"
+              className={`w-full ${
+                selected === "Calendar" ? "h-screen" : "p-8"
               }`}
             >
               {renderMainContent()}

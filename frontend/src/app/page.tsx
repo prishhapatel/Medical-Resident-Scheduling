@@ -1,15 +1,18 @@
 "use client";
 
+import React from "react";
 import Image from "next/image";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { setAuthToken } from '../lib/auth';
 import { useToast } from '../lib/use-toast';
 import { Toaster } from '../components/ui/toaster';
 import { config } from '../config';
 import { useAuth } from "../context/AuthContext";
+
+// Type assertion workaround for React hooks
+const useState = React.useState;
 
 
 export default function Home() {
@@ -26,7 +29,7 @@ export default function Home() {
   };
 
   // handle form submission and login
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log('Login attempt with email:', formData.email);
     setIsLoading(true);
@@ -52,8 +55,9 @@ export default function Home() {
         setAuthToken(data.token);
         localStorage.setItem("user", JSON.stringify(data.resident));
         setUser(data.resident);
-      
-        console.log('Login successful, token stored');
+        
+        console.log('Login successful, user data:', data.resident); // Debug: Check what user data contains
+        console.log('Is admin?', data.resident?.isAdmin); // Debug: Check admin status
       
         toast({
           variant: "success",
@@ -78,10 +82,21 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Login error:", error);
+      
+      // Provide more specific error messages for different types of failures
+      let errorMessage = "An error occurred during login. Please try again later.";
+      
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        errorMessage = "Unable to connect to the server. Please check your internet connection and try again.";
+        console.error("Network error - API server may be unreachable at:", config.apiUrl);
+      } else if (error instanceof Error) {
+        errorMessage = `Connection error: ${error.message}`;
+      }
+      
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "An error occurred during login. Please try again later.",
+        title: "Connection Error",
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);

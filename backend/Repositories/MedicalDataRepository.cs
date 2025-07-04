@@ -1,6 +1,5 @@
 using MedicalDemo.Data.Models;
 using Microsoft.EntityFrameworkCore;
-using MedicalDemo.Services;
 using MedicalDemo.Models; // if you name the namespace this way
 
 public class MedicalDataRepository : IMedicalRepository
