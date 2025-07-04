@@ -16,8 +16,34 @@ export default function Register() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = () => {
-    console.log("Register Existing Submission:", form, "Token:", token);
+  const handleSubmit = async () => {
+    try {
+      const res = await fetch("http://localhost:5109/api/register/complete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          phone: form.phone,
+          password: form.password,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        console.error("Registration error:", err);
+        alert(`Error: ${err.message || "Something went wrong."}`);
+        return;
+      }
+
+      const data = await res.json();
+      console.log("Registration successful:", data);
+      alert("Registration complete! You can now log in.");
+    } catch (err) {
+      console.error("Request failed:", err);
+      alert("Network error. Please try again.");
+    }
   };
 
   return (

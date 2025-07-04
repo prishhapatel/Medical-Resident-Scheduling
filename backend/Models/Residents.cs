@@ -10,7 +10,7 @@ namespace MedicalDemo.Data.Models
     {
         [Key]
         [Column("resident_id")]
-        public string resident_id { get; set; }
+        public string resident_id { get; set; } 
 
         [Column("first_name")]
         public string first_name { get; set; }

@@ -12,7 +12,7 @@ namespace MedicalDemo.Data.Models
         public string token{ get; set; }
 
         [Column("resident_id")]
-        public string resident_id{ get; set; }
+        public string? resident_id{ get; set; }
 
         [Column("expires")]
         public DateTime expires{ get; set; }

@@ -24,7 +24,7 @@ namespace MedicalDemo.Server.Controllers
 
             //Create token and expiration time
             var token = Guid.NewGuid().ToString();
-            var expires = DateTime.UtcNow.AddMinutes(1);
+            var expires = DateTime.UtcNow.AddHours(24);
 
             //Save token to Invitations table
             var invitation = new Invitation{
