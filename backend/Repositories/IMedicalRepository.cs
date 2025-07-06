@@ -9,6 +9,8 @@ public interface IMedicalRepository
 
     Task<List<Rotations>> GetAllRotationsAsync();
 
+    Task<List<Vacations>> GetAllVacationsAsync();
+
     Task<List<Residents>> LoadPGYOne();
 
     Task<List<Residents>> LoadPGYTwo();

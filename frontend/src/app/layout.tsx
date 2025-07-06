@@ -1,23 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "src/components/ui/theme-provider";
 import { Toaster } from "../components/ui/toaster"
 import { AuthProvider } from "@/context/AuthContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
   title: "Psycall",
   description: "Scheduler app for HCA Florida Residents",
+  icons: {
+    icon: [
+      { url: '/HCAHeader.png', type: 'image/png' },
+      { url: '/favicon.png', type: 'image/png' }
+    ],
+    shortcut: '/HCAHeader.png',
+    apple: '/HCAHeader.png',
+  },
 };
 
 interface RootLayoutProps {

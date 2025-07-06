@@ -1,6 +1,8 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+
 
 namespace MedicalDemo.Data.Models
 {
@@ -9,7 +11,7 @@ namespace MedicalDemo.Data.Models
     {
         [Key]
         [Column("date_id")]
-        public Guid DateId { get; set; }  // binary(16) typically maps to Guid in EF Core
+        public Guid DateId { get; set; }
 
         [Column("schedule_id")]
         public Guid ScheduleId { get; set; }
@@ -24,5 +26,9 @@ namespace MedicalDemo.Data.Models
         [Column("call_type")]
         [MaxLength(45)]
         public string CallType { get; set; }
+
+        [ForeignKey("ResidentId")]
+        [ValidateNever] 
+        public Residents Resident { get; set; }  // <-- Navigation property
     }
 }

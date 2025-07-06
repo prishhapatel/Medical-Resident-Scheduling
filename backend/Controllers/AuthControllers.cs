@@ -1,18 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
 using MedicalDemo.Data.Models;
 using BCrypt.Net;
+using System;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
 namespace MedicalDemo.Server.Controllers
-{//Base url and and class for the controller
-    [ApiController]
+{
     [Route("api/[controller]")]
+    [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly MedicalContext _context; 
+        private readonly MedicalContext _context;
 
-        public AuthController(MedicalContext context)//Allow to make queries to db
+        public AuthController(MedicalContext context)
         {
             _context = context;
         }
@@ -20,16 +21,14 @@ namespace MedicalDemo.Server.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] Residents resident)
         {
-            //Check if email already exists
             var exists = await _context.residents
                 .AnyAsync(r => r.email == resident.email);
 
-            if(exists)
+            if (exists)
             {
                 return Conflict(new { success = false, message = "Email already registered" });
             }
 
-            //Hash the password
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(resident.password);
 
             var newResident = new Residents
@@ -45,50 +44,59 @@ namespace MedicalDemo.Server.Controllers
                 total_hours = 0,
                 bi_yearly_hours = 0
             };
-            //Add to db
+
             _context.residents.Add(newResident);
             await _context.SaveChangesAsync();
 
-            return StatusCode(201, new {success = true});
+            return StatusCode(201, new { success = true });
         }
 
-        [HttpPost("login")]//api/auth/login
+        [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var resident = await _context.residents//search for resident email
-                .FirstOrDefaultAsync(r => r.email == request.email);
-
-            if(resident == null)
+            try
             {
-                return Unauthorized(new { success = false, message = "Invalid credentials" });
-            }
+                var resident = await _context.residents
+                    .FirstOrDefaultAsync(r => r.email == request.email);
 
-            bool passwordMatch = BCrypt.Net.BCrypt.Verify(request.password, resident.password);//compare to hash
-
-            if(!passwordMatch)
-            {
-                return Unauthorized(new { success = false, message = "Invalid credentials" });
-            }
-
-            //Generate a token
-            string token = Guid.NewGuid().ToString();
-
-            return Ok(new { 
-                success = true,
-                token = token,
-                resident = new {
-                    id = resident.resident_id,
-                    email = resident.email,
-                    firstName = resident.first_name,
-                    lastName = resident.last_name
+                if (resident == null)
+                {
+                    return Unauthorized(new { success = false, message = "Invalid credentials" });
                 }
-            });
+
+                bool passwordMatch = BCrypt.Net.BCrypt.Verify(request.password, resident.password);
+
+                if (!passwordMatch)
+                {
+                    return Unauthorized(new { success = false, message = "Invalid credentials" });
+                }
+
+                string token = Guid.NewGuid().ToString();
+
+                return Ok(new
+                {
+                    success = true,
+                    token = token,
+                    resident = new
+                    {
+                        id = resident.resident_id,
+                        email = resident.email,
+                        firstName = resident.first_name,
+                        lastName = resident.last_name,
+                        phone_num = resident.phone_num
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = $"Login error: {ex.Message}" });
+            }
         }
     }
 
-    public class LoginRequest//json body for requests
+    public class LoginRequest
     {
-        public string email{ get; set; }
-        public string password{ get; set; }
+        public string email { get; set; }
+        public string password { get; set; }
     }
 }

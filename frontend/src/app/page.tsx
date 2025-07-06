@@ -1,24 +1,23 @@
 "use client";
 
+import React from "react";
 import Image from "next/image";
-import { Button } from "src/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "src/components/ui/card";
-import { useState } from "react";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import { setAuthToken } from '../lib/auth';
 import { useToast } from '../lib/use-toast';
 import { Toaster } from '../components/ui/toaster';
 import { config } from '../config';
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "../context/AuthContext";
+
+// Type assertion workaround for React hooks
+const useState = React.useState;
 
 
 export default function Home() {
-  const { theme } = useTheme();
   const { toast } = useToast();
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { setUser } = useAuth();
@@ -30,11 +29,9 @@ export default function Home() {
   };
 
   // handle form submission and login
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log('Login attempt with email:', formData.email);
-    setError("");
-    setSuccess(false);
     setIsLoading(true);
 
     try {
@@ -58,9 +55,9 @@ export default function Home() {
         setAuthToken(data.token);
         localStorage.setItem("user", JSON.stringify(data.resident));
         setUser(data.resident);
-      
-        setSuccess(true);
-        console.log('Login successful, token stored');
+        
+        console.log('Login successful, user data:', data.resident); // Debug: Check what user data contains
+        console.log('Is admin?', data.resident?.isAdmin); // Debug: Check admin status
       
         toast({
           variant: "success",
@@ -72,12 +69,11 @@ export default function Home() {
       
         try {
           await router.push("/dashboard");
-        } catch (navError) {
+        } catch {
           window.location.href = "/dashboard";
         }
       }else {
         console.log('Login failed:', data.message);
-        setError(data.message || 'Invalid username or password');
         toast({
           variant: "destructive",
           title: "Error",
@@ -86,11 +82,21 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Login error:", error);
-      setError("An error occurred during login");
+      
+      // Provide more specific error messages for different types of failures
+      let errorMessage = "An error occurred during login. Please try again later.";
+      
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        errorMessage = "Unable to connect to the server. Please check your internet connection and try again.";
+        console.error("Network error - API server may be unreachable at:", config.apiUrl);
+      } else if (error instanceof Error) {
+        errorMessage = `Connection error: ${error.message}`;
+      }
+      
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "An error occurred during login. Please try again later.",
+        title: "Connection Error",
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
@@ -104,7 +110,7 @@ export default function Home() {
       <header className="bg-gray-100 dark:bg-neutral-900 text-black dark:text-white p-5 flex items-center justify-between border-b border-gray-300 dark:border-gray-700 shadow-lg">
         <div className="flex items-center">
           <Image 
-            src={theme === 'dark' ? "/HCAHeader-white.png" : "/HCAHeader.png"} 
+            src="/HCAHeader.png" 
             alt="HCA Logo" 
             width={50} 
             height={50} 
@@ -164,7 +170,7 @@ export default function Home() {
           <Image src="/UCF-College-of-Medicine-Footer.png" alt="UCF Footer Logo" width={150} height={75} className="object-contain" />
           <div className="h-16 w-px bg-gray-400 dark:bg-gray-700" />
           <Image 
-            src={theme === 'dark' ? "/HCAFooter-white.png" : "/HCAFooter.png"} 
+            src="/HCAFooter.png" 
             alt="HCA Footer Logo" 
             width={150} 
             height={75} 

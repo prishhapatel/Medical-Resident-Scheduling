@@ -452,3 +452,17 @@ orleans.codegen.cs
 # Logs
 logs/
 *.log
+
+# Next.js build artifacts
+frontend/.next/
+frontend/out/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Vercel
+frontend/.vercel
+
+# Node.js
+frontend/node_modules/
