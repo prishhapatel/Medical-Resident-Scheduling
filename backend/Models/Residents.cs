@@ -3,9 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MedicalDemo.Data.Models
 {
-    // Optional: If your table is named "residents" (plural) and you want to ensure EF 
-    // maps this class to exactly that table name, add the [Table] attribute:
-    // [Table("residents")]
     public class Residents
     {
         [Key]

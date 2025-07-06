@@ -29,7 +29,7 @@ namespace MedicalDemo.Server.Controllers
             //Save token to Invitations table
             var invitation = new Invitation{
                 token = token,
-                resident_id = resident?.resident_id,  // nullable if not found
+                resident_id = resident?.resident_id,
                 expires = expires,
                 used = false
             };
@@ -49,7 +49,7 @@ namespace MedicalDemo.Server.Controllers
             }
 
 
-            // Send email
+            //Send email
             var success = await _postmark.SendInvitationEmailAsync(request.Email, url);
 
             if(!success){

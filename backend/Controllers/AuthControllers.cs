@@ -32,7 +32,6 @@ namespace MedicalDemo.Server.Controllers
             //Hash the password
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(resident.password);
 
-            // Create new Resident instance
             var newResident = new Residents
             {
                 resident_id = resident.resident_id,
