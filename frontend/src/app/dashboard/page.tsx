@@ -105,7 +105,6 @@ const leaveReasons = [
   { id: "other", name: "Other" },
 ];
 
-<<<<<<< HEAD
 const sendInvitation = async (email: string, residentId: string) => {
   try{
     const res = await fetch("http://localhost:5109/api/invite/send", {
@@ -130,8 +129,6 @@ const sendInvitation = async (email: string, residentId: string) => {
 
 
 //dashboard
-=======
->>>>>>> origin/main
 function Dashboard() {
   const router = useRouter();
   const { setTheme } = useTheme();
@@ -506,7 +503,6 @@ function Dashboard() {
       });
       return;
     }
-<<<<<<< HEAD
     try{
       const res = await fetch("http://localhost:5109/api/invite/send", {
         method: "POST",
@@ -541,20 +537,6 @@ function Dashboard() {
         description: "Please enter an email address.",
       });
     }
-=======
-    const newInvitation = {
-      id: Date.now().toString(),
-      email: inviteEmail,
-      status: "Pending" as const,
-    };
-    setUserInvitations((prev) => [...prev, newInvitation]);
-    setInviteEmail("");
-    toast({
-      variant: "success",
-      title: "Invitation Sent",
-      description: `Invitation sent to ${inviteEmail}.`, 
-    });
->>>>>>> origin/main
   };
 
   const handleResendInvite = (id: string) => {
@@ -845,25 +827,6 @@ function Dashboard() {
       case "Check My Schedule":
         return <CheckSchedulePage mySchedule={mySchedule} />;
 
-<<<<<<< HEAD
-        case "Admin":
-          return (
-            <AdminPage
-              residents={[]}
-              adminSwapRequests={[]}
-              myTimeOffRequests={[]}
-              shifts={[]}
-              handleApproveRequest={handleApproveRequest}
-              handleDenyRequest={handleDenyRequest}
-              userInvitations={userInvitations}
-              inviteEmail={inviteEmail}
-              setInviteEmail={setInviteEmail}
-              handleSendInvite={handleSendInvite}
-              handleResendInvite={handleResendInvite}
-            />
-          );
-        
-=======
       case "Admin":
         if (!isAdmin) {
           return (
@@ -890,7 +853,6 @@ function Dashboard() {
             handleResendInvite={handleResendInvite}
           />
         );
->>>>>>> origin/main
 
       default:
         return null;
