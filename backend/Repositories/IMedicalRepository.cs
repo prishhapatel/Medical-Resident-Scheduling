@@ -1,25 +1,28 @@
 using MedicalDemo.Data.Models;
 
-//connector functions
-public interface IMedicalRepository
+namespace MedicalDemo.Repositories
 {
-    Task<List<Admins>> GetAllAdminsAsync();
+    //connector functions
+    public interface IMedicalRepository
+    {
+        Task<List<Admins>> GetAllAdminsAsync();
 
-    Task<List<Residents>> GetAllResidentsAsync();
+        Task<List<Residents>> GetAllResidentsAsync();
 
-    Task<List<Rotations>> GetAllRotationsAsync();
+        Task<List<Rotations>> GetAllRotationsAsync();
 
-    Task<List<Vacations>> GetAllVacationsAsync();
+        Task<List<Vacations>> GetAllVacationsAsync();
 
-    Task<List<Residents>> LoadPGYOne();
+        Task<List<Residents>> LoadPGYOne();
 
-    Task<List<Residents>> LoadPGYTwo();
+        Task<List<Residents>> LoadPGYTwo();
 
-    Task<List<Residents>> LoadPGYThree();
+        Task<List<Residents>> LoadPGYThree();
 
-    Task<Dictionary<string, List<Rotations>>> GetResidentRolesByMonthAsync();
-    Task<List<Dates>> GenerateTrainingDatesAsync();
+        Task<Dictionary<string, List<Rotations>>> GetResidentRolesByMonthAsync();
+        Task<List<Dates>> GenerateTrainingDatesAsync();
 
-    Task<List<Dates>> GenerateTrainingScheduleAsync();
+        Task<List<Dates>> GenerateTrainingScheduleAsync();
 
+    }
 }

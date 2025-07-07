@@ -205,7 +205,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
         {/* Main Calendar Area */}
         <div className="flex-1 flex flex-col w-full">
           {/* Header */}
-          <div className="bg-card border-b border-border py-6 w-full">
+          <div className="bg-card border py-6 px-1  w-full">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <button
@@ -286,7 +286,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
           </div>
 
           {/* PGY Color Legend */}
-          <div className="py-4 bg-card border-b border-border w-full">
+          <div className="py-4 px-2 border bg-card w-full">
             <div className="flex items-center space-x-6">
               <span className="text-sm font-medium text-muted-foreground">PGY Color Coding:</span>
               <div className="flex items-center space-x-4">
