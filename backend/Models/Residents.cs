@@ -3,14 +3,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MedicalDemo.Data.Models
 {
-    // Optional: If your table is named "residents" (plural) and you want to ensure EF 
-    // maps this class to exactly that table name, add the [Table] attribute:
-    // [Table("residents")]
     public class Residents
     {
         [Key]
         [Column("resident_id")]
-        public string resident_id { get; set; }
+        public string resident_id { get; set; } 
 
         [Column("first_name")]
         public string first_name { get; set; }

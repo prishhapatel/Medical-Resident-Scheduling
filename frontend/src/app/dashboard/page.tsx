@@ -147,6 +147,8 @@ function Dashboard() {
 
   // Admin state
   const [inviteEmail, setInviteEmail] = useState<string>("");
+  const [inviteResidentId, setInviteResidentId] = useState<string>("");
+
   const [userInvitations, setUserInvitations] = useState<{
     id: string;
     email: string;
@@ -535,8 +537,8 @@ function Dashboard() {
     }
   };
 
-  const handleSendInvite = () => {
-    if (!inviteEmail) {
+  const handleSendInvite = async () => {
+    if(!inviteEmail.trim()){
       toast({
         variant: "destructive",
         title: "Error",
@@ -544,18 +546,40 @@ function Dashboard() {
       });
       return;
     }
-    const newInvitation = {
-      id: Date.now().toString(),
-      email: inviteEmail,
-      status: "Pending" as const,
-    };
-    setUserInvitations((prev) => [...prev, newInvitation]);
-    setInviteEmail("");
-    toast({
-      variant: "success",
-      title: "Invitation Sent",
-      description: `Invitation sent to ${inviteEmail}.`, 
-    });
+    try{
+      const res = await fetch("http://localhost:5109/api/invite/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: inviteEmail,
+        }),        
+      });
+      if(!res.ok){
+        throw new Error(`API returned ${res.status}`);
+      }
+      const newInvitation ={
+        id: Date.now().toString(),
+        email: inviteEmail,
+        status: "Pending" as "Pending",
+      };
+      setUserInvitations((prev) => [...prev, newInvitation]);
+      setInviteEmail("");
+      setInviteResidentId("");
+      toast({
+        variant: "success",
+        title: "Invitation Sent",
+        description: `Invitation sent to ${inviteEmail}.`,
+      });
+    }catch (error){
+      console.error("Send invitation error:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter an email address.",
+      });
+    }
   };
 
   const handleResendInvite = (id: string) => {

@@ -1,8 +1,16 @@
 using MedicalDemo.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
+using MedicalDemo.Services;
+
 
 // Load .env file
+Env.Load();
+DotNetEnv.Env.Load(".env.local");
+Console.WriteLine("ENV CHECK:");
+Console.WriteLine("FROM_EMAIL = " + Environment.GetEnvironmentVariable("FROM_EMAIL"));
+Console.WriteLine("POSTMARK_API_KEY = " + Environment.GetEnvironmentVariable("POSTMARK_API_KEY"));
+
 DotNetEnv.Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +19,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<PostmarkService>();
+
 builder.Services.AddScoped<IMedicalRepository, MedicalDataRepository>();
 
 // Add CORS configuration
@@ -48,6 +58,9 @@ try
     {
         options.UseMySql(MySqlConnectString, ServerVersion.AutoDetect(MySqlConnectString));
     });
+
+    builder.Services.AddScoped<PostmarkService>();
+
 }
 catch (Exception ex)
 {

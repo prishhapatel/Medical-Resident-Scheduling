@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using MedicalDemo.Data.Models;  // Adjust namespace to where your MedicalContext and Admin model are defined
+using MedicalDemo.Data.Models;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 

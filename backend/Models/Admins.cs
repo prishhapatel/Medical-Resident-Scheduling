@@ -9,9 +9,6 @@ namespace MedicalDemo.Data.Models
         [Column("admin_id")]
         public string admin_id { get; set; }
 
-        // Or, if it's truly a raw 16-byte array, you can do:
-        // public byte[] AdminId { get; set; }
-
         [Column("first_name")]
         public string first_name { get; set; }
 
@@ -20,6 +17,9 @@ namespace MedicalDemo.Data.Models
 
         [Column("email")]
         public string email { get; set; }
+        
+        [Column("password")]
+        public string password { get; set; }
 
         [Column("phone_num")]
         public string phone_num { get; set; }
