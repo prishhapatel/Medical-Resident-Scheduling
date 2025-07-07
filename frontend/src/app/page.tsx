@@ -11,7 +11,6 @@ import { Toaster } from '../components/ui/toaster';
 import { config } from '../config';
 import { useAuth } from "../context/AuthContext";
 
-// Type assertion workaround for React hooks
 const useState = React.useState;
 
 
@@ -53,11 +52,18 @@ export default function Home() {
 
       if (response.ok) {
         setAuthToken(data.token);
-        localStorage.setItem("user", JSON.stringify(data.resident));
-        setUser(data.resident);
+        const baseUser = data.admin ?? data.resident;
+        const user = {
+          ...baseUser,
+          isAdmin: data.userType === "admin"
+        };
         
-        console.log('Login successful, user data:', data.resident); // Debug: Check what user data contains
-        console.log('Is admin?', data.resident?.isAdmin); // Debug: Check admin status
+        localStorage.setItem("user", JSON.stringify(user));
+        setUser(user);
+      
+        console.log("Saved user to localStorage:", user);
+        console.log("Login successful, user data:", user);
+        console.log("Is admin?", user?.isAdmin);
       
         toast({
           variant: "success",
@@ -66,13 +72,13 @@ export default function Home() {
         });
       
         await new Promise(resolve => setTimeout(resolve, 1500));
-      
         try {
           await router.push("/dashboard");
         } catch {
           window.location.href = "/dashboard";
         }
-      }else {
+      }
+      else {
         console.log('Login failed:', data.message);
         toast({
           variant: "destructive",
@@ -83,7 +89,7 @@ export default function Home() {
     } catch (error) {
       console.error("Login error:", error);
       
-      // Provide more specific error messages for different types of failures
+      //Provide more specific error messages for different types of failures
       let errorMessage = "An error occurred during login. Please try again later.";
       
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
