@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { Repeat, CalendarDays, UserPlus, Send, Check, X } from "lucide-react";
@@ -17,6 +17,11 @@ interface AdminPageProps {
   setInviteEmail: (value: string) => void;
   handleSendInvite: () => void;
   handleResendInvite: (id: string) => void;
+  inviteRole: string;
+  setInviteRole: (value: string) => void;
+  users: { id: string; first_name: string; last_name: string; email: string; role: string }[];
+  handleChangeRole: (user: { id: string; first_name: string; last_name: string; email: string; role: string }, newRole: string) => void;
+  handleDeleteUser: (user: { id: string; first_name: string; last_name: string; email: string; role: string }) => void;
 }
 
 const AdminPage: React.FC<AdminPageProps> = ({
@@ -31,9 +36,38 @@ const AdminPage: React.FC<AdminPageProps> = ({
   setInviteEmail,
   handleSendInvite,
   handleResendInvite,
+  inviteRole,
+  setInviteRole,
+  users,
+  handleChangeRole,
+  handleDeleteUser,
 }) => {
+  const [generating, setGenerating] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const handleGenerateSchedule = async () => {
+    setGenerating(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/schedules/generate", { method: "POST" });
+      if (!response.ok) throw new Error("Failed to generate schedule");
+      setMessage("New schedule generated successfully!");
+    } catch (err) {
+      setMessage("Error generating schedule. Please try again.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <div className="w-full pt-4 h-[calc(100vh-4rem)] flex flex-col items-center">
+      {/* Generate New Schedule Button */}
+      <div className="w-full flex justify-center mb-6">
+        <Button onClick={handleGenerateSchedule} disabled={generating} className="bg-blue-600 text-white hover:bg-blue-700">
+          {generating ? "Generating..." : "Generate New Schedule"}
+        </Button>
+      </div>
+      {message && <div className="mb-4 text-center text-sm font-medium text-green-600 dark:text-green-400">{message}</div>}
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-8">
         <Card className="p-6 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl">
@@ -184,6 +218,14 @@ const AdminPage: React.FC<AdminPageProps> = ({
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
           />
+          <select
+            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
+            value={inviteRole}
+            onChange={e => setInviteRole(e.target.value)}
+          >
+            <option value="resident">Resident</option>
+            <option value="admin">Admin</option>
+          </select>
           <Button onClick={handleSendInvite} className="py-2 flex items-center justify-center gap-2">
             <Send className="h-5 w-5" />
             <span>Send Invitation</span>
@@ -218,6 +260,54 @@ const AdminPage: React.FC<AdminPageProps> = ({
               ) : (
                 <tr>
                   <td colSpan={3} className="px-6 py-4 text-center text-gray-500 italic">No pending invitations.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      {/* User Management */}
+      <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">User Management</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-100 dark:bg-neutral-800">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
+              {users.length > 0 ? (
+                users.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{user.first_name} {user.last_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <select
+                        value={user.role}
+                        onChange={e => handleChangeRole(user, e.target.value)}
+                        className="border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-neutral-800"
+                      >
+                        <option value="resident">Resident</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDeleteUser(user)}>
+                        Delete
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="px-6 py-4 text-center text-gray-500 italic">No users found.</td>
                 </tr>
               )}
             </tbody>

@@ -125,3 +125,62 @@
 td.fc-daygrid-day.fc-day.fc-day-today {
   background-color: #e0f2f7 !important; /* Light blue */
 }
+
+@media print {
+  /* Hide navigation, sidebars, headers, footers, and agenda */
+  .Sidebar,
+  .SidebarHeader,
+  .SidebarFooter,
+  .SidebarGroup,
+  .SidebarGroupContent,
+  .SidebarMenu,
+  .SidebarMenuButton,
+  .SidebarMenuItem,
+  .SidebarUserCard,
+  .sidebar,
+  .sidebar-content,
+  .sidebar-footer,
+  .sidebar-header,
+  .sidebar-group,
+  .sidebar-group-content,
+  .sidebar-menu,
+  .sidebar-menu-button,
+  .sidebar-menu-item,
+  .sidebar-user-card,
+  .agenda,
+  .right-sidebar,
+  .left-sidebar,
+  .header,
+  .footer,
+  .print-hide,
+  [data-print-hide],
+  [class*="sidebar"],
+  [class*="agenda"],
+  [class*="header"],
+  [class*="footer"] {
+    display: none !important;
+  }
+  /* Make calendar take full width */
+  .calendar, .fc, .fc-view {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  /* Hide call type, year, and time in calendar cells */
+  .calendar .call-type,
+  .calendar .resident-year,
+  .calendar .event-time,
+  .fc-event-time,
+  .fc-list-event-time,
+  .fc-agendaTime,
+  .fc-time {
+    display: none !important;
+  }
+  /* Only show event title (resident name) */
+  .calendar .fc-event-title {
+    font-size: 1.1em !important;
+    font-weight: bold !important;
+    color: #000 !important;
+  }
+}

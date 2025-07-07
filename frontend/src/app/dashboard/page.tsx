@@ -11,6 +11,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
 } from "../../components/ui/sidebar";
 import { SidebarUserCard } from "./components/SidebarUserCard";
 import { Repeat, CalendarDays, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun } from "lucide-react";
@@ -105,6 +107,18 @@ const leaveReasons = [
   { id: "other", name: "Other" },
 ];
 
+function SidebarFloatingTrigger() {
+  const sidebar = useSidebar();
+  return (
+    <div
+      className={` z-50 left-65 top-13 -translate-y-1/2 transition-all duration-300`}
+      style={{ pointerEvents: 'auto' }}
+    >
+      <SidebarTrigger />
+    </div>
+  );
+}
+
 function Dashboard() {
   const router = useRouter();
   const { setTheme } = useTheme();
@@ -142,6 +156,7 @@ function Dashboard() {
   // Data state
   const [residents, setResidents] = useState<Resident[]>([]);
   const [mySchedule, setMySchedule] = useState<ScheduleItem[]>([]);
+  const [users, setUsers] = useState<{ id: string; first_name: string; last_name: string; email: string; role: string }[]>([]);
 
   // Helper functions
   const formatPhoneNumber = (value: string) => {
@@ -256,24 +271,44 @@ function Dashboard() {
       const response = await fetch(url);
       if (response.ok) {
         const dates = await response.json();
-        
-        const events = dates.map((date: DateResponse) => {
+
+        // Find the scheduleId with the most recent date
+        let latestScheduleId = null;
+        if (dates.length > 0) {
+          // Map of scheduleId to most recent date
+          const scheduleIdToLatestDate = {};
+          dates.forEach((date) => {
+            if (!date.scheduleId) return;
+            const current = scheduleIdToLatestDate[date.scheduleId];
+            const thisDate = new Date(date.date).getTime();
+            if (!current || thisDate > current) {
+              scheduleIdToLatestDate[date.scheduleId] = thisDate;
+            }
+          });
+          // Find the scheduleId with the most recent date
+          latestScheduleId = Object.entries(scheduleIdToLatestDate)
+            .sort((a, b) => (Number(b[1]) - Number(a[1])))[0]?.[0];
+        }
+
+        // Only include events from the latest schedule
+        const filteredDates = latestScheduleId
+          ? dates.filter((date: DateResponse) => date.scheduleId === latestScheduleId)
+          : dates;
+
+        const events = filteredDates.map((date: DateResponse) => {
+          // Only show the resident's name on the calendar
           const fullName = date.firstName && date.lastName
             ? `${date.firstName} ${date.lastName}`
             : date.residentId;
 
-          // Find the resident to get graduate_yr directly
+          // Find the resident to get graduate_yr directly (for details only)
           const resident = residents.find(r => r.resident_id === date.residentId);
-          
           const graduateYear = resident?.graduate_yr;
           const eventColor = getEventColor(date.callType, graduateYear);
-          
-          // Include PGY in the title if available
-          const pgyText = graduateYear ? ` (PGY ${graduateYear})` : '';
 
           return {
             id: date.dateId,
-            title: `${date.callType} Call${fullName ? ` - ${fullName}${pgyText}` : ''}`,
+            title: fullName || '', // Only name
             start: new Date(date.date),
             end: new Date(date.date),
             backgroundColor: eventColor,
@@ -289,7 +324,7 @@ function Dashboard() {
             }
           };
         });
-        
+
         setCalendarEvents(events);
       } else {
         console.error('Failed to fetch calendar events');
@@ -308,6 +343,38 @@ function Dashboard() {
       });
     }
   }, [residents]);
+
+  const fetchUsers = async () => {
+    try {
+      const [residentsRes, adminsRes] = await Promise.all([
+        fetch(`${config.apiUrl}/api/Residents`),
+        fetch(`${config.apiUrl}/api/Admins`)
+      ]);
+      const residents = residentsRes.ok ? await residentsRes.json() : [];
+      const admins = adminsRes.ok ? await adminsRes.json() : [];
+      const residentUsers = residents.map((r: any) => ({
+        id: r.resident_id,
+        first_name: r.first_name,
+        last_name: r.last_name,
+        email: r.email,
+        role: 'resident',
+      }));
+      const adminUsers = admins.map((a: any) => ({
+        id: a.admin_id,
+        first_name: a.first_name,
+        last_name: a.last_name,
+        email: a.email,
+        role: 'admin',
+      }));
+      setUsers([...residentUsers, ...adminUsers]);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to fetch users.'
+      });
+    }
+  };
 
   // Event handlers
   const handleUpdatePhoneNumber = async () => {
@@ -693,6 +760,80 @@ function Dashboard() {
     router.push("/");
   };
 
+  const handleChangeRole = async (user: { id: string; first_name: string; last_name: string; email: string; role: string }, newRole: string) => {
+    if (user.role === newRole) return;
+    try {
+      if (user.role === 'resident' && newRole === 'admin') {
+        // Delete from residents, add to admins
+        await fetch(`${config.apiUrl}/api/Residents/${user.id}`, { method: 'DELETE' });
+        await fetch(`${config.apiUrl}/api/Admins`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            admin_id: user.id,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            email: user.email,
+            phone_num: ''
+          })
+        });
+      } else if (user.role === 'admin' && newRole === 'resident') {
+        // Delete from admins, add to residents
+        await fetch(`${config.apiUrl}/api/Admins/${user.id}`, { method: 'DELETE' });
+        await fetch(`${config.apiUrl}/api/Residents`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            resident_id: user.id,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            email: user.email,
+            password: 'changeme',
+            graduate_yr: 0,
+            phone_num: '',
+            weekly_hours: 0,
+            total_hours: 0,
+            bi_yearly_hours: 0
+          })
+        });
+      }
+      toast({
+        variant: 'success',
+        title: 'Role Changed',
+        description: `${user.first_name} ${user.last_name} is now a ${newRole}.`
+      });
+      fetchUsers();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to change user role.'
+      });
+    }
+  };
+
+  const handleDeleteUser = async (user: { id: string; role: string }) => {
+    try {
+      if (user.role === 'resident') {
+        await fetch(`${config.apiUrl}/api/Residents/${user.id}`, { method: 'DELETE' });
+      } else {
+        await fetch(`${config.apiUrl}/api/Admins/${user.id}`, { method: 'DELETE' });
+      }
+      toast({
+        variant: 'success',
+        title: 'User Deleted',
+        description: `${user.role === 'resident' ? 'Resident' : 'Admin'} deleted.`
+      });
+      fetchUsers();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete user.'
+      });
+    }
+  };
+
   // Render main content based on selected menu item
   const renderMainContent = () => {
     switch (selected) {
@@ -803,6 +944,11 @@ function Dashboard() {
             setInviteEmail={setInviteEmail}
             handleSendInvite={handleSendInvite}
             handleResendInvite={handleResendInvite}
+            users={users}
+            handleChangeRole={handleChangeRole}
+            handleDeleteUser={handleDeleteUser}
+            inviteRole={inviteRole}
+            setInviteRole={setInviteRole}
           />
         );
 
@@ -851,10 +997,16 @@ function Dashboard() {
     }
   }, [residents, selected, fetchCalendarEvents]);
 
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
   // Computed values
   const displayName = user ? `${user.firstName} ${user.lastName}` : "John Doe";
   const displayEmail = user?.email || "john.doe@email.com";
   const filteredMenuItems = menuItems.filter(item => item.title !== "Admin" || isAdmin);
+
+  const [inviteRole, setInviteRole] = useState<string>("resident");
 
   if (loading) {
     return <div>Loading...</div>;
@@ -865,6 +1017,8 @@ function Dashboard() {
       <SidebarProvider defaultOpen={true}>
         <div className="flex min-h-screen w-full">
           <Toaster />
+          {/* Left Sidebar Trigger (moves with sidebar, only on calendar page) */}
+          {selected === "Calendar" && <SidebarFloatingTrigger />}
           {/* Sidebar Navigation */}
           <Sidebar>
             <SidebarHeader>
