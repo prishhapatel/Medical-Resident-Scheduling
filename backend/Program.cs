@@ -1,6 +1,7 @@
 using MedicalDemo.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
+using MedicalDemo.Repositories;
 using MedicalDemo.Services;
 
 // Load .env file
