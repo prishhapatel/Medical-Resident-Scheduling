@@ -50,7 +50,7 @@ namespace MedicalDemo.Services
                 VacationRequests = new HashSet<DateTime>(vacations.Select(v => v.Date)),
                 RolePerMonth = MapRotationsToRoles(rotations),
                 CommitedWorkDays = new HashSet<DateTime>(committedDates),
-                InTraining = resident.graduate_yr == DateTime.Now.Year + 2
+                InTraining = resident.graduate_yr == 2
             };
         }
 

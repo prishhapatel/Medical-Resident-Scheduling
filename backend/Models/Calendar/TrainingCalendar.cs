@@ -12,41 +12,46 @@ namespace MedicalDemo.Models.Calendar
             public ArrayList saturdayCallDaysList;
             public ArrayList sundayCallDaysList;
             //public HashMap dayToShortCallIndex;
-
-        public TrainingCalendar(int year)
-        {
-            // training happens in july and august!
-            int trainingDays = 31 + 31; // days in july and days in august
-
-            dayOfWeekAmt = new int[7]; // array of 7 days
-
-            System.Globalization.Calendar calendar = new GregorianCalendar();
-            DateTime currentDay = new DateTime(year, 7, 7); // second week of july of whatever year passed in
-
-            shortCallDaysList = new ArrayList();
-            saturdayCallDaysList = new ArrayList();
-            sundayCallDaysList = new ArrayList();
-
-            while(currentDay.Month < 9)
+            
+            // TrainingCalendar.cs
+            public TrainingCalendar(int year)
             {
-                DayOfWeek dayOfWeek = calendar.GetDayOfWeek(currentDay);
-                if(dayOfWeek == DayOfWeek.Tuesday || dayOfWeek == DayOfWeek.Wednesday || dayOfWeek == DayOfWeek.Thursday) // if it is tues, wed, or thurs TODODODODODODO
+                dayOfWeekAmt = new int[7];
+                shortCallDaysList = new ArrayList();
+                saturdayCallDaysList = new ArrayList();
+                sundayCallDaysList = new ArrayList();
+
+                // Start from July 1st and find first Saturday
+                DateTime startDate = new DateTime(year, 7, 1);
+                DateTime currentDay = startDate;
+                while (currentDay.Month == 7 && currentDay.DayOfWeek != DayOfWeek.Saturday)
                 {
-                    // TO DO, DO NOT HARD CODE THIS^ IN CASE WE WANT MONDAY AND FRIDAY TO BE OPTIONAL
-                    shortCallDaysList.Add(currentDay); 
+                    currentDay = currentDay.AddDays(1);
                 }
-                if(dayOfWeek == DayOfWeek.Saturday)
+
+                // Process through August
+                while (currentDay.Month < 9)
                 {
-                    saturdayCallDaysList.Add(currentDay);
+                    DayOfWeek dayOfWeek = currentDay.DayOfWeek;
+                    if (dayOfWeek == DayOfWeek.Tuesday || 
+                        dayOfWeek == DayOfWeek.Wednesday || 
+                        dayOfWeek == DayOfWeek.Thursday)
+                    {
+                        shortCallDaysList.Add(currentDay);
+                    }
+                    else if (dayOfWeek == DayOfWeek.Saturday)
+                    {
+                        saturdayCallDaysList.Add(currentDay);
+                    }
+                    else if (dayOfWeek == DayOfWeek.Sunday)
+                    {
+                        sundayCallDaysList.Add(currentDay);
+                    }
+        
+                    dayOfWeekAmt[(int)dayOfWeek]++;
+                    currentDay = currentDay.AddDays(1);
                 }
-                if(dayOfWeek == DayOfWeek.Sunday)
-                {
-                    sundayCallDaysList.Add(currentDay);
-                }
-                dayOfWeekAmt[(int)dayOfWeek]++; // amount of mon, tues, wed, etc that are available in a training period
-                currentDay = currentDay.AddDays(1); // move to the next day of the week
             }
-        }
 
         // Input: a day as an integer (0-indexed)
         // Output: DateTime for the day index

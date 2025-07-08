@@ -1,4 +1,4 @@
-﻿using MedicalDemo.Models.Calendar;
+﻿﻿using MedicalDemo.Models.Calendar;
 using MedicalDemo.Utils;
 using System;
 using System.Collections;
@@ -22,7 +22,6 @@ namespace MedicalDemo.Services
             PGY1DTO[] pgy1Array = pgy1s.ToArray();
             PGY2DTO[] pgy2Array = pgy2s.ToArray();
             PGY3DTO[] pgy3Array = pgy3s.ToArray();
-            
             
             OriginalTraining(year, tCalendar, pgy1Array, pgy2Array, pgy3Array);
         }
@@ -129,6 +128,25 @@ namespace MedicalDemo.Services
                 }
             }
 
+            // ADDED: Assign PGY3s to short call days
+            for (int dayIndex = 0; dayIndex < shortCallAmt; dayIndex++)
+            {
+                int splitNodeIndex = 2 * dayIndex + 1;
+                ArrayList splitNodeAdj = (ArrayList)shortCallGraph.adjList[splitNodeIndex];
+                foreach (Edge edge in splitNodeAdj)
+                {
+                    if (edge.Flow() > 0)
+                    {
+                        int pgy3Index = edge.destination - (shortCallAmt * 2);
+                        if (pgy3Index >= 0 && pgy3Index < pgy3Count)
+                        {
+                            DateTime workDay = tCalendar.whatShortDayIsIt(dayIndex);
+                            pgy3s[pgy3Index].AddWorkDay(workDay);
+                        }
+                    }
+                }
+            }
+
             // 2. SATURDAY SCHEDULING (PGY1 + PGY2)
             nodeAmt = (satCallAmt * 2) + pgy2Count + pgy1Count + 2;
             sourceIndex = nodeAmt - 2;
@@ -210,7 +228,7 @@ namespace MedicalDemo.Services
                 throw new Exception($"Saturday scheduling failed. Expected {pgy1Count}, got {flow}");
             }
 
-            // Assign Saturday work days
+            // Assign Saturday work days to PGY1s
             for (int i = 0; i < pgy1Count; i++)
             {
                 ArrayList curList = (ArrayList)saturdayGraph.adjList[satCallAmt * 2 + pgy2Count + i];
@@ -222,18 +240,24 @@ namespace MedicalDemo.Services
                         int dayIndex = currEdge.destination / 2;
                         DateTime workDay = tCalendar.whatSaturdayIsIt(dayIndex);
                         pgy1s[i].AddWorkDay(workDay);
-                        // Find which PGY2 was assigned
-                        ArrayList dayList = (ArrayList)saturdayGraph.adjList[2 * dayIndex + 1];
-                        foreach (Edge edge in dayList)
+                    }
+                }
+            }
+
+            // ADDED: Assign PGY2s to Saturday days
+            for (int dayIndex = 0; dayIndex < satCallAmt; dayIndex++)
+            {
+                int splitNodeIndex = 2 * dayIndex + 1;
+                ArrayList splitNodeAdj = (ArrayList)saturdayGraph.adjList[splitNodeIndex];
+                foreach (Edge edge in splitNodeAdj)
+                {
+                    if (edge.Flow() > 0)
+                    {
+                        int pgy2Index = edge.destination - (satCallAmt * 2);
+                        if (pgy2Index >= 0 && pgy2Index < pgy2Count)
                         {
-                            if (edge.Flow() < 0) // Negative flow indicates reverse edge
-                            {
-                                int pgy2Index = edge.destination - (satCallAmt * 2);
-                                if (pgy2Index >= 0 && pgy2Index < pgy2Count)
-                                {
-                                    pgy2s[pgy2Index].AddWorkDay(workDay);
-                                }
-                            }
+                            DateTime workDay = tCalendar.whatSaturdayIsIt(dayIndex);
+                            pgy2s[pgy2Index].AddWorkDay(workDay);
                         }
                     }
                 }
@@ -320,7 +344,7 @@ namespace MedicalDemo.Services
                 throw new Exception($"Sunday scheduling failed. Expected {pgy1Count}, got {flow}");
             }
 
-            // Assign Sunday work days
+            // Assign Sunday work days to PGY1s
             for (int i = 0; i < pgy1Count; i++)
             {
                 ArrayList curList = (ArrayList)sundayGraph.adjList[sunCallAmt * 2 + pgy2Count + i];
@@ -332,18 +356,24 @@ namespace MedicalDemo.Services
                         int dayIndex = currEdge.destination / 2;
                         DateTime workDay = tCalendar.whatSundayIsIt(dayIndex);
                         pgy1s[i].AddWorkDay(workDay);
-                        // Find which PGY2 was assigned
-                        ArrayList dayList = (ArrayList)sundayGraph.adjList[2 * dayIndex + 1];
-                        foreach (Edge edge in dayList)
+                    }
+                }
+            }
+
+            // ADDED: Assign PGY2s to Sunday days
+            for (int dayIndex = 0; dayIndex < sunCallAmt; dayIndex++)
+            {
+                int splitNodeIndex = 2 * dayIndex + 1;
+                ArrayList splitNodeAdj = (ArrayList)sundayGraph.adjList[splitNodeIndex];
+                foreach (Edge edge in splitNodeAdj)
+                {
+                    if (edge.Flow() > 0)
+                    {
+                        int pgy2Index = edge.destination - (sunCallAmt * 2);
+                        if (pgy2Index >= 0 && pgy2Index < pgy2Count)
                         {
-                            if (edge.Flow() < 0) // Negative flow indicates reverse edge
-                            {
-                                int pgy2Index = edge.destination - (sunCallAmt * 2);
-                                if (pgy2Index >= 0 && pgy2Index < pgy2Count)
-                                {
-                                    pgy2s[pgy2Index].AddWorkDay(workDay);
-                                }
-                            }
+                            DateTime workDay = tCalendar.whatSundayIsIt(dayIndex);
+                            pgy2s[pgy2Index].AddWorkDay(workDay);
                         }
                     }
                 }
