@@ -7,11 +7,11 @@ namespace MedicalDemo.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ScheduleController : ControllerBase
+    public class AlgorithmController : ControllerBase
     {
         private readonly SchedulerService _scheduler;
 
-        public ScheduleController(SchedulerService scheduler)
+        public AlgorithmController(SchedulerService scheduler)
         {
             _scheduler = scheduler;
         }
