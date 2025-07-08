@@ -27,7 +27,9 @@ namespace MedicalDemo.Services
                 // Load data
                 var residents = await _context.residents.ToListAsync();
                 var rotations = await _context.rotations.ToListAsync();
-                var vacations = await _context.vacations.ToListAsync();
+                var vacations = await _context.vacations
+                    .Where(v => v.Status == "Confirmed")  // Add this filter
+                    .ToListAsync();
                 var dates = await _context.dates.ToListAsync();
 
                 // Convert dates to DTOs
