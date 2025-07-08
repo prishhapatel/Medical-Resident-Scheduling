@@ -34,8 +34,16 @@ export default function RegisterNew() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+  
+    setForm(prev => ({
+      ...prev,
+      [name]: 
+        name === "phone" ? formatPhoneNumber(value) :
+        name === "email" ? formatEmail(value) :
+        value
+    }));
   };
+  
 
   const validatePassword = (password: string) => {
     return (
@@ -67,6 +75,16 @@ export default function RegisterNew() {
       return;
     }
 
+    if (!isValidEmail(form.email)) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Email",
+        description: "Please enter a valid email address."
+      });
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       const res = await fetch(`${config.apiUrl}/api/register/new`, {
         method: "POST",
@@ -99,6 +117,28 @@ export default function RegisterNew() {
       setIsLoading(false);
     }
   };
+
+  const formatPhoneNumber = (value: string): string => {
+    const digits = value.replace(/\D/g, '');
+  
+    if (digits.length <= 3) {
+      return digits;
+    } else if (digits.length <= 6) {
+      return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+    } else {
+      return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+    }
+  };
+
+  const formatEmail = (value: string): string => {
+    return value.trim().toLowerCase();
+  };
+  
+  const isValidEmail = (email: string): boolean => {
+    return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+  };
+  
+  
 
   return (
     <div className="flex flex-col min-h-screen">
