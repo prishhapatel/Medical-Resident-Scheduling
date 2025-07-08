@@ -33,9 +33,15 @@ export default function Register() {
 
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-    };
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+      
+        setForm(prev => ({
+          ...prev,
+          [name]: name === "phone" ? formatPhoneNumber(value) : value
+        }));
+      };
+      
 
     const validatePassword = (password: string) => {
         return (
@@ -128,6 +134,18 @@ export default function Register() {
                 });
             });
     }, [token, toast]);
+
+    const formatPhoneNumber = (value: string): string => {
+        const digits = value.replace(/\D/g, '');
+      
+        if (digits.length <= 3) {
+          return digits;
+        } else if (digits.length <= 6) {
+          return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+        } else {
+          return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+        }
+      };
 
 
     return (
