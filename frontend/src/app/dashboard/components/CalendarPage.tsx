@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronLeft, ChevronRight, CalendarDays, PanelLeftIcon } from "lucide-react";
-import { SidebarProvider, Sidebar, SidebarContent, SidebarTrigger, useSidebar } from "../../../components/ui/sidebar";
+import { ChevronLeft, ChevronRight, CalendarDays, PanelLeftIcon, Home, Repeat2, Calendar, User, Shield, Settings as SettingsIcon } from "lucide-react";
+import { SidebarProvider, Sidebar, SidebarContent, useSidebar } from "../../../components/ui/sidebar";
+import Link from "next/link";
 
 interface CalendarEvent {
   id: string;
@@ -24,15 +25,24 @@ interface CalendarEvent {
 interface CalendarPageProps {
   events: CalendarEvent[];
   onNavigateToSwapCalls?: () => void;
+  onNavigateToRequestOff?: () => void;
+  onNavigateToCheckSchedule?: () => void;
+  onNavigateToAdmin?: () => void;
+  onNavigateToSettings?: () => void;
+  onNavigateToHome?: () => void;
   onDateChange?: (month: number, year: number) => void;
+  isAdmin?: boolean;
 }
 
-const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCalls, onDateChange }) => {
+const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCalls, onNavigateToRequestOff, onNavigateToCheckSchedule, onNavigateToAdmin, onNavigateToSettings, onNavigateToHome, onDateChange, isAdmin }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month' | 'year'>('month');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [overflowModalData, setOverflowModalData] = useState<{ date: Date; events: CalendarEvent[]; position: { x: number; y: number } } | null>(null);
+  // Add state for upcoming panel open/close
+  const [isUpcomingOpen, setIsUpcomingOpen] = useState(true);
+  const [eventPopover, setEventPopover] = useState<{ event: CalendarEvent; x: number; y: number } | null>(null);
 
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -199,654 +209,546 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
 
   const calendarDays = generateCalendarDays();
 
+  const getVisibleRange = () => {
+    const start = new Date(currentDate);
+    let end = new Date(currentDate);
+    if (viewMode === 'month') {
+      // Get first and last day of the month
+      const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      // First visible day: Sunday before the 1st (or the 1st if it's Sunday)
+      const firstVisibleDay = new Date(firstDayOfMonth);
+      firstVisibleDay.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay());
+      // Last visible day: Saturday after the last day of the month (or the last day if it's Saturday)
+      const lastVisibleDay = new Date(lastDayOfMonth);
+      lastVisibleDay.setDate(lastDayOfMonth.getDate() + (6 - lastDayOfMonth.getDay()));
+      firstVisibleDay.setHours(0,0,0,0);
+      lastVisibleDay.setHours(23,59,59,999);
+      return { start: firstVisibleDay, end: lastVisibleDay };
+    } else if (viewMode === 'week') {
+      const day = currentDate.getDay();
+      start.setDate(currentDate.getDate() - day);
+      end = new Date(start);
+      end.setDate(start.getDate() + 6);
+    } else if (viewMode === 'day') {
+      // start and end are the same
+    } else if (viewMode === 'year') {
+      start.setMonth(0, 1);
+      end = new Date(currentDate.getFullYear(), 11, 31);
+    }
+    // Normalize times
+    start.setHours(0,0,0,0);
+    end.setHours(23,59,59,999);
+    return { start, end };
+  };
+
+  const { start: visibleStart, end: visibleEnd } = getVisibleRange();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const visibleEvents = events
+    .filter(event => {
+      const eventDate = ensureDate(event.start);
+      return eventDate >= visibleStart && eventDate <= visibleEnd && eventDate >= today;
+    })
+    .sort((a, b) => ensureDate(a.start).getTime() - ensureDate(b.start).getTime())
+    .slice(0, 10);
+
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex w-full h-screen bg-background text-foreground relative">
-        {/* Main Calendar Area */}
-        <div className="flex-1 flex flex-col w-full">
-          {/* Header */}
-          <div className="bg-card border py-6 px-1  w-full">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={sidebar.toggleSidebar}
-                  className="p-2 rounded hover:bg-muted transition-colors"
-                  title="Toggle left sidebar"
-                >
-                  <PanelLeftIcon className="w-4 h-5" />
-                </button>
-                <h1 className="text-5xl font-bold text-foreground">
-                  {getPeriodTitle()}
-                </h1>
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={() => navigatePeriod('prev')}
-                    className="p-3 hover:bg-muted rounded-full transition-colors duration-200"
-                  >
-                    <ChevronLeft className="w-6 h-6 text-muted-foreground" />
-                  </button>
-                  <button
-                    onClick={goToToday}
-                    className="px-6 py-3 text-sm font-semibold text-primary hover:bg-primary/10 rounded-xl transition-colors duration-200"
-                  >
-                    Today
-                  </button>
-                  <button
-                    onClick={() => navigatePeriod('next')}
-                    className="p-3 hover:bg-muted rounded-full transition-colors duration-200"
-                  >
-                    <ChevronRight className="w-6 h-6 text-muted-foreground" />
-                  </button>
-                </div>
-              </div>
-              <div className="flex space-x-3 items-center">
-                <button 
-                  onClick={() => setViewMode('day')}
-                  className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${
-                    viewMode === 'day' 
-                      ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
-                      : 'text-muted-foreground bg-card border border-border hover:bg-muted'
-                  }`}
-                >
-                  Day
-                </button>
-                <button 
-                  onClick={() => setViewMode('week')}
-                  className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${
-                    viewMode === 'week' 
-                      ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
-                      : 'text-muted-foreground bg-card border border-border hover:bg-muted'
-                  }`}
-                >
-                  Week
-                </button>
-                <button 
-                  onClick={() => setViewMode('month')}
-                  className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${
-                    viewMode === 'month' 
-                      ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
-                      : 'text-muted-foreground bg-card border border-border hover:bg-muted'
-                  }`}
-                >
-                  Month
-                </button>
-                <button 
-                  onClick={() => setViewMode('year')}
-                  className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${
-                    viewMode === 'year' 
-                      ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
-                      : 'text-muted-foreground bg-card border border-border hover:bg-muted'
-                  }`}
-                >
-                  Year
-                </button>
-                <SidebarTrigger />
-              </div>
+    <div className="flex flex-col w-full min-h-screen bg-background text-foreground relative">
+      {/* Header */}
+      <div className="bg-card border pt-6 pb-8 fixed left-0 right-0 top-0 z-10 px-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <h1 className="text-5xl font-bold text-foreground">
+              {getPeriodTitle()}
+            </h1>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => navigatePeriod('prev')}
+                className="p-3 hover:bg-muted rounded-full transition-colors duration-200"
+              >
+                <ChevronLeft className="w-6 h-6 text-muted-foreground" />
+              </button>
+              <button
+                onClick={goToToday}
+                className="px-6 py-3 text-sm font-semibold text-primary hover:bg-primary/10 rounded-xl transition-colors duration-200"
+              >
+                Today
+              </button>
+              <button
+                onClick={() => navigatePeriod('next')}
+                className="p-3 hover:bg-muted rounded-full transition-colors duration-200"
+              >
+                <ChevronRight className="w-6 h-6 text-muted-foreground" />
+              </button>
             </div>
           </div>
-
-          {/* PGY Color Legend */}
-          <div className="py-4 px-2 border bg-card w-full">
-            <div className="flex items-center space-x-6">
-              <span className="text-sm font-medium text-muted-foreground">PGY Color Coding:</span>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: '#ef4444' }}></div>
-                  <span className="text-sm text-foreground">PGY 1</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: '#f97316' }}></div>
-                  <span className="text-sm text-foreground">PGY 2</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: '#8b5cf6' }}></div>
-                  <span className="text-sm text-foreground">PGY 3</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: '#6b7280' }}></div>
-                  <span className="text-sm text-foreground">No PGY Info</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Calendar Grid */}
-          <div className="flex-1 p-8">
-            <div className="bg-card rounded-2xl shadow-xl border border-border overflow-hidden h-full">
-              {viewMode === 'day' ? (
-                // Day View
-                <div className="h-full flex flex-col">
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-600">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      {currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-                    </h3>
-                  </div>
-                  <div className="flex-1 p-6">
-                    {getEventsForDate(currentDate).length === 0 ? (
-                      <div className="text-center py-20">
-                        <CalendarDays className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                        <p className="text-gray-500 dark:text-gray-400">No events scheduled for this day</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {getEventsForDate(currentDate).map((event, index) => (
-                          <div
-                            key={index}
-                            className="p-4 rounded-lg border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all duration-200 cursor-pointer"
-                            style={{ borderLeftColor: getPGYColor(event), borderLeftWidth: '4px' }}
-                            onClick={() => {
-                              // Close any other open modals first
-                              setSelectedDate(null);
-                              setOverflowModalData(null);
-                              setSelectedEvent(event);
-                            }}
-                          >
-                            <h4 className="font-semibold text-gray-900 dark:text-gray-100">{event.title}</h4>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : viewMode === 'week' ? (
-                // Week View
-                <div className="h-full flex flex-col">
-                  <div className="grid grid-cols-7 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
-                    {generateWeekDays().map((date, index) => (
-                      <div key={index} className="px-4 py-3 text-center">
-                        <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                          {shortDayNames[date.getDay()]}
-                        </div>
-                        <div className={`text-lg font-semibold mt-1 ${
-                          isToday(date) 
-                            ? 'w-8 h-8 bg-blue-600 dark:bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto'
-                            : 'text-gray-900 dark:text-gray-100'
-                        }`}>
-                          {date.getDate()}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-7 flex-1">
-                    {generateWeekDays().map((date, index) => {
-                      const dayEvents = getEventsForDate(date);
-                      return (
-                        <div
-                          key={index}
-                          className="border-r border-gray-100 dark:border-gray-600 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                          onClick={() => handleDateClick(date)}
-                        >
-                          <div className="space-y-2">
-                            {dayEvents.slice(0, 6).map((event, eventIndex) => (
-                              <div
-                                key={eventIndex}
-                                className="text-xs px-2 py-1 rounded truncate font-medium cursor-pointer"
-                                style={{ backgroundColor: getPGYColor(event), color: 'white' }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // Close any other open modals first
-                                  setSelectedDate(null);
-                                  setOverflowModalData(null);
-                                  setSelectedEvent(event);
-                                }}
-                                title={event.title}
-                              >
-                                {event.title}
-                              </div>
-                            ))}
-                            {dayEvents.length > 6 && (
-                              <div 
-                                className="text-xs text-muted-foreground px-2 py-1 bg-muted/50 rounded text-center cursor-pointer hover:bg-muted/70 transition-colors"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // Close any other open modals first
-                                  setSelectedDate(null);
-                                  setSelectedEvent(null);
-                                  
-                                  const rect = e.currentTarget.getBoundingClientRect();
-                                  setOverflowModalData({ 
-                                    date, 
-                                    events: dayEvents,
-                                    position: { x: rect.left, y: rect.bottom + 5 }
-                                  });
-                                }}
-                              >
-                                +{dayEvents.length - 6} more
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : viewMode === 'year' ? (
-                // Year View
-                <div className="h-full p-6">
-                  <div className="grid grid-cols-4 gap-6 h-full">
-                    {generateYearMonths().map((monthDate, index) => (
-                      <div
-                        key={index}
-                        className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-md transition-all duration-200 cursor-pointer"
-                        onClick={() => {
-                          setCurrentDate(monthDate);
-                          setViewMode('month');
-                          
-                          // Trigger event refetch when switching to month view
-                          if (onDateChange) {
-                            onDateChange(monthDate.getMonth() + 1, monthDate.getFullYear());
-                          }
-                        }}
-                      >
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 text-center">
-                          {monthNames[monthDate.getMonth()]}
-                        </h3>
-                        <div className="grid grid-cols-7 gap-1">
-                          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, dayIndex) => (
-                            <div key={dayIndex} className="text-xs text-gray-500 dark:text-gray-400 text-center font-medium">
-                              {day}
-                            </div>
-                          ))}
-                          {(() => {
-                            const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-                            const lastDay = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
-                            const startDate = firstDay.getDay();
-                            const days = [];
-                            
-                            // Empty cells for days before month starts
-                            for (let i = 0; i < startDate; i++) {
-                              days.push(<div key={`empty-${i}`} className="text-xs p-1"></div>);
-                            }
-                            
-                            // Days of the month
-                            for (let day = 1; day <= lastDay.getDate(); day++) {
-                              const date = new Date(monthDate.getFullYear(), monthDate.getMonth(), day);
-                              const hasEvents = getEventsForDate(date).length > 0;
-                              days.push(
-                                <div key={day} className={`text-xs p-1 text-center ${
-                                  hasEvents ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded' : 'text-gray-700 dark:text-gray-300'
-                                }`}>
-                                  {day}
-                                </div>
-                              );
-                            }
-                            
-                            return days;
-                          })()}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                // Month View (existing)
-                <>
-                  <div className="grid grid-cols-7 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
-                    {dayNames.map((day) => (
-                      <div key={day} className="px-6 py-5 text-sm font-semibold text-gray-700 dark:text-gray-200 text-center uppercase tracking-wide">
-                        {day}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-7 h-full">
-                    {calendarDays.map((dayInfo, index) => {
-                      if (!dayInfo) return <div key={index} className="min-h-40 border-r border-b border-gray-100 dark:border-gray-600" />;
-                      
-                      const dayEvents = getEventsForDate(dayInfo.date);
-                      const isCurrentDay = isToday(dayInfo.date);
-
-                      return (
-                        <div
-                          key={index}
-                          className={`min-h-40 border-r border-b border-gray-100 dark:border-gray-600 p-4 relative hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 cursor-pointer ${
-                            !dayInfo.isCurrentMonth ? 'text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'
-                          }`}
-                          onClick={() => handleDateClick(dayInfo.date)}
-                        >
-                          <div className={`text-lg font-medium mb-3 ${
-                            isCurrentDay 
-                              ? 'w-10 h-10 bg-blue-600 dark:bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg' 
-                              : dayInfo.isCurrentMonth ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'
-                          }`}>
-                            {dayInfo.day}
-                          </div>
-                          
-                          <div className="space-y-2">
-                            {dayEvents.slice(0, 4).map((event, eventIndex) => (
-                              <div
-                                key={eventIndex}
-                                className={`text-xs px-3 py-2 rounded-lg cursor-pointer hover:shadow-md transition-all duration-200 truncate font-medium`}
-                                style={{ backgroundColor: getPGYColor(event), color: 'white' }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // Close any other open modals first
-                                  setSelectedDate(null);
-                                  setOverflowModalData(null);
-                                  setSelectedEvent(event);
-                                }}
-                                title={event.title}
-                              >
-                                {event.title}
-                              </div>
-                            ))}
-                            {dayEvents.length > 4 && (
-                              <div 
-                                className="text-xs text-muted-foreground px-2 py-1 bg-muted/50 rounded text-center cursor-pointer hover:bg-muted/70 transition-colors"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // Close any other open modals first
-                                  setSelectedDate(null);
-                                  setSelectedEvent(null);
-                                  
-                                  const rect = e.currentTarget.getBoundingClientRect();
-                                  setOverflowModalData({ 
-                                    date: dayInfo.date, 
-                                    events: dayEvents,
-                                    position: { x: rect.left, y: rect.bottom + 5 }
-                                  });
-                                }}
-                              >
-                                +{dayEvents.length - 4} more
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-            </div>
+          <div className="flex space-x-3 items-center">
+            <button 
+              onClick={() => setViewMode('day')}
+              className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${
+                viewMode === 'day' 
+                  ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
+                  : 'text-muted-foreground bg-card border border-border hover:bg-muted'
+              }`}
+            >
+              Day
+            </button>
+            <button 
+              onClick={() => setViewMode('week')}
+              className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${
+                viewMode === 'week' 
+                  ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
+                  : 'text-muted-foreground bg-card border border-border hover:bg-muted'
+              }`}
+            >
+              Week
+            </button>
+            <button 
+              onClick={() => setViewMode('month')}
+              className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${
+                viewMode === 'month' 
+                  ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
+                  : 'text-muted-foreground bg-card border border-border hover:bg-muted'
+              }`}
+            >
+              Month
+            </button>
+            <button 
+              onClick={() => setViewMode('year')}
+              className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${
+                viewMode === 'year' 
+                  ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
+                  : 'text-muted-foreground bg-card border border-border hover:bg-muted'
+              }`}
+            >
+              Year
+            </button>
+            <button
+              className={`flex items-center text-sm font-medium rounded-xl transition-colors duration-200 px-5 py-3 border border-border ${isUpcomingOpen ? 'bg-primary text-primary-foreground border-primary shadow-lg' : 'bg-card text-muted-foreground hover:bg-muted'}`}
+              onClick={() => setIsUpcomingOpen((open) => !open)}
+              aria-expanded={isUpcomingOpen}
+              aria-controls="upcoming-panel-content"
+              type="button"
+            >
+              <span className="mr-2">Upcoming</span>
+              <span className={`transition-transform duration-200 ${isUpcomingOpen ? '' : 'rotate-180'}`}> 
+                <ChevronLeft className="w-4 h-4" style={{ transform: isUpcomingOpen ? 'rotate(-90deg)' : 'rotate(90deg)' }} />
+              </span>
+            </button>
           </div>
         </div>
-        {/* Right Sidebar (Agenda) */}
-        <Sidebar side="right">
-          <SidebarContent>
-            <div className="px-6 py-6 border-b border-border">
-              <h2 className="text-xl font-semibold text-foreground">Upcoming</h2>
+      </div>
+
+      {/* PGY Color Legend + Navigation Buttons */}
+      <div className="py-4 border bg-card fixed left-0 right-0 z-10 px-8 mt-2" style={{ top: 'calc(4.5rem + 1px)' }}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-6">
+            <span className="text-sm font-medium text-muted-foreground">PGY Color Coding:</span>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: '#ef4444' }}></div>
+                <span className="text-sm text-foreground">PGY 1</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: '#f97316' }}></div>
+                <span className="text-sm text-foreground">PGY 2</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: '#8b5cf6' }}></div>
+                <span className="text-sm text-foreground">PGY 3</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: '#6b7280' }}></div>
+                <span className="text-sm text-foreground">No PGY Info</span>
+              </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              {events.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CalendarDays className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-                  </div>
-                  <p className="text-gray-500 dark:text-gray-400">No upcoming events</p>
+          </div>
+          <div className="flex space-x-2">
+            <button onClick={onNavigateToHome} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
+              <Home className="w-5 h-5" /> Home
+            </button>
+            <button onClick={onNavigateToSwapCalls} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
+              <Repeat2 className="w-5 h-5" /> Swap Calls
+            </button>
+            <button onClick={onNavigateToRequestOff} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
+              <Calendar className="w-5 h-5" /> Request Off
+            </button>
+            <button onClick={onNavigateToCheckSchedule} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
+              <User className="w-5 h-5" /> Check My Schedule
+            </button>
+            {isAdmin && (
+              <button onClick={onNavigateToAdmin} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
+                <Shield className="w-5 h-5" /> Admin
+              </button>
+            )}
+            <button onClick={onNavigateToSettings} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
+              <SettingsIcon className="w-5 h-5" /> Settings
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content: Calendar + Upcoming */}
+      <div className="flex flex-1 w-full relative pt-[9rem]">
+        {/* Calendar Grid */}
+        <div className={`flex-1 p-8 transition-all duration-300 ${isUpcomingOpen ? 'mr-[24rem]' : ''}`}>
+          <div className="bg-card rounded-2xl shadow-xl border border-border overflow-hidden h-full">
+            {viewMode === 'day' ? (
+              // Day View
+              <div className="h-full flex flex-col">
+                <div className="p-6 border-b border-gray-200 dark:border-gray-600">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    {currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                  </h3>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {events.slice(0, 10).map((event, index) => (
-                    <div 
-                      key={index}
-                      className="p-4 rounded-xl border border-gray-200 dark:border-gray-600 hover:shadow-md dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer"
-                      onClick={() => {
-                        setSelectedDate(null);
-                        setOverflowModalData(null);
-                        setSelectedEvent(event);
-                      }}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <div 
-                          className="w-3 h-3 rounded-full mt-2 flex-shrink-0"
-                          style={{ backgroundColor: getPGYColor(event) }}
-                        ></div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                            {event.title}
-                          </h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {ensureDate(event.start).toLocaleDateString('en-US', { 
-                              weekday: 'short', 
-                              month: 'short', 
-                              day: 'numeric' 
-                            })}
-                          </p>
+                <div className="flex-1 p-6">
+                  {getEventsForDate(currentDate).length === 0 ? (
+                    <div className="text-center py-20">
+                      <CalendarDays className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                      <p className="text-gray-500 dark:text-gray-400">No events scheduled for this day</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {getEventsForDate(currentDate).map((event, index) => (
+                        <div
+                          key={index}
+                          className="p-4 rounded-lg border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all duration-200 cursor-pointer"
+                          style={{ borderLeftColor: getPGYColor(event), borderLeftWidth: '4px' }}
+                          onClick={(e) => {
+                            // Close any other open modals first
+                            setSelectedDate(null);
+                            setOverflowModalData(null);
+                            setSelectedEvent(event);
+                          }}
+                        >
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100">{event.title}</h4>
                         </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : viewMode === 'week' ? (
+              // Week View
+              <div className="h-full flex flex-col">
+                <div className="grid grid-cols-7 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
+                  {generateWeekDays().map((date, index) => (
+                    <div key={index} className="px-4 py-3 text-center">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                        {shortDayNames[date.getDay()]}
+                      </div>
+                      <div className={`text-lg font-semibold mt-1 ${
+                        isToday(date) 
+                          ? 'w-8 h-8 bg-blue-600 dark:bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto'
+                          : 'text-gray-900 dark:text-gray-100'
+                      }`}>
+                        {date.getDate()}
                       </div>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-          </SidebarContent>
-        </Sidebar>
-        {/* Date Details Modal */}
-        {selectedDate && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl pointer-events-auto">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                  {selectedDate.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </h3>
-                <button
-                  onClick={() => setSelectedDate(null)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-              
-              {(() => {
-                const dayEvents = getEventsForDate(selectedDate);
-                return dayEvents.length === 0 ? (
-                  <div className="text-center py-8">
-                    <CalendarDays className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                    <p className="text-gray-500 dark:text-gray-400">No events scheduled</p>
-                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                      This day is free from scheduled duties
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                      {dayEvents.length} {dayEvents.length === 1 ? 'event' : 'events'} scheduled
-                    </div>
-                    {dayEvents.map((event, index) => (
+                <div className="grid grid-cols-7 flex-1">
+                  {generateWeekDays().map((date, index) => {
+                    const dayEvents = getEventsForDate(date);
+                    return (
                       <div
                         key={index}
-                        className="p-4 rounded-lg border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all duration-200 cursor-pointer"
-                        style={{ borderLeftColor: getPGYColor(event), borderLeftWidth: '4px' }}
-                        onClick={() => {
-                          setSelectedDate(null);
-                          setSelectedEvent(event);
-                        }}
+                        className="border-r border-gray-100 dark:border-gray-600 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        onClick={() => handleDateClick(date)}
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                        <div className="space-y-2">
+                          {dayEvents.slice(0, 6).map((event, eventIndex) => (
+                            <div
+                              key={eventIndex}
+                              className="text-xs px-2 py-1 rounded truncate font-medium cursor-pointer"
+                              style={{ backgroundColor: getPGYColor(event), color: 'white' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Close any other open modals first
+                                setSelectedDate(null);
+                                setOverflowModalData(null);
+                                setSelectedEvent(event);
+                              }}
+                              title={event.title}
+                            >
                               {event.title}
-                            </h4>
-                          </div>
-                          <div 
-                            className="w-3 h-3 rounded-full flex-shrink-0 ml-3 mt-1"
-                            style={{ backgroundColor: getPGYColor(event) }}
-                          ></div>
+                            </div>
+                          ))}
+                          {dayEvents.length > 6 && (
+                            <div 
+                              className="text-xs text-muted-foreground px-2 py-1 bg-muted/50 rounded text-center cursor-pointer hover:bg-muted/70 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Close any other open modals first
+                                setSelectedDate(null);
+                                setSelectedEvent(null);
+                                
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setOverflowModalData({ 
+                                  date, 
+                                  events: dayEvents,
+                                  position: { x: rect.left, y: rect.bottom + 5 }
+                                });
+                              }}
+                            >
+                              +{dayEvents.length - 6} more
+                            </div>
+                          )}
                         </div>
                       </div>
-                    ))}
-                    
-                    <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
-                      <button
-                        onClick={() => {
-                          setSelectedDate(null);
-                          if (dayEvents.length === 1) {
-                            setSelectedEvent(dayEvents[0]);
-                          }
-                        }}
-                        className="w-full px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors duration-200 font-medium"
-                      >
-                        {dayEvents.length === 1 ? 'View Event Details' : 'Manage Events'}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-        )}
-
-        {/* Event Details Modal */}
-        {selectedEvent && (
-          <div 
-            className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none"
-          >
-            <div 
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl border border-gray-200 dark:border-gray-700 pointer-events-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <div 
-                    className="w-3 h-3 rounded-full mr-3"
-                    style={{ backgroundColor: getPGYColor(selectedEvent) }}
-                  ></div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{selectedEvent.title}</h3>
-                </div>
-                <button
-                  onClick={() => setSelectedEvent(null)}
-                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-                >
-                  <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Date and Time */}
-              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-4">
-                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  {ensureDate(selectedEvent.start).toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    month: 'long', 
-                    day: 'numeric',
-                    year: 'numeric'
+                    );
                   })}
                 </div>
               </div>
-              
-              {/* Details */}
-              {selectedEvent.extendedProps && (
-                <div className="mb-4">
-                  <h4 className="font-medium text-xs uppercase tracking-wide mb-3 text-gray-500 dark:text-gray-400">Details</h4>
-                  <div className="space-y-2">
-                    {Object.entries(selectedEvent.extendedProps)
-                      .filter(([key]) => key !== 'scheduleId' && key !== 'dateId')
-                      .map(([key, value]) => (
-                      <div key={key} className="flex justify-between items-center py-1">
-                        <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">
-                          {key === 'residentId' ? 'Resident ID' :
-                           key === 'firstName' ? 'First Name' :
-                           key === 'lastName' ? 'Last Name' :
-                           key === 'callType' ? 'Call Type' : key}
-                        </span> 
-                        <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
-                          {String(value)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {/* Actions */}
-              <div className="flex space-x-3 pt-2">
-                <button
-                  onClick={() => setSelectedEvent(null)}
-                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 text-sm font-medium"
-                >
-                  Close
-                </button>
-                <button
-                  onClick={() => {
-                    if (onNavigateToSwapCalls) {
-                      onNavigateToSwapCalls();
-                    }
-                    setSelectedEvent(null);
-                  }}
-                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors duration-200 text-sm font-medium"
-                >
-                  Request Swap
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Overflow Events Modal */}
-        {overflowModalData && (
-          <div 
-            className="fixed inset-0 z-50 pointer-events-auto"
-            onClick={() => setOverflowModalData(null)}
-          >
-            <div 
-              className="bg-white dark:bg-gray-800 rounded-lg p-3 w-[280px] shadow-lg border border-gray-200 dark:border-gray-700 max-h-[40vh] overflow-hidden flex flex-col pointer-events-auto absolute"
-              style={{
-                left: `${Math.min(overflowModalData.position.x, window.innerWidth - 300)}px`,
-                top: `${overflowModalData.position.y}px`,
-                transform: overflowModalData.position.x > window.innerWidth - 300 ? 'translateX(-100%)' : 'none'
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">
-                  {overflowModalData.date.toLocaleDateString('en-US', { 
-                    weekday: 'short', 
-                    month: 'short', 
-                    day: 'numeric' 
-                  })}
-                </h3>
-                <button
-                  onClick={() => setOverflowModalData(null)}
-                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-                >
-                  <svg className="w-3 h-3 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto">
-                <div className="space-y-1">
-                  {overflowModalData.events.map((event, index) => (
+            ) : viewMode === 'year' ? (
+              // Year View
+              <div className="h-full p-6">
+                <div className="grid grid-cols-4 gap-6 h-full">
+                  {generateYearMonths().map((monthDate, index) => (
                     <div
                       key={index}
-                      className="p-2 rounded border border-gray-200 dark:border-gray-600 hover:shadow-sm transition-all duration-200 cursor-pointer"
-                      style={{ borderLeftColor: getPGYColor(event), borderLeftWidth: '3px' }}
+                      className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-md transition-all duration-200 cursor-pointer"
                       onClick={() => {
-                        setOverflowModalData(null);
-                        setSelectedEvent(event);
+                        setCurrentDate(monthDate);
+                        setViewMode('month');
+                        
+                        // Trigger event refetch when switching to month view
+                        if (onDateChange) {
+                          onDateChange(monthDate.getMonth() + 1, monthDate.getFullYear());
+                        }
                       }}
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-xs text-gray-900 dark:text-gray-100 mb-1 truncate">
-                            {event.title}
-                          </h4>
-                        </div>
-                        <div 
-                          className="w-2 h-2 rounded-full flex-shrink-0 ml-2 mt-0.5"
-                          style={{ backgroundColor: getPGYColor(event) }}
-                        ></div>
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 text-center">
+                        {monthNames[monthDate.getMonth()]}
+                      </h3>
+                      <div className="grid grid-cols-7 gap-1">
+                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, dayIndex) => (
+                          <div key={dayIndex} className="text-xs text-gray-500 dark:text-gray-400 text-center font-medium">
+                            {day}
+                          </div>
+                        ))}
+                        {(() => {
+                          const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+                          const lastDay = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+                          const startDate = firstDay.getDay();
+                          const days = [];
+                          
+                          // Empty cells for days before month starts
+                          for (let i = 0; i < startDate; i++) {
+                            days.push(<div key={`empty-${i}`} className="text-xs p-1"></div>);
+                          }
+                          
+                          // Days of the month
+                          for (let day = 1; day <= lastDay.getDate(); day++) {
+                            const date = new Date(monthDate.getFullYear(), monthDate.getMonth(), day);
+                            const hasEvents = getEventsForDate(date).length > 0;
+                            days.push(
+                              <div key={day} className={`text-xs p-1 text-center ${
+                                hasEvents ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded' : 'text-gray-700 dark:text-gray-300'
+                              }`}>
+                                {day}
+                              </div>
+                            );
+                          }
+                          
+                          return days;
+                        })()}
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
+            ) : (
+              // Month View (existing)
+              <>
+                <div className="grid grid-cols-7 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
+                  {dayNames.map((day) => (
+                    <div key={day} className="px-6 py-5 text-sm font-semibold text-gray-700 dark:text-gray-200 text-center uppercase tracking-wide">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 h-full">
+                  {calendarDays.map((dayInfo, index) => {
+                    if (!dayInfo) return <div key={index} className="min-h-40 border-r border-b border-gray-100 dark:border-gray-600" />;
+                    const dayEvents = getEventsForDate(dayInfo.date);
+                    const isCurrentDay = isToday(dayInfo.date);
+                    // There are 6 rows of 7 days = 42 cells
+                    const isLastRow = index >= 35;
+                    return (
+                      <div
+                        key={index}
+                        className={`min-h-40 border-r border-b border-gray-100 dark:border-gray-600 p-4 relative hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 cursor-pointer ${
+                          !dayInfo.isCurrentMonth ? 'text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'
+                        } ${isLastRow ? 'pb-16' : ''}`}
+                        onClick={() => handleDateClick(dayInfo.date)}
+                      >
+                        <div className={`text-lg font-medium mb-3 ${
+                          isCurrentDay 
+                            ? 'w-10 h-10 bg-blue-600 dark:bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg' 
+                            : dayInfo.isCurrentMonth ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'
+                        }`}>
+                          {dayInfo.day}
+                        </div>
+                        <div className="space-y-2">
+                          {dayEvents.slice(0, 4).map((event, eventIndex) => (
+                            <div
+                              key={eventIndex}
+                              className={`text-xs px-3 py-2 rounded-lg cursor-pointer hover:shadow-md transition-all duration-200 truncate font-medium`}
+                              style={{ backgroundColor: getPGYColor(event), color: 'white' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedDate(null);
+                                setOverflowModalData(null);
+                                setSelectedEvent(event);
+                              }}
+                              title={event.title}
+                            >
+                              {event.title}
+                            </div>
+                          ))}
+                          {dayEvents.length > 4 && (
+                            <div 
+                              className="text-xs text-muted-foreground px-2 py-1 bg-muted/50 rounded text-center cursor-pointer hover:bg-muted/70 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedDate(null);
+                                setSelectedEvent(null);
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setOverflowModalData({ 
+                                  date: dayInfo.date, 
+                                  events: dayEvents,
+                                  position: { x: rect.left, y: rect.bottom + 5 }
+                                });
+                              }}
+                            >
+                              +{dayEvents.length - 4} more
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
-        )}
+        </div>
+        {/* Upcoming Section to the right (animated slide in/out) */}
+        <div
+          className={`max-w-xs w-[24rem] h-[50rem] fixed right-0 z-10 border-l border-border bg-card p-6 flex flex-col transition-transform duration-300 ease-in-out ${isUpcomingOpen ? 'translate-x-0' : 'translate-x-full'} pointer-events-auto`}
+          style={{ top: 'calc(4.5rem + 4.5rem + 0.7rem)', boxShadow: isUpcomingOpen ? '0 0 24px 0 rgba(0,0,0,0.08)' : 'none' }}
+        >
+          <div id="upcoming-panel-content" className="flex-1 overflow-y-auto pb-32">
+            {events.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CalendarDays className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                </div>
+                <p className="text-gray-500 dark:text-gray-400">No upcoming events</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {visibleEvents.map((event, index) => (
+                  <div 
+                    key={index}
+                    className="p-4 rounded-xl border border-gray-200 dark:border-gray-600 hover:shadow-md dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer"
+                    onClick={() => {
+                      setSelectedDate(null);
+                      setOverflowModalData(null);
+                      setSelectedEvent(event);
+                    }}
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div 
+                        className="w-3 h-3 rounded-full mt-2 flex-shrink-0"
+                        style={{ backgroundColor: getPGYColor(event) }}
+                      ></div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                          {event.title}
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {ensureDate(event.start).toLocaleDateString('en-US', { 
+                            weekday: 'short', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-    </SidebarProvider>
+
+      {/* Event Detail Modal */}
+      {selectedEvent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40" onClick={() => setSelectedEvent(null)}>
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl p-8 min-w-[320px] max-w-[90vw]" onClick={e => e.stopPropagation()}>
+            <h2 className="text-xl font-bold mb-2">{selectedEvent.title}</h2>
+            <div className="mb-2">
+              <span className="font-semibold">Date: </span>
+              {ensureDate(selectedEvent.start).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+            </div>
+            <div className="mb-2">
+              <span className="font-semibold">Call Type: </span>
+              {selectedEvent.extendedProps?.callType}
+            </div>
+            <div className="mb-2">
+              <span className="font-semibold">Resident: </span>
+              {selectedEvent.extendedProps?.firstName} {selectedEvent.extendedProps?.lastName}
+            </div>
+            {selectedEvent.extendedProps?.pgyLevel && (
+              <div className="mb-2">
+                <span className="font-semibold">PGY: </span>
+                {selectedEvent.extendedProps.pgyLevel}
+              </div>
+            )}
+            <button className="mt-4 px-4 py-2 bg-primary text-white rounded" onClick={() => setSelectedEvent(null)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+      {eventPopover && (
+        <div
+          className="z-50"
+          style={{ position: 'fixed', left: eventPopover.x, top: eventPopover.y, background: 'none', boxShadow: 'none' }}
+          tabIndex={-1}
+        >
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl p-6 min-w-[260px] max-w-[90vw] border border-gray-300 dark:border-gray-700" tabIndex={0}>
+            <h2 className="text-lg font-bold mb-2">{eventPopover.event.title}</h2>
+            <div className="mb-2">
+              <span className="font-semibold">Date: </span>
+              {ensureDate(eventPopover.event.start).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+            </div>
+            <div className="mb-2">
+              <span className="font-semibold">Call Type: </span>
+              {eventPopover.event.extendedProps?.callType}
+            </div>
+            <div className="mb-2">
+              <span className="font-semibold">Resident: </span>
+              {eventPopover.event.extendedProps?.firstName} {eventPopover.event.extendedProps?.lastName}
+            </div>
+            {eventPopover.event.extendedProps?.pgyLevel && (
+              <div className="mb-2">
+                <span className="font-semibold">PGY: </span>
+                {eventPopover.event.extendedProps.pgyLevel}
+              </div>
+            )}
+            <button className="mt-4 px-4 py-2 bg-primary text-white rounded" onClick={() => setEventPopover(null)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
-export default CalendarPage; 
+export default CalendarPage;

@@ -127,6 +127,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       </div>
 
+      {/* Add space between sections */}
+      <div className="h-8" />
+
       {/* Theme Settings Section */}
       <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
         <div className="border-b border-border pb-4 mb-6">

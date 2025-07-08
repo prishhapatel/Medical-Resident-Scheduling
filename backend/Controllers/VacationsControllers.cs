@@ -26,6 +26,19 @@ namespace MedicalDemo.Controllers
                 return BadRequest("Vacation object is null.");
             }
 
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(vacation.ResidentId) || vacation.Date == default || string.IsNullOrWhiteSpace(vacation.Reason) || string.IsNullOrWhiteSpace(vacation.Status))
+            {
+                return BadRequest("Missing required fields: ResidentId, Date, Reason, and Status are required.");
+            }
+
+            // Check if resident exists
+            var residentExists = await _context.residents.AnyAsync(r => r.resident_id == vacation.ResidentId);
+            if (!residentExists)
+            {
+                return BadRequest($"Resident with id '{vacation.ResidentId}' does not exist.");
+            }
+
             // Generate a new Guid if not supplied
             if (vacation.VacationId == Guid.Empty)
             {
@@ -40,10 +53,25 @@ namespace MedicalDemo.Controllers
         
         // GET: api/vacations
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Vacations>>> GetAllVacations()
+        public async Task<ActionResult<IEnumerable<object>>> GetAllVacations()
         {
-	        var vacations = await _context.vacations.ToListAsync();
-	        return Ok(vacations);
+            var vacations = await _context.vacations.ToListAsync();
+            var residentIds = vacations.Select(v => v.ResidentId).Distinct().ToList();
+            var residents = await _context.residents
+                .Where(r => residentIds.Contains(r.resident_id))
+                .ToDictionaryAsync(r => r.resident_id);
+
+            var result = vacations.Select(v => new {
+                id = v.VacationId,
+                residentId = v.ResidentId,
+                firstName = residents.ContainsKey(v.ResidentId) ? residents[v.ResidentId].first_name : null,
+                lastName = residents.ContainsKey(v.ResidentId) ? residents[v.ResidentId].last_name : null,
+                date = v.Date,
+                reason = v.Reason,
+                status = v.Status
+            });
+
+            return Ok(result);
         }
 
         // GET: api/vacations/filter?residentId=&date=&reason=&status=

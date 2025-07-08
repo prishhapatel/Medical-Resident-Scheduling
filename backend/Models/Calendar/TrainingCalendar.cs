@@ -74,13 +74,13 @@ namespace MedicalDemo.Models.Calendar
         //* DEBUGGING IF NEEDED
         public void printDayAmounts()
         {
-            Console.WriteLine($"Sunday AMT is: {dayOfWeekAmt[0]}");
-            Console.WriteLine($"Monday AMT is: {dayOfWeekAmt[1]}");
-            Console.WriteLine($"Tuesday AMT is: {dayOfWeekAmt[2]}");
-            Console.WriteLine($"Wednesday AMT is: {dayOfWeekAmt[3]}");
-            Console.WriteLine($"Thursday AMT is: {dayOfWeekAmt[4]}");
-            Console.WriteLine($"Friday AMT is: {dayOfWeekAmt[5]}");
-            Console.WriteLine($"Saturday AMT is: {dayOfWeekAmt[6]}");
+            // Console.WriteLine($"Sunday AMT is: {dayOfWeekAmt[0]}");
+            // Console.WriteLine($"Monday AMT is: {dayOfWeekAmt[1]}");
+            // Console.WriteLine($"Tuesday AMT is: {dayOfWeekAmt[2]}");
+            // Console.WriteLine($"Wednesday AMT is: {dayOfWeekAmt[3]}");
+            // Console.WriteLine($"Thursday AMT is: {dayOfWeekAmt[4]}");
+            // Console.WriteLine($"Friday AMT is: {dayOfWeekAmt[5]}");
+            // Console.WriteLine($"Saturday AMT is: {dayOfWeekAmt[6]}");
         }
         //*/
 

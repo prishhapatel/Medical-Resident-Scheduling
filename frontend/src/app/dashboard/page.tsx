@@ -137,7 +137,9 @@ function Dashboard() {
   // Swap calls form state
   const [selectedResident, setSelectedResident] = useState<string>("");
   const [selectedShift, setSelectedShift] = useState<string>("");
-  const [shiftDate, setShiftDate] = useState<string>("");
+  const [yourShiftDate, setYourShiftDate] = useState<string>("");
+  const [partnerShiftDate, setPartnerShiftDate] = useState<string>("");
+  const [partnerShift, setPartnerShift] = useState<string>("");
 
   // Request off form state
   const [startDate, setStartDate] = useState<string>("");
@@ -159,6 +161,17 @@ function Dashboard() {
   const [residents, setResidents] = useState<Resident[]>([]);
   const [mySchedule, setMySchedule] = useState<ScheduleItem[]>([]);
   const [users, setUsers] = useState<{ id: string; first_name: string; last_name: string; email: string; role: string }[]>([]);
+
+  // Add state for adminSwapRequests, myTimeOffRequests, and shifts
+  const [adminSwapRequests, setAdminSwapRequests] = useState<any[]>([]);
+  const [myTimeOffRequests, setMyTimeOffRequests] = useState<any[]>([]);
+  const [shifts, setShifts] = useState<any[]>([]);
+
+  // Sidebar open state for calendar toggle
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // Add a state to track recent user actions
+  const [userRecentActivity, setUserRecentActivity] = useState<any[]>([]);
 
   // Helper functions
   const formatPhoneNumber = (value: string) => {
@@ -205,6 +218,12 @@ function Dashboard() {
     }
   };
 
+  // Helper to compare only the date part
+  function toISODateString(date: string | Date) {
+    if (typeof date === 'string') date = new Date(date);
+    return date.toISOString().split('T')[0];
+  }
+
   // API functions
   const fetchResidents = useCallback(async () => {
     try {
@@ -222,32 +241,50 @@ function Dashboard() {
 
   const fetchMySchedule = useCallback(async () => {
     if (!user?.id) return;
-    
     try {
       const response = await fetch(`${config.apiUrl}/api/dates`);
       if (response.ok) {
         const dates = await response.json();
         const currentDate = new Date();
         currentDate.setHours(0, 0, 0, 0); // Start of today
-        
-        // Filter dates for current user and future dates only
-        const userSchedule = dates
-          .filter((date: DateResponse) => {
+
+        // Find the scheduleId with the most recent date (same as calendar)
+        let latestScheduleId = null;
+        if (dates.length > 0) {
+          const scheduleIdToLatestDate = {};
+          dates.forEach((date) => {
+            if (!date.scheduleId) return;
+            const current = scheduleIdToLatestDate[date.scheduleId];
+            const thisDate = new Date(date.date).getTime();
+            if (!current || thisDate > current) {
+              scheduleIdToLatestDate[date.scheduleId] = thisDate;
+            }
+          });
+          latestScheduleId = Object.entries(scheduleIdToLatestDate)
+            .sort((a, b) => (Number(b[1]) - Number(a[1])))[0]?.[0];
+        }
+
+        // Only include events from the latest schedule
+        const filteredDates = latestScheduleId
+          ? dates.filter((date) => date.scheduleId === latestScheduleId)
+          : dates;
+
+        // Filter for current user and future dates only, and with a real callType
+        const userSchedule = filteredDates
+          .filter((date) => {
             const dateObj = new Date(date.date);
-            return date.residentId === user.id && dateObj >= currentDate;
+            return date.residentId === user.id && dateObj >= currentDate && date.callType;
           })
-          .sort((a: DateResponse, b: DateResponse) => {
-            return new Date(a.date).getTime() - new Date(b.date).getTime();
-          })
-          .slice(0, 20) // Show next 20 shifts
-          .map((date: DateResponse) => ({
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+          .slice(0, 20)
+          .map((date) => ({
             id: date.dateId,
-            date: date.date, // Keep ISO format for proper date handling
+            date: date.date,
             time: "All Day",
             shift: `${date.callType} Call`,
             location: "Hospital"
           }));
-        
+
         setMySchedule(userSchedule);
       } else {
         console.error('Failed to fetch schedule');
@@ -259,18 +296,8 @@ function Dashboard() {
 
   const fetchCalendarEvents = useCallback(async (month?: number, year?: number) => {
     try {
-      // Build URL with month and year parameters if provided
-      let url = `${config.apiUrl}/api/dates`;
-      const params = new URLSearchParams();
-      if (month !== undefined && year !== undefined) {
-        params.append('month', month.toString());
-        params.append('year', year.toString());
-      }
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
-
-      const response = await fetch(url);
+      // Fetch all dates - the backend doesn't support month/year filtering yet
+      const response = await fetch(`${config.apiUrl}/api/dates`);
       if (response.ok) {
         const dates = await response.json();
 
@@ -377,6 +404,36 @@ function Dashboard() {
       });
     }
   };
+
+  // Fetch time off requests
+  const fetchMyTimeOffRequests = useCallback(async () => {
+    try {
+      const response = await fetch(`${config.apiUrl}/api/vacations`);
+      if (response.ok) {
+        const data = await response.json();
+        setMyTimeOffRequests(data);
+      } else {
+        setMyTimeOffRequests([]);
+      }
+    } catch (error) {
+      setMyTimeOffRequests([]);
+    }
+  }, []);
+
+  // Fetch shifts (rotations)
+  const fetchShifts = useCallback(async () => {
+    try {
+      const response = await fetch(`${config.apiUrl}/api/rotations`);
+      if (response.ok) {
+        const data = await response.json();
+        setShifts(data);
+      } else {
+        setShifts([]);
+      }
+    } catch (error) {
+      setShifts([]);
+    }
+  }, []);
 
   // Event handlers
   const handleUpdatePhoneNumber = async () => {
@@ -607,84 +664,105 @@ function Dashboard() {
   };
 
   const handleSubmitSwap = async () => {
-    if (!selectedResident || !selectedShift || !shiftDate) {
+    if (!selectedResident || !selectedShift || !yourShiftDate || !partnerShiftDate || !partnerShift) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please select both a resident, a shift, and a date.",
+        description: "Please select both residents, both shifts, and both dates.",
+      });
+      return;
+    }
+
+    // Check PGY level
+    const myPGY = residents.find(r => r.resident_id === user?.id)?.graduate_yr;
+    const partnerPGY = residents.find(r => r.resident_id === selectedResident)?.graduate_yr;
+    if (myPGY !== partnerPGY) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Both residents must be the same PGY level.",
       });
       return;
     }
 
     try {
-      // Find the current user's shift on the selected date
-      const currentUserShift = calendarEvents.find((event: CalendarEvent) => 
-        event.extendedProps?.residentId === user?.id && 
-        event.start.toDateString() === new Date(shiftDate).toDateString() &&
+      // Debug: Log all candidate events for user and partner
+      console.log('--- DEBUG SWAP ---');
+      console.log('User:', user?.id, 'Partner:', selectedResident);
+      console.log('Your Shift Date:', yourShiftDate, 'Type:', selectedShift);
+      console.log('Partner Shift Date:', partnerShiftDate, 'Type:', partnerShift);
+      console.log('All calendar events:', calendarEvents);
+      const myCandidates = calendarEvents.filter((event) =>
+        event.extendedProps?.residentId === user?.id &&
         event.extendedProps?.callType === selectedShift
       );
-
-      // Find the target resident's shift on the same date  
-      const targetUserShift = calendarEvents.find((event: CalendarEvent) => 
-        event.extendedProps?.residentId === selectedResident && 
-        event.start.toDateString() === new Date(shiftDate).toDateString()
+      const partnerCandidates = calendarEvents.filter((event) =>
+        event.extendedProps?.residentId === selectedResident &&
+        event.extendedProps?.callType === partnerShift
       );
-
-      if (!currentUserShift || !targetUserShift) {
+      console.log('My candidate events:', myCandidates);
+      console.log('Partner candidate events:', partnerCandidates);
+      // Find the current user's shift on their selected date/type
+      const myShift = myCandidates.find((event) =>
+        toISODateString(event.start) === toISODateString(yourShiftDate)
+      );
+      // Find the partner's shift on their selected date/type
+      const partnerShiftEvent = partnerCandidates.find((event) =>
+        toISODateString(event.start) === toISODateString(partnerShiftDate)
+      );
+      console.log('My shift found:', myShift);
+      console.log('Partner shift found:', partnerShiftEvent);
+      if (!myShift || !partnerShiftEvent) {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Could not find shifts to swap. Both residents must have shifts on the selected date.",
+          description: "Could not find both shifts to swap.",
         });
         return;
       }
-
-      // Update current user's shift to target resident
-      const updateCurrentShift = fetch(`${config.apiUrl}/api/dates/${currentUserShift.id}`, {
+      // Swap the shifts
+      const updateMyShift = fetch(`${config.apiUrl}/api/dates/${myShift.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          dateId: currentUserShift.id,
-          scheduleId: currentUserShift.extendedProps.scheduleId,
+          dateId: myShift.id,
+          scheduleId: myShift.extendedProps.scheduleId,
           residentId: selectedResident,
-          date: shiftDate,
+          date: yourShiftDate,
           callType: selectedShift
         })
       });
-
-      // Update target resident's shift to current user
-      const updateTargetShift = fetch(`${config.apiUrl}/api/dates/${targetUserShift.id}`, {
+      const updatePartnerShift = fetch(`${config.apiUrl}/api/dates/${partnerShiftEvent.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          dateId: targetUserShift.id,
-          scheduleId: targetUserShift.extendedProps.scheduleId,
+          dateId: partnerShiftEvent.id,
+          scheduleId: partnerShiftEvent.extendedProps.scheduleId,
           residentId: user?.id,
-          date: shiftDate,
-          callType: targetUserShift.extendedProps.callType
+          date: partnerShiftDate,
+          callType: partnerShift
         })
       });
-
-      const [response1, response2] = await Promise.all([updateCurrentShift, updateTargetShift]);
-
+      const [response1, response2] = await Promise.all([updateMyShift, updatePartnerShift]);
       if (response1.ok && response2.ok) {
         const targetResident = residents.find(r => r.resident_id === selectedResident);
         const targetName = targetResident ? `${targetResident.first_name} ${targetResident.last_name}` : selectedResident;
-        
         toast({
           variant: "success",
           title: "Swap Request Completed",
           description: `Your shift has been swapped with ${targetName}.`,
         });
-        
-        // Refresh calendar events and user schedule
-        const now = new Date();
-        fetchCalendarEvents(now.getMonth() + 1, now.getFullYear());
+        fetchCalendarEvents();
         fetchMySchedule();
+        setUserRecentActivity(prev => [
+          {
+            id: Date.now().toString(),
+            type: 'swap',
+            message: `You swapped shifts with ${targetName} (your: ${yourShiftDate}, partner: ${partnerShiftDate})`,
+            date: new Date().toLocaleDateString()
+          },
+          ...prev
+        ]);
       } else {
         throw new Error('Failed to complete swap');
       }
@@ -696,13 +774,25 @@ function Dashboard() {
         description: "Failed to swap shifts. Please try again.",
       });
     }
-
     setSelectedResident("");
     setSelectedShift("");
-    setShiftDate("");
+    setYourShiftDate("");
+    setPartnerShiftDate("");
+    setPartnerShift("");
   };
 
   const handleSubmitRequestOff = async () => {
+    if (!user?.id) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "User ID is missing. Please log in again.",
+      });
+      return;
+    }
+
+    console.log('[RequestOff] Submitting vacation request for residentId:', user?.id);
+
     if (!startDate || !endDate || !reason) {
       toast({
         variant: "destructive",
@@ -753,6 +843,15 @@ function Dashboard() {
           title: "Time Off Request Submitted",
           description: `Your request for ${reason} from ${startDate} to ${endDate} has been submitted.`,
         });
+        setUserRecentActivity(prev => [
+          {
+            id: Date.now().toString(),
+            type: 'request-off',
+            message: `You requested time off from ${startDate} to ${endDate}`,
+            date: new Date().toLocaleDateString()
+          },
+          ...prev
+        ]);
       } else {
         throw new Error('Some requests failed');
       }
@@ -858,6 +957,12 @@ function Dashboard() {
     }
   };
 
+  // Handler to clear all requests
+  const handleClearRequests = () => {
+    setMyTimeOffRequests([]);
+    setAdminSwapRequests([]);
+  };
+
   // Render main content based on selected menu item
   const renderMainContent = () => {
     switch (selected) {
@@ -873,15 +978,23 @@ function Dashboard() {
             onNavigateToRequestOff={() => setSelected("Request Off")}
             onNavigateToSchedule={() => setSelected("Check My Schedule")}
             userId={user?.id || ""}
+            calendarEvents={calendarEvents}
           />
         );
 
       case "Calendar":
-        return <CalendarPage 
-          events={calendarEvents} 
-          onNavigateToSwapCalls={() => setSelected("Swap Calls")}
-          onDateChange={(month, year) => fetchCalendarEvents(month, year)}
-        />;
+        return (
+          <CalendarPage
+            events={calendarEvents}
+            onNavigateToSwapCalls={() => setSelected("Swap Calls")}
+            onNavigateToRequestOff={() => setSelected("Request Off")}
+            onNavigateToCheckSchedule={() => setSelected("Check My Schedule")}
+            onNavigateToAdmin={() => setSelected("Admin")}
+            onNavigateToSettings={() => setSelected("Settings")}
+            onNavigateToHome={() => setSelected("Home")}
+            isAdmin={isAdmin}
+          />
+        );
 
       case "Settings":
         return (
@@ -898,28 +1011,30 @@ function Dashboard() {
         );
 
       case "Swap Calls":
-        const availableResidents = residents
-          .filter(resident => resident.resident_id !== user?.id)
-          .map(resident => ({
-            id: resident.resident_id,
-            name: `${resident.first_name} ${resident.last_name}`
-          }));
+        // Compute PGY-matched residents for swap
+        const myPGY = residents.find(r => r.resident_id === user?.id)?.graduate_yr;
+        const pgyMatchedResidents = residents.filter(r => r.graduate_yr === myPGY && r.resident_id !== user?.id)
+          .map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }));
         
         const availableShifts = [
-          { id: "Short", name: "Short Call" },
-          { id: "Saturday", name: "Saturday Call" },
-          { id: "Sunday", name: "Sunday Call" }
+          { id: "Short", name: "Short" },
+          { id: "Saturday", name: "Saturday" },
+          { id: "Sunday", name: "Sunday" }
         ];
         
         return (
           <SwapCallsPage
-            shiftDate={shiftDate}
-            setShiftDate={setShiftDate}
+            yourShiftDate={yourShiftDate}
+            setYourShiftDate={setYourShiftDate}
+            partnerShiftDate={partnerShiftDate}
+            setPartnerShiftDate={setPartnerShiftDate}
             selectedResident={selectedResident}
             setSelectedResident={setSelectedResident}
-            residents={availableResidents}
+            residents={pgyMatchedResidents}
             selectedShift={selectedShift}
             setSelectedShift={setSelectedShift}
+            partnerShift={partnerShift}
+            setPartnerShift={setPartnerShift}
             shifts={availableShifts}
             handleSubmitSwap={handleSubmitSwap}
           />
@@ -957,10 +1072,14 @@ function Dashboard() {
         }
         return (
           <AdminPage
-            residents={[]}
-            adminSwapRequests={[]}
-            myTimeOffRequests={[]}
-            shifts={[]}
+            residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }))}
+            myTimeOffRequests={myTimeOffRequests}
+            shifts={shifts.map(s => ({
+              id: s.id || s.rotation_id,
+              name: s.name || s.rotation_name || s.rotation,
+              month: s.month,
+              year: s.year
+            }))}
             handleApproveRequest={handleApproveRequest}
             handleDenyRequest={handleDenyRequest}
             userInvitations={userInvitations}
@@ -973,6 +1092,7 @@ function Dashboard() {
             handleDeleteUser={handleDeleteUser}
             inviteRole={inviteRole}
             setInviteRole={setInviteRole}
+            onClearRequests={handleClearRequests}
           />
         );
 
@@ -1002,33 +1122,51 @@ function Dashboard() {
     initialize();
   }, []);
 
+  // Initial fetch of residents and calendar events
   useEffect(() => {
-    if (selected === "Calendar") {
+    if (user && !loading) {
       fetchResidents();
-    } else if (selected === "Swap Calls") {
-      fetchResidents();
-    } else if (selected === "Check My Schedule") {
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loading]);
+
+  // Fetch calendar events after residents are loaded
+  useEffect(() => {
+    if (residents.length > 0) {
+      fetchCalendarEvents();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [residents]);
+
+  // Handle page-specific data fetching
+  useEffect(() => {
+    if (selected === "Check My Schedule") {
       fetchMySchedule();
     }
-  }, [selected, fetchResidents, fetchMySchedule]);
-
-  // Fetch calendar events whenever residents data is updated and we're on Calendar or Swap Calls page
-  useEffect(() => {
-    if (residents.length > 0 && (selected === "Calendar" || selected === "Swap Calls")) {
-      // Load events for current month for better performance
-      const now = new Date();
-      fetchCalendarEvents(now.getMonth() + 1, now.getFullYear());
-    }
-  }, [residents, selected, fetchCalendarEvents]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
+  // Fetch data when Admin page is selected
+  useEffect(() => {
+    if (selected === "Admin") {
+      fetchMyTimeOffRequests();
+      fetchShifts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
+
   // Computed values
   const displayName = user ? `${user.firstName} ${user.lastName}` : "John Doe";
   const displayEmail = user?.email || "john.doe@email.com";
-  const filteredMenuItems = menuItems.filter(item => item.title !== "Admin" || isAdmin);
+  const filteredMenuItems = menuItems.filter(item => {
+    if (item.title === "Admin") return isAdmin;
+    if (item.title === "Request Off") return !isAdmin;
+    return true;
+  });
 
   const [inviteRole, setInviteRole] = useState<string>("resident");
 
@@ -1039,82 +1177,84 @@ function Dashboard() {
   return (
     <ProtectedRoute>
       <SidebarProvider defaultOpen={true}>
-        <div className="flex min-h-screen w-full">
+        <div className={`flex min-h-screen w-full ${!isSidebarOpen ? '' : ''}`}>
           <Toaster />
           {/* Left Sidebar Trigger (moves with sidebar, only on calendar page) */}
           {selected === "Calendar" && <SidebarFloatingTrigger />}
           {/* Sidebar Navigation */}
-          <Sidebar>
-            <SidebarHeader>
-              <div className="flex items-center justify-center py-2">
-                <span className="text-3xl font-bold tracking-wide">PSYCALL</span>
-              </div>
-            </SidebarHeader>
-            <SidebarContent>
-              <SidebarGroup>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {filteredMenuItems.map((item) => (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild>
-                          <span
-                            className={`flex items-center text-xl cursor-pointer rounded-lg px-2 py-1 transition-colors ${
-                              selected === item.title
-                                ? "font-bold text-gray-800 dark:text-gray-200 bg-gray-300 dark:bg-gray-700"
-                                : "hover:bg-gray-900 dark:hover:bg-gray-700"
-                            }`}
-                            onClick={() => setSelected(item.title)}
-                          >
-                            {item.icon}
-                            {item.title}
-                          </span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            </SidebarContent>
-            <SidebarFooter>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <div className="cursor-pointer flex items-center gap-2 group relative" title="Account options">
-                    <SidebarUserCard
-                      name={displayName}
-                      email={displayEmail}
-                    />
-                    <ChevronDown className="h-5 w-5 text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors" />
-                  </div>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem
-                    className="flex items-center gap-2"
-                    onClick={() => setSelected("Settings")}
-                  >
-                    <UserIcon className="h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTheme("light")} className="flex items-center gap-2">
-                    <Sun className="h-4 w-4" />
-                    <span>Light</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTheme("dark")} className="flex items-center gap-2">
-                    <Moon className="h-4 w-4" />
-                    <span>Dark</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="flex items-center gap-2 text-red-600 focus:text-red-600"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarFooter>
-          </Sidebar>
+          {selected !== "Calendar" && isSidebarOpen && (
+            <Sidebar>
+              <SidebarHeader>
+                <div className="flex items-center justify-center py-2">
+                  <span className="text-3xl font-bold tracking-wide">PSYCALL</span>
+                </div>
+              </SidebarHeader>
+              <SidebarContent>
+                <SidebarGroup>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {filteredMenuItems.map((item) => (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton asChild>
+                            <span
+                              className={`flex items-center text-xl cursor-pointer rounded-lg px-2 py-1 transition-colors ${
+                                selected === item.title
+                                  ? "font-bold text-gray-800 dark:text-gray-200 bg-gray-300 dark:bg-gray-700"
+                                  : "hover:bg-gray-900 dark:hover:bg-gray-700"
+                              }`}
+                              onClick={() => setSelected(item.title)}
+                            >
+                              {item.icon}
+                              {item.title}
+                            </span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              </SidebarContent>
+              <SidebarFooter>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <div className="cursor-pointer flex items-center gap-2 group relative" title="Account options">
+                      <SidebarUserCard
+                        name={displayName}
+                        email={displayEmail}
+                      />
+                      <ChevronDown className="h-5 w-5 text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors" />
+                    </div>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem
+                      className="flex items-center gap-2"
+                      onClick={() => setSelected("Settings")}
+                    >
+                      <UserIcon className="h-4 w-4" />
+                      <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme("light")} className="flex items-center gap-2">
+                      <Sun className="h-4 w-4" />
+                      <span>Light</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme("dark")} className="flex items-center gap-2">
+                      <Moon className="h-4 w-4" />
+                      <span>Dark</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="flex items-center gap-2 text-red-600 focus:text-red-600"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </SidebarFooter>
+            </Sidebar>
+          )}
           {/* Main Content Area */}
-          <div className="flex-1 flex flex-col w-full">
+          <div className={`flex-1 flex flex-col ${isSidebarOpen ? 'w-full' : ''}`}>
             <main
               className={`w-full ${
                 selected === "Calendar" ? "h-screen" : "p-8"
