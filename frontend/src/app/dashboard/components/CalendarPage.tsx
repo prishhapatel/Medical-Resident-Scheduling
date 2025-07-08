@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronLeft, ChevronRight, CalendarDays, PanelLeftIcon, Home, Repeat2, Calendar, User, Shield, Settings as SettingsIcon } from "lucide-react";
-import { SidebarProvider, Sidebar, SidebarContent, useSidebar } from "../../../components/ui/sidebar";
-import Link from "next/link";
+import { ChevronLeft, ChevronRight, CalendarDays, Home, Repeat2, Calendar, User, Shield, Settings as SettingsIcon } from "lucide-react";
 
 interface CalendarEvent {
   id: string;
@@ -38,9 +36,6 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month' | 'year'>('month');
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [overflowModalData, setOverflowModalData] = useState<{ date: Date; events: CalendarEvent[]; position: { x: number; y: number } } | null>(null);
-  // Add state for upcoming panel open/close
   const [isUpcomingOpen, setIsUpcomingOpen] = useState(true);
   const [eventPopover, setEventPopover] = useState<{ event: CalendarEvent; x: number; y: number } | null>(null);
 
@@ -51,8 +46,6 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
 
   const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const shortDayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-  const sidebar = useSidebar();
 
   // Helper function to safely convert to Date object
   const ensureDate = (dateValue: Date | string): Date => {
@@ -183,9 +176,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
   const handleDateClick = (date: Date) => {
     // Close any other open modals first
     setSelectedEvent(null);
-    setOverflowModalData(null);
     
-    setSelectedDate(date);
     const dayEvents = getEventsForDate(date);
     if (dayEvents.length === 1) {
       setSelectedEvent(dayEvents[0]);
@@ -415,10 +406,8 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                           key={index}
                           className="p-4 rounded-lg border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all duration-200 cursor-pointer"
                           style={{ borderLeftColor: getPGYColor(event), borderLeftWidth: '4px' }}
-                          onClick={(e) => {
+                          onClick={() => {
                             // Close any other open modals first
-                            setSelectedDate(null);
-                            setOverflowModalData(null);
                             setSelectedEvent(event);
                           }}
                         >
@@ -466,8 +455,6 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                               onClick={(e) => {
                                 e.stopPropagation();
                                 // Close any other open modals first
-                                setSelectedDate(null);
-                                setOverflowModalData(null);
                                 setSelectedEvent(event);
                               }}
                               title={event.title}
@@ -480,15 +467,12 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                               className="text-xs text-muted-foreground px-2 py-1 bg-muted/50 rounded text-center cursor-pointer hover:bg-muted/70 transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                // Close any other open modals first
-                                setSelectedDate(null);
                                 setSelectedEvent(null);
-                                
                                 const rect = e.currentTarget.getBoundingClientRect();
-                                setOverflowModalData({ 
-                                  date, 
-                                  events: dayEvents,
-                                  position: { x: rect.left, y: rect.bottom + 5 }
+                                setEventPopover({ 
+                                  event: date, // <-- FIXED: use 'date' from map scope
+                                  x: rect.left, 
+                                  y: rect.bottom + 5 
                                 });
                               }}
                             >
@@ -599,8 +583,6 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                               style={{ backgroundColor: getPGYColor(event), color: 'white' }}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setSelectedDate(null);
-                                setOverflowModalData(null);
                                 setSelectedEvent(event);
                               }}
                               title={event.title}
@@ -613,13 +595,12 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                               className="text-xs text-muted-foreground px-2 py-1 bg-muted/50 rounded text-center cursor-pointer hover:bg-muted/70 transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setSelectedDate(null);
                                 setSelectedEvent(null);
                                 const rect = e.currentTarget.getBoundingClientRect();
-                                setOverflowModalData({ 
-                                  date: dayInfo.date, 
-                                  events: dayEvents,
-                                  position: { x: rect.left, y: rect.bottom + 5 }
+                                setEventPopover({ 
+                                  event: dayInfo.date, 
+                                  x: rect.left, 
+                                  y: rect.bottom + 5 
                                 });
                               }}
                             >
@@ -655,8 +636,6 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                     key={index}
                     className="p-4 rounded-xl border border-gray-200 dark:border-gray-600 hover:shadow-md dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer"
                     onClick={() => {
-                      setSelectedDate(null);
-                      setOverflowModalData(null);
                       setSelectedEvent(event);
                     }}
                   >

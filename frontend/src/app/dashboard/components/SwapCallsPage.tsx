@@ -90,12 +90,12 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                 min={new Date().toISOString().split('T')[0]}
               />
             </div>
-            {/* Partner's Shift Date Selection */}
+            {/* Partner&apos;s Shift Date Selection */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" />
                 <label htmlFor="partner-shift-date" className="text-sm font-semibold text-foreground">
-                  Partner's Shift Date
+                  Partner&apos;s Shift Date
                 </label>
               </div>
               <input
@@ -152,12 +152,12 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                 ))}
               </select>
             </div>
-            {/* Partner's Shift Type Selection */}
+            {/* Partner&apos;s Shift Type Selection */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
                 <label htmlFor="partner-shift-select" className="text-sm font-semibold text-foreground">
-                  Partner's Shift Type
+                  Partner&apos;s Shift Type
                 </label>
               </div>
               <select
@@ -189,7 +189,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Partner's Shift:</span>
+                    <span className="text-muted-foreground">Partner&apos;s Shift:</span>
                     <span className="font-medium text-foreground">
                       {partnerShiftDate ? new Date(partnerShiftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} - {shifts.find(s => s.id === partnerShift)?.name || 'N/A'}
                     </span>
@@ -237,7 +237,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                   </p>
                   <div className="text-xs text-yellow-600 dark:text-yellow-400">
                     <strong>Your Shift:</strong> {yourShiftDate ? new Date(yourShiftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''} - {shifts.find(s => s.id === selectedShift)?.name || 'N/A'}<br/>
-                    <strong>Partner's Shift:</strong> {partnerShiftDate ? new Date(partnerShiftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''} - {shifts.find(s => s.id === partnerShift)?.name || 'N/A'}<br/>
+                    <strong>Partner&apos;s Shift:</strong> {partnerShiftDate ? new Date(partnerShiftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''} - {shifts.find(s => s.id === partnerShift)?.name || 'N/A'}<br/>
                     <strong>Partner:</strong> {residents.find(r => r.id === selectedResident)?.name}
                   </div>
                 </div>

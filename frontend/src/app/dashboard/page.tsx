@@ -12,7 +12,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
-  useSidebar,
 } from "../../components/ui/sidebar";
 import { SidebarUserCard } from "./components/SidebarUserCard";
 import { Repeat, CalendarDays, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun } from "lucide-react";
@@ -108,7 +107,6 @@ const leaveReasons = [
 ];
 
 function SidebarFloatingTrigger() {
-  const sidebar = useSidebar();
   return (
     <div
       className={` z-50 left-65 top-13 -translate-y-1/2 transition-all duration-300`}
@@ -149,7 +147,6 @@ function Dashboard() {
 
   // Admin state
   const [inviteEmail, setInviteEmail] = useState<string>("");
-  const [inviteResidentId, setInviteResidentId] = useState<string>("");
 
   const [userInvitations, setUserInvitations] = useState<{
     id: string;
@@ -163,15 +160,17 @@ function Dashboard() {
   const [users, setUsers] = useState<{ id: string; first_name: string; last_name: string; email: string; role: string }[]>([]);
 
   // Add state for adminSwapRequests, myTimeOffRequests, and shifts
-  const [adminSwapRequests, setAdminSwapRequests] = useState<any[]>([]);
-  const [myTimeOffRequests, setMyTimeOffRequests] = useState<any[]>([]);
-  const [shifts, setShifts] = useState<any[]>([]);
-
-  // Sidebar open state for calendar toggle
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
-  // Add a state to track recent user actions
-  const [userRecentActivity, setUserRecentActivity] = useState<any[]>([]);
+  const [myTimeOffRequests, setMyTimeOffRequests] = useState<{
+    id: string;
+    date: string;
+    reason: string;
+    status: string;
+    residentId: string;
+  }[]>([]);
+  const [shifts, setShifts] = useState<{
+    id: string;
+    name: string;
+  }[]>([]);
 
   // Helper functions
   const formatPhoneNumber = (value: string) => {
@@ -294,7 +293,7 @@ function Dashboard() {
     }
   }, [user?.id]);
 
-  const fetchCalendarEvents = useCallback(async (month?: number, year?: number) => {
+  const fetchCalendarEvents = useCallback(async () => {
     try {
       // Fetch all dates - the backend doesn't support month/year filtering yet
       const response = await fetch(`${config.apiUrl}/api/dates`);
@@ -305,8 +304,8 @@ function Dashboard() {
         let latestScheduleId = null;
         if (dates.length > 0) {
           // Map of scheduleId to most recent date
-          const scheduleIdToLatestDate = {};
-          dates.forEach((date) => {
+          const scheduleIdToLatestDate: Record<string, number> = {};
+          dates.forEach((date: DateResponse) => {
             if (!date.scheduleId) return;
             const current = scheduleIdToLatestDate[date.scheduleId];
             const thisDate = new Date(date.date).getTime();
@@ -363,8 +362,8 @@ function Dashboard() {
           description: "Failed to load calendar events",
         });
       }
-    } catch (error) {
-      console.error('Error fetching calendar events:', error);
+    } catch {
+      console.error('Error fetching calendar events');
       toast({
         variant: "destructive",
         title: "Error",
@@ -381,14 +380,14 @@ function Dashboard() {
       ]);
       const residents = residentsRes.ok ? await residentsRes.json() : [];
       const admins = adminsRes.ok ? await adminsRes.json() : [];
-      const residentUsers = residents.map((r: any) => ({
+      const residentUsers = residents.map((r: { resident_id: string; first_name: string; last_name: string; email: string }) => ({
         id: r.resident_id,
         first_name: r.first_name,
         last_name: r.last_name,
         email: r.email,
         role: 'resident',
       }));
-      const adminUsers = admins.map((a: any) => ({
+      const adminUsers = admins.map((a: { admin_id: string; first_name: string; last_name: string; email: string }) => ({
         id: a.admin_id,
         first_name: a.first_name,
         last_name: a.last_name,
@@ -396,7 +395,7 @@ function Dashboard() {
         role: 'admin',
       }));
       setUsers([...residentUsers, ...adminUsers]);
-    } catch (error) {
+    } catch {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -415,7 +414,7 @@ function Dashboard() {
       } else {
         setMyTimeOffRequests([]);
       }
-    } catch (error) {
+    } catch {
       setMyTimeOffRequests([]);
     }
   }, []);
@@ -430,7 +429,7 @@ function Dashboard() {
       } else {
         setShifts([]);
       }
-    } catch (error) {
+    } catch {
       setShifts([]);
     }
   }, []);
@@ -595,7 +594,7 @@ function Dashboard() {
   };
 
   const handleSendInvite = async () => {
-    if(!inviteEmail.trim()){
+    if (!inviteEmail) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -603,34 +602,37 @@ function Dashboard() {
       });
       return;
     }
-    try{
-      const res = await fetch("http://localhost:5109/api/invite/send", {
+
+    try {
+      const response = await fetch(`${config.apiUrl}/api/invitations`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email: inviteEmail,
-        }),        
+          role: "resident",
+        }),
       });
-      if(!res.ok){
-        throw new Error(`API returned ${res.status}`);
+
+      if (response.ok) {
+        const newInvitation = {
+          id: Date.now().toString(),
+          email: inviteEmail,
+          status: "Pending" as const,
+        };
+        setUserInvitations((prev) => [...prev, newInvitation]);
+        setInviteEmail("");
+        toast({
+          variant: "success",
+          title: "Invitation Sent",
+          description: `Invitation sent to ${inviteEmail}.`,
+        });
+      } else {
+        throw new Error('Failed to send invitation');
       }
-      const newInvitation ={
-        id: Date.now().toString(),
-        email: inviteEmail,
-        status: "Pending" as "Pending",
-      };
-      setUserInvitations((prev) => [...prev, newInvitation]);
-      setInviteEmail("");
-      setInviteResidentId("");
-      toast({
-        variant: "success",
-        title: "Invitation Sent",
-        description: `Invitation sent to ${inviteEmail}.`,
-      });
-    }catch (error){
-      console.error("Send invitation error:", error);
+    } catch {
+      console.error("Send invitation error");
       toast({
         variant: "destructive",
         title: "Error",
@@ -754,15 +756,6 @@ function Dashboard() {
         });
         fetchCalendarEvents();
         fetchMySchedule();
-        setUserRecentActivity(prev => [
-          {
-            id: Date.now().toString(),
-            type: 'swap',
-            message: `You swapped shifts with ${targetName} (your: ${yourShiftDate}, partner: ${partnerShiftDate})`,
-            date: new Date().toLocaleDateString()
-          },
-          ...prev
-        ]);
       } else {
         throw new Error('Failed to complete swap');
       }
@@ -817,57 +810,52 @@ function Dashboard() {
       const end = new Date(endDate);
       const requests = [];
       
-      for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-        requests.push(
-          fetch(`${config.apiUrl}/api/vacations`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              residentId: user?.id,
-              date: date.toISOString().split('T')[0] + 'T00:00:00',
-              reason: reason,
-              status: 'Pending'
-            })
-          })
-        );
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        requests.push({
+          residentId: user.id,
+          date: d.toISOString().split('T')[0],
+          reason: reason,
+          description: description || '',
+        });
       }
 
-      const responses = await Promise.all(requests);
-      const allSuccessful = responses.every(response => response.ok);
+      // Send all requests
+      const response = await fetch(`${config.apiUrl}/api/vacations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requests),
+      });
 
-      if (allSuccessful) {
+      if (response.ok) {
         toast({
           variant: "success",
-          title: "Time Off Request Submitted",
-          description: `Your request for ${reason} from ${startDate} to ${endDate} has been submitted.`,
+          title: "Request Submitted",
+          description: `Time off request submitted for ${startDate} to ${endDate}.`,
         });
-        setUserRecentActivity(prev => [
-          {
-            id: Date.now().toString(),
-            type: 'request-off',
-            message: `You requested time off from ${startDate} to ${endDate}`,
-            date: new Date().toLocaleDateString()
-          },
-          ...prev
-        ]);
+        
+        // Clear form
+        setStartDate("");
+        setEndDate("");
+        setReason("");
+        setDescription("");
+        
+        // Refresh data
+        fetchMyTimeOffRequests();
+        
+        // Add to recent activity
       } else {
-        throw new Error('Some requests failed');
+        throw new Error('Failed to submit request');
       }
-    } catch (error) {
-      console.error('Error submitting vacation request:', error);
+    } catch {
+      console.error('Error submitting vacation request');
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to submit vacation request. Please try again.",
+        description: "Failed to submit request. Please try again.",
       });
     }
-
-    setStartDate("");
-    setEndDate("");
-    setReason("");
-    setDescription("");
   };
 
   const handleLogout = async () => {
@@ -884,71 +872,56 @@ function Dashboard() {
   };
 
   const handleChangeRole = async (user: { id: string; first_name: string; last_name: string; email: string; role: string }, newRole: string) => {
-    if (user.role === newRole) return;
     try {
-      if (user.role === 'resident' && newRole === 'admin') {
-        // Delete from residents, add to admins
-        await fetch(`${config.apiUrl}/api/Residents/${user.id}`, { method: 'DELETE' });
-        await fetch(`${config.apiUrl}/api/Admins`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            admin_id: user.id,
-            first_name: user.first_name,
-            last_name: user.last_name,
-            email: user.email,
-            phone_num: ''
-          })
-        });
-      } else if (user.role === 'admin' && newRole === 'resident') {
-        // Delete from admins, add to residents
-        await fetch(`${config.apiUrl}/api/Admins/${user.id}`, { method: 'DELETE' });
-        await fetch(`${config.apiUrl}/api/Residents`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            resident_id: user.id,
-            first_name: user.first_name,
-            last_name: user.last_name,
-            email: user.email,
-            password: 'changeme',
-            graduate_yr: 0,
-            phone_num: '',
-            weekly_hours: 0,
-            total_hours: 0,
-            bi_yearly_hours: 0
-          })
-        });
-      }
-      toast({
-        variant: 'success',
-        title: 'Role Changed',
-        description: `${user.first_name} ${user.last_name} is now a ${newRole}.`
+      const response = await fetch(`${config.apiUrl}/api/users/${user.id}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ role: newRole }),
       });
-      fetchUsers();
-    } catch (error) {
+
+      if (response.ok) {
+        setUsers(prev => prev.map(u => 
+          u.id === user.id ? { ...u, role: newRole } : u
+        ));
+        toast({
+          variant: 'success',
+          title: 'Role Updated',
+          description: `${user.first_name} ${user.last_name}'s role has been updated to ${newRole}.`
+        });
+      } else {
+        throw new Error('Failed to update role');
+      }
+    } catch {
+      console.error('Error updating user role');
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to change user role.'
+        description: 'Failed to update user role.'
       });
     }
   };
 
   const handleDeleteUser = async (user: { id: string; role: string }) => {
     try {
-      if (user.role === 'resident') {
-        await fetch(`${config.apiUrl}/api/Residents/${user.id}`, { method: 'DELETE' });
-      } else {
-        await fetch(`${config.apiUrl}/api/Admins/${user.id}`, { method: 'DELETE' });
-      }
-      toast({
-        variant: 'success',
-        title: 'User Deleted',
-        description: `${user.role === 'resident' ? 'Resident' : 'Admin'} deleted.`
+      const endpoint = user.role === 'admin' ? 'Admins' : 'Residents';
+      const response = await fetch(`${config.apiUrl}/api/${endpoint}/${user.id}`, {
+        method: 'DELETE',
       });
-      fetchUsers();
-    } catch (error) {
+
+      if (response.ok) {
+        setUsers(prev => prev.filter(u => u.id !== user.id));
+        toast({
+          variant: 'success',
+          title: 'User Deleted',
+          description: 'User has been successfully deleted.'
+        });
+      } else {
+        throw new Error('Failed to delete user');
+      }
+    } catch {
+      console.error('Error deleting user');
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -960,7 +933,6 @@ function Dashboard() {
   // Handler to clear all requests
   const handleClearRequests = () => {
     setMyTimeOffRequests([]);
-    setAdminSwapRequests([]);
   };
 
   // Render main content based on selected menu item
@@ -1073,12 +1045,17 @@ function Dashboard() {
         return (
           <AdminPage
             residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }))}
-            myTimeOffRequests={myTimeOffRequests}
+            myTimeOffRequests={myTimeOffRequests.map(r => ({
+              id: r.id,
+              startDate: r.date || '',
+              endDate: r.date || '',
+              resident: r.residentId || '',
+              reason: r.reason,
+              status: r.status,
+            }))}
             shifts={shifts.map(s => ({
-              id: s.id || s.rotation_id,
-              name: s.name || s.rotation_name || s.rotation,
-              month: s.month,
-              year: s.year
+              id: s.id,
+              name: s.name
             }))}
             handleApproveRequest={handleApproveRequest}
             handleDenyRequest={handleDenyRequest}
@@ -1177,12 +1154,12 @@ function Dashboard() {
   return (
     <ProtectedRoute>
       <SidebarProvider defaultOpen={true}>
-        <div className={`flex min-h-screen w-full ${!isSidebarOpen ? '' : ''}`}>
+        <div className={`flex min-h-screen w-full`}>
           <Toaster />
           {/* Left Sidebar Trigger (moves with sidebar, only on calendar page) */}
           {selected === "Calendar" && <SidebarFloatingTrigger />}
           {/* Sidebar Navigation */}
-          {selected !== "Calendar" && isSidebarOpen && (
+          {selected !== "Calendar" && (
             <Sidebar>
               <SidebarHeader>
                 <div className="flex items-center justify-center py-2">
@@ -1254,7 +1231,7 @@ function Dashboard() {
             </Sidebar>
           )}
           {/* Main Content Area */}
-          <div className={`flex-1 flex flex-col ${isSidebarOpen ? 'w-full' : ''}`}>
+          <div className={`flex-1 flex flex-col`}>
             <main
               className={`w-full ${
                 selected === "Calendar" ? "h-screen" : "p-8"

@@ -35,7 +35,14 @@ interface DashboardData {
   }>;
 }
 
-const HomePage: React.FC<HomeProps & { calendarEvents?: any[]; userId: string }> = ({
+interface CalendarEvent {
+  start: Date | string;
+  extendedProps?: {
+    residentId?: string;
+  };
+}
+
+const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId: string }> = ({
   displayName,
   onNavigateToSwapCalls,
   onNavigateToRequestOff,

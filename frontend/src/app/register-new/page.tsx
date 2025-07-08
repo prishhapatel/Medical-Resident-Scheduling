@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { config } from "@/config";
 import { useRouter } from "next/navigation";
 
-export default function RegisterNew() {
+function RegisterNewContent() {
   const { theme } = useTheme();
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -184,5 +184,13 @@ export default function RegisterNew() {
         <p className="text-sm">&copy; 2025 PSYCALL. All rights reserved.</p>
       </footer>
     </div>
+  );
+}
+
+export default function RegisterNew() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RegisterNewContent />
+    </Suspense>
   );
 }

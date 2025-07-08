@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { Repeat, CalendarDays, UserPlus, Send, Check, X } from "lucide-react";
-import { differenceInCalendarDays, format, parseISO } from 'date-fns';
+import { CalendarDays, UserPlus, Send, Check, X } from "lucide-react";
+import { differenceInCalendarDays, parseISO } from 'date-fns';
 import { config } from '../../../config';
 
 interface AdminPageProps {
@@ -27,8 +27,21 @@ interface AdminPageProps {
   latestVersion?: string;
 }
 
+interface Request {
+  id?: string;
+  firstName?: string;
+  lastName?: string;
+  resident?: string;
+  residentName?: string;
+  reason?: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  date?: string;
+}
+
 // Modal component
-function Modal({ open, onClose, title, children }) {
+function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -44,7 +57,6 @@ function Modal({ open, onClose, title, children }) {
 const AdminPage: React.FC<AdminPageProps> = ({
   residents,
   myTimeOffRequests,
-  shifts,
   handleApproveRequest,
   handleDenyRequest,
   userInvitations,
@@ -58,13 +70,9 @@ const AdminPage: React.FC<AdminPageProps> = ({
   handleChangeRole,
   handleDeleteUser,
   onClearRequests,
-  latestVersion,
 }) => {
   const [generating, setGenerating] = useState(false);
   const [message, setMessage] = useState("");
-  const [backendStatus, setBackendStatus] = useState<'Online' | 'Offline'>('Offline');
-  const currentVersion = process.env.NEXT_PUBLIC_APP_VERSION || 'dev';
-  const updateNeeded = latestVersion && latestVersion !== currentVersion;
   const [showRequestsModal, setShowRequestsModal] = useState(false);
   const [showInvitationsModal, setShowInvitationsModal] = useState(false);
 
@@ -75,7 +83,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
       const response = await fetch(`${config.apiUrl}/api/schedules/generate`, { method: "POST" });
       if (!response.ok) throw new Error("Failed to generate schedule");
       setMessage("New schedule generated successfully!");
-    } catch (err) {
+    } catch {
       setMessage("Error generating schedule. Please try again.");
     } finally {
       setGenerating(false);
@@ -85,12 +93,19 @@ const AdminPage: React.FC<AdminPageProps> = ({
   useEffect(() => {
     // Ping backend API
     fetch(`${config.apiUrl}/api/rotations`, { method: 'GET' })
-      .then(res => setBackendStatus(res.ok ? 'Online' : 'Offline'))
-      .catch(() => setBackendStatus('Offline'));
+      .then(res => {
+        // Backend status check - keeping the logic but not storing the result
+        if (!res.ok) {
+          console.warn('Backend is offline');
+        }
+      })
+      .catch(() => {
+        console.warn('Backend is offline');
+      });
   }, []);
 
   // Group vacation requests by resident and reason into date ranges
-  function groupRequests(requests: any[]) {
+  function groupRequests(requests: Request[]) {
     if (!requests || requests.length === 0) return [];
     // Sort by resident, reason, then date
     const sorted = [...requests].sort((a, b) => {
@@ -98,22 +113,22 @@ const AdminPage: React.FC<AdminPageProps> = ({
       const nameB = (b.firstName || '') + (b.lastName || '');
       if (nameA !== nameB) return nameA.localeCompare(nameB);
       if (a.reason !== b.reason) return (a.reason || '').localeCompare(b.reason || '');
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
+      return new Date(a.date || '').getTime() - new Date(b.date || '').getTime();
     });
     const groups = [];
     let i = 0;
     while (i < sorted.length) {
       const curr = sorted[i];
-      let start = curr.date;
-      let end = curr.date;
+      const start = curr.date || '';
+      let end = curr.date || '';
       let j = i + 1;
       while (
         j < sorted.length &&
         (sorted[j].firstName === curr.firstName && sorted[j].lastName === curr.lastName) &&
         sorted[j].reason === curr.reason &&
-        differenceInCalendarDays(parseISO(sorted[j].date), parseISO(end)) === 1
+        differenceInCalendarDays(parseISO(sorted[j].date || ''), parseISO(end)) === 1
       ) {
-        end = sorted[j].date;
+        end = sorted[j].date || '';
         j++;
       }
       groups.push({
@@ -141,7 +156,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   };
 
   // Helper to get date or date range
-  const getRequestDate = (request: any) => {
+  const getRequestDate = (request: Request) => {
     if (request.startDate && request.endDate && request.startDate !== request.endDate) {
       return `${formatDate(request.startDate)} - ${formatDate(request.endDate)}`;
     }
@@ -155,7 +170,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   };
 
   // Helper to get resident name
-  const getResidentName = (request: any) => {
+  const getResidentName = (request: Request) => {
     if (request.firstName && request.lastName) {
       return `${request.firstName} ${request.lastName}`;
     }
@@ -220,7 +235,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
             </thead>
             <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
               {groupedRequests.length > 0 ? (
-                groupedRequests.map((request: any, idx: number) => (
+                groupedRequests.map((request: Request, idx: number) => (
                   <tr key={request.id || `${request.startDate || request.date || ''}-${getResidentName(request)}-${idx}`}
                       className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
@@ -230,10 +245,10 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       {request.status === "Pending" && (
                         <div className="flex items-center space-x-2">
-                          <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-500 hover:text-white" onClick={() => handleApproveRequest(request.id)}>
+                          <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-500 hover:text-white" onClick={() => handleApproveRequest(request.id || '')}>
                             <Check className="h-4 w-4 mr-2" /> Approve
                           </Button>
-                          <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDenyRequest(request.id)}>
+                          <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDenyRequest(request.id || '')}>
                             <X className="h-4 w-4 mr-2" /> Deny
                           </Button>
                         </div>
@@ -301,7 +316,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       {invite.status === "Pending" && (
-                        <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white" onClick={() => handleResendInvite(invite.id)}>
+                        <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white" onClick={() => handleResendInvite(invite.id || '')}>
                           Resend
                         </Button>
                       )}
@@ -338,7 +353,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
             </thead>
             <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
               {groupedRequests.length > 0 ? (
-                groupedRequests.map((request: any, idx: number) => (
+                groupedRequests.map((request: Request, idx: number) => (
                   <tr key={request.id || `${request.startDate || request.date || ''}-${getResidentName(request)}-${idx}`}
                       className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
@@ -348,10 +363,10 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       {request.status === "Pending" && (
                         <div className="flex items-center space-x-2">
-                          <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-500 hover:text-white" onClick={() => handleApproveRequest(request.id)}>
+                          <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-500 hover:text-white" onClick={() => handleApproveRequest(request.id || '')}>
                             <Check className="h-4 w-4 mr-2" /> Approve
                           </Button>
-                          <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDenyRequest(request.id)}>
+                          <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDenyRequest(request.id || '')}>
                             <X className="h-4 w-4 mr-2" /> Deny
                           </Button>
                         </div>
@@ -394,7 +409,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       {invite.status === "Pending" && (
-                        <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white" onClick={() => handleResendInvite(invite.id)}>
+                        <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white" onClick={() => handleResendInvite(invite.id || '')}>
                           Resend
                         </Button>
                       )}
