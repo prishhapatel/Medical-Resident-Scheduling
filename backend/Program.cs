@@ -24,7 +24,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
             "http://localhost:3002",   // for local development
-            "https://psycall.net"      // for production
+            "https://psycall.net",     // for production
+            "https://www.psycall.net"  // for www subdomain
         )
         .AllowAnyMethod()
         .AllowAnyHeader()
@@ -68,10 +69,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
-// Add CORS middleware
+// Add CORS middleware - must be before other middleware
 app.UseCors("AllowFrontend");
+
+app.UseHttpsRedirection();
 
 app.MapControllers();
 
