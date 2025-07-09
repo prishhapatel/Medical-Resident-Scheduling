@@ -16,6 +16,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IMedicalRepository, MedicalDataRepository>();
 builder.Services.AddScoped<SchedulingMapperService>();
 builder.Services.AddScoped<SchedulerService>();
+builder.Services.AddScoped<PostmarkService>();
 
 // Add CORS configuration
 builder.Services.AddCors(options =>
@@ -69,16 +70,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Add CORS middleware - must be before other middleware
-app.UseCors("AllowFrontend");
-
 app.UseHttpsRedirection();
+
+// Add CORS middleware
+app.UseCors("AllowFrontend");
 
 app.MapControllers();
 
 // Use the port from environment variable or default to 5109
 var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
-app.Urls.Add($"http://0.0.0.0:{port}");
+app.Urls.Add($"http://localhost:{port}");
 
 
 app.Run();
