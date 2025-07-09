@@ -23,14 +23,13 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(
-            "http://localhost:3002",   // for local development
-            "https://psycall.net",     // for production
-            "https://www.psycall.net"  // for www subdomain
-        )
-        .AllowAnyMethod()
-        .AllowAnyHeader()
-        .AllowCredentials();
+        policy
+            .SetIsOriginAllowed(origin => 
+                origin.StartsWith("https://psycall.net") || 
+                origin.StartsWith("http://localhost"))
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
@@ -70,10 +69,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
-// Add CORS middleware
+// Add CORS middleware - MUST be first, before any other middleware
 app.UseCors("AllowFrontend");
+
+app.UseHttpsRedirection();
 
 app.MapControllers();
 

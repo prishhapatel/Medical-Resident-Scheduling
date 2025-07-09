@@ -80,7 +80,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
     setGenerating(true);
     setMessage("");
     try {
-      const response = await fetch(`${config.apiUrl}/api/schedules/generate`, { method: "POST" });
+      const response = await fetch(`${config.apiUrl}/api/algorithm/training/2025`, { method: "POST" });
       if (!response.ok) throw new Error("Failed to generate schedule");
       setMessage("New schedule generated successfully!");
     } catch {
