@@ -23,8 +23,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.WithOrigins(
-            "http://localhost:3000",   // for local development
-            "http://localhost:3002",   // for local development (alternative port)
+            "http://localhost:3002",   // for local development
             "https://psycall.net"      // for production
         )
         .AllowAnyMethod()
