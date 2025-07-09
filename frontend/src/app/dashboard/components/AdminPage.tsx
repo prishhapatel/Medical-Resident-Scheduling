@@ -25,6 +25,7 @@ interface AdminPageProps {
   handleDeleteUser: (user: { id: string; first_name: string; last_name: string; email: string; role: string }) => void;
   onClearRequests?: () => void;
   latestVersion?: string;
+  onNavigateToCalendar?: () => void;
 }
 
 interface Request {
@@ -70,6 +71,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   handleChangeRole,
   handleDeleteUser,
   onClearRequests,
+  onNavigateToCalendar,
 }) => {
   const [generating, setGenerating] = useState(false);
   const [message, setMessage] = useState("");
@@ -83,6 +85,13 @@ const AdminPage: React.FC<AdminPageProps> = ({
       const response = await fetch(`${config.apiUrl}/api/algorithm/training/2025`, { method: "POST" });
       if (!response.ok) throw new Error("Failed to generate schedule");
       setMessage("New schedule generated successfully!");
+      
+      // Navigate to calendar view after successful generation
+      if (onNavigateToCalendar) {
+        setTimeout(() => {
+          onNavigateToCalendar();
+        }, 1500); // Wait 1.5 seconds to show success message
+      }
     } catch {
       setMessage("Error generating schedule. Please try again.");
     } finally {

@@ -18,6 +18,12 @@ namespace MedicalDemo.Server.Controllers
             _context = context;
         }
 
+        [HttpOptions]
+        public IActionResult Options()
+        {
+            return Ok();
+        }
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] Residents resident)
         {

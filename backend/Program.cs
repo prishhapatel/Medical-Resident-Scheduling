@@ -26,6 +26,7 @@ builder.Services.AddCors(options =>
         policy
             .SetIsOriginAllowed(origin => 
                 origin.StartsWith("https://psycall.net") || 
+                origin.StartsWith("https://www.psycall.net") ||
                 origin.StartsWith("http://localhost"))
             .AllowAnyMethod()
             .AllowAnyHeader()
@@ -71,6 +72,21 @@ if (app.Environment.IsDevelopment())
 
 // Add CORS middleware - MUST be first, before any other middleware
 app.UseCors("AllowFrontend");
+
+// Handle preflight requests
+app.Use(async (context, next) =>
+{
+    if (context.Request.Method == "OPTIONS")
+    {
+        context.Response.Headers.Add("Access-Control-Allow-Origin", context.Request.Headers["Origin"]);
+        context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+        context.Response.StatusCode = 200;
+        return;
+    }
+    await next();
+});
 
 app.UseHttpsRedirection();
 

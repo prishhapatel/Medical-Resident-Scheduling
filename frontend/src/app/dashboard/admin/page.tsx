@@ -133,6 +133,7 @@ export default function Page() {
       inviteRole={inviteRole}
       setInviteRole={handleSetInviteRole}
       onClearRequests={handleClearRequests}
+      onNavigateToCalendar={() => window.location.href = '/dashboard?view=Calendar'}
     />
   );
 } 
