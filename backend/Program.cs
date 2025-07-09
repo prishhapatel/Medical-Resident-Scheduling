@@ -24,6 +24,7 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
             "http://localhost:3000",   // for local development
+            "http://localhost:3002",   // for local development (alternative port)
             "https://psycall.net"      // for production
         )
         .AllowAnyMethod()
