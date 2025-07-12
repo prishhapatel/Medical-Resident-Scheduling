@@ -65,8 +65,9 @@ const AdminPage: React.FC<AdminPageProps> = ({
   setInviteEmail,
   handleSendInvite,
   handleResendInvite,
-  inviteRole,
-  setInviteRole,
+  // inviteRole and setInviteRole are not currently used but kept for future functionality
+  // inviteRole,
+  // setInviteRole,
   users,
   handleChangeRole,
   handleDeleteUser,
@@ -119,7 +120,16 @@ const AdminPage: React.FC<AdminPageProps> = ({
     fetch(`${config.apiUrl}/api/vacations`)
       .then(res => res.json())
       .then((data) => {
-        const mapped: Request[] = data.map((vac: any) => ({
+        const mapped: Request[] = data.map((vac: {
+          vacationId: string;
+          firstName: string;
+          lastName: string;
+          date: string;
+          reason: string;
+          status: string;
+          residentId: string;
+          details?: string;
+        }) => ({
           id: vac.vacationId,
           firstName: vac.firstName,
           lastName: vac.lastName,
@@ -152,7 +162,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   
     const result = [];
   
-    for (const [key, entries] of groupedMap.entries()) {
+    for (const [, entries] of groupedMap.entries()) {
       const sorted = entries.sort((a, b) =>
         new Date(a.startDate || "").getTime() - new Date(b.startDate || "").getTime()
       );
@@ -160,7 +170,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
       let i = 0;
       while (i < sorted.length) {
         const current = sorted[i];
-        let start = current.startDate!;
+        const start = current.startDate!;
         let end = current.endDate!;
   
         let j = i + 1;
