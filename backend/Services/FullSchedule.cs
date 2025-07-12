@@ -389,5 +389,54 @@ namespace MedicalDemo.Services
             };
         }
 
+        // might be wrong
+        private void AssignFlowDays(
+            List<PGY1DTO> pgy1s,
+            List<PGY2DTO> pgy2s,
+            Graph g,
+            List<DateTime> dayList,
+            int totalResidents)
+        {
+            for (int i = 0; i < pgy1s.Count; i++)
+            {
+                for (int type = 0; type < 3; type++)
+                {
+                    var edges = g.adjList[i * 3 + type] as List<Edge>; // Explicitly cast to the correct type
+                    if (edges != null)
+                    {
+                        foreach (var edge in edges)
+                        {
+                            if (edge.Flow() > 0)
+                            {
+                                int dayIndex = edge.destination - (totalResidents * 3);
+                                DateTime workDay = dayList[dayIndex];
+                                pgy1s[i].AddWorkDay(workDay);
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < pgy2s.Count; i++)
+            {
+                for (int type = 0; type < 3; type++)
+                {
+                    var edges = g.adjList[(pgy1s.Count + i) * 3 + type] as List<Edge>; // Explicitly cast to the correct type
+                    if (edges != null)
+                    {
+                        foreach (var edge in edges)
+                        {
+                            if (edge.Flow() > 0)
+                            {
+                                int dayIndex = edge.destination - (totalResidents * 3);
+                                DateTime workDay = dayList[dayIndex];
+                                pgy2s[i].AddWorkDay(workDay);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
     }
 }
