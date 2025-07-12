@@ -9,6 +9,7 @@ export interface User {
   email: string;
   isAdmin?: boolean;
   phone_num?: string;
+  graduate_yr?: number;
 }
 
 // Set auth token in localStorage

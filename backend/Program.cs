@@ -16,16 +16,18 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IMedicalRepository, MedicalDataRepository>();
 builder.Services.AddScoped<SchedulingMapperService>();
 builder.Services.AddScoped<SchedulerService>();
+builder.Services.AddScoped<PostmarkService>();
 
 // Add CORS configuration
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:3002",         // for local dev
-                "https://psycall.net"            // for production frontend
-            )
+        policy
+            .SetIsOriginAllowed(origin => 
+                origin.StartsWith("https://psycall.net") || 
+                origin.StartsWith("https://www.psycall.net") ||
+                origin.StartsWith("http://localhost"))
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials();
@@ -68,10 +70,25 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
-// Add CORS middleware
+// Add CORS middleware - MUST be first, before any other middleware
 app.UseCors("AllowFrontend");
+
+// Handle preflight requests
+app.Use(async (context, next) =>
+{
+    if (context.Request.Method == "OPTIONS")
+    {
+        context.Response.Headers.Add("Access-Control-Allow-Origin", context.Request.Headers["Origin"]);
+        context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+        context.Response.StatusCode = 200;
+        return;
+    }
+    await next();
+});
+
+app.UseHttpsRedirection();
 
 app.MapControllers();
 

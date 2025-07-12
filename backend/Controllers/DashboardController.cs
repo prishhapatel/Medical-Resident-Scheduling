@@ -34,16 +34,46 @@ namespace MedicalDemo.Server.Controllers
                     TeamUpdates = new List<TeamUpdate>()
                 };
 
-                // Get current rotation
-                var currentMonth = DateTime.Now.ToString("MMMM yyyy");
+                // Get current rotation - try multiple month formats
+                var currentMonthFormats = new[]
+                {
+                    DateTime.Now.ToString("MMMM yyyy"),  // "December 2024"
+                    DateTime.Now.ToString("MMM yyyy"),   // "Dec 2024"
+                    DateTime.Now.ToString("yyyy-MM"),    // "2024-12"
+                    DateTime.Now.ToString("MM/yyyy"),    // "12/2024"
+                };
+
                 var currentRotation = await _context.rotations
-                    .FirstOrDefaultAsync(r => r.ResidentId == residentId && r.Month == currentMonth);
+                    .FirstOrDefaultAsync(r => r.ResidentId == residentId && currentMonthFormats.Contains(r.Month));
 
                 if (currentRotation != null)
                 {
                     dashboardData.CurrentRotation = currentRotation.Rotation;
                     var endOfMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(1).AddDays(-1);
                     dashboardData.RotationEndDate = $"Ends {endOfMonth:MM/dd/yyyy}";
+                }
+                else
+                {
+                    // Debug: Log what month formats we're looking for
+                    Console.WriteLine($"No rotation found for resident {residentId}. Looking for months: {string.Join(", ", currentMonthFormats)}");
+                    
+                    // Get all rotations for this resident to see what format is used
+                    var allRotations = await _context.rotations
+                        .Where(r => r.ResidentId == residentId)
+                        .ToListAsync();
+                    
+                    if (allRotations.Any())
+                    {
+                        Console.WriteLine($"Found {allRotations.Count} rotations for resident {residentId}:");
+                        foreach (var rot in allRotations)
+                        {
+                            Console.WriteLine($"  Month: '{rot.Month}', Rotation: '{rot.Rotation}'");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"No rotations found for resident {residentId}");
+                    }
                 }
 
                 // Get dates for this resident
@@ -56,6 +86,13 @@ namespace MedicalDemo.Server.Controllers
                     d.Date.Month == DateTime.Now.Month && 
                     d.Date.Year == DateTime.Now.Year).ToList();
                 dashboardData.MonthlyHours = thisMonthDates.Count * 8; // Assuming 8 hours per shift
+                
+                // Debug: Log the hours calculation
+                Console.WriteLine($"Resident {residentId}: Found {thisMonthDates.Count} dates in {DateTime.Now:MMMM yyyy}, calculated {dashboardData.MonthlyHours} hours");
+                if (thisMonthDates.Any())
+                {
+                    Console.WriteLine($"Dates: {string.Join(", ", thisMonthDates.Select(d => d.Date.ToString("MM/dd/yyyy")))}");
+                }
 
                 // Get upcoming shifts (next 3)
                 var futureDates = userDates

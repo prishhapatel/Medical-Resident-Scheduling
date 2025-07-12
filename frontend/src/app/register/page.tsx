@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/lib/use-toast";
 import { Toaster } from "@/components/ui/toaster";
@@ -10,7 +10,7 @@ import { useTheme } from "next-themes";
 import { Card } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 
-export default function Register() {
+function RegisterContent() {
     const searchParams = useSearchParams();
     const token = searchParams.get("token") || "";
     const { theme } = useTheme();
@@ -103,7 +103,7 @@ export default function Register() {
             router.push("/");
 
             setForm({ phone: "", password: "", confirmPassword: "" });
-        } catch (err) {
+        } catch {
             toast({
                 variant: "destructive",
                 title: "Network Error",
@@ -122,7 +122,7 @@ export default function Register() {
                 if (data.hasEmailOnFile) {
                     setResident(data.resident);
                 } else {
-                    // this really shouldn’t happen on this page…
+                    // this really shouldn't happen on this page…
                 }
             })
             .catch(err => {
@@ -241,5 +241,13 @@ export default function Register() {
                 <p className="text-sm">&copy; 2025 PSYCALL. All rights reserved.</p>
             </footer>
         </div>
+    );
+}
+
+export default function Register() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <RegisterContent />
+        </Suspense>
     );
 }

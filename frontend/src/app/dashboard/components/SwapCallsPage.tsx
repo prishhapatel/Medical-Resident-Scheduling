@@ -6,30 +6,38 @@ import { Button } from "../../../components/ui/button";
 import { Calendar, Users, Clock, Send, ArrowRightLeft, AlertTriangle } from "lucide-react";
 
 interface SwapCallsPageProps {
-  shiftDate: string;
-  setShiftDate: (value: string) => void;
+  yourShiftDate: string;
+  setYourShiftDate: (value: string) => void;
+  partnerShiftDate: string;
+  setPartnerShiftDate: (value: string) => void;
   selectedResident: string;
   setSelectedResident: (value: string) => void;
   residents: { id: string; name: string }[];
   selectedShift: string;
   setSelectedShift: (value: string) => void;
+  partnerShift: string;
+  setPartnerShift: (value: string) => void;
   shifts: { id: string; name: string }[];
   handleSubmitSwap: () => void;
 }
 
 const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
-  shiftDate,
-  setShiftDate,
+  yourShiftDate,
+  setYourShiftDate,
+  partnerShiftDate,
+  setPartnerShiftDate,
   selectedResident,
   setSelectedResident,
   residents,
   selectedShift,
   setSelectedShift,
+  partnerShift,
+  setPartnerShift,
   shifts,
   handleSubmitSwap,
 }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const isFormValid = shiftDate && selectedResident && selectedShift;
+  const isFormValid = yourShiftDate && partnerShiftDate && selectedResident && selectedShift && partnerShift;
 
   const handleInitialSubmit = () => {
     if (isFormValid) {
@@ -65,24 +73,40 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
         {/* Main Form Card */}
         <Card className="p-5 shadow-lg border border-border flex-1 flex flex-col">
           <div className="space-y-5 flex-1">
-            {/* Date Selection */}
+            {/* Your Shift Date Selection */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" />
-                <label htmlFor="shift-date" className="text-sm font-semibold text-foreground">
-                  Shift Date
+                <label htmlFor="your-shift-date" className="text-sm font-semibold text-foreground">
+                  Your Shift Date
                 </label>
               </div>
               <input
-                id="shift-date"
+                id="your-shift-date"
                 type="date"
                 className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                value={shiftDate}
-                onChange={(e) => setShiftDate(e.target.value)}
+                value={yourShiftDate}
+                onChange={(e) => setYourShiftDate(e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
               />
             </div>
-
+            {/* Partner&apos;s Shift Date Selection */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary" />
+                <label htmlFor="partner-shift-date" className="text-sm font-semibold text-foreground">
+                  Partner&apos;s Shift Date
+                </label>
+              </div>
+              <input
+                id="partner-shift-date"
+                type="date"
+                className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                value={partnerShiftDate}
+                onChange={(e) => setPartnerShiftDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
             {/* Resident Selection */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -106,12 +130,12 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
               </select>
             </div>
 
-            {/* Shift Type Selection */}
+            {/* Your Shift Type Selection */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
                 <label htmlFor="shift-select" className="text-sm font-semibold text-foreground">
-                  Shift Type
+                  Your Shift Type
                 </label>
               </div>
               <select
@@ -128,7 +152,28 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                 ))}
               </select>
             </div>
-
+            {/* Partner&apos;s Shift Type Selection */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                <label htmlFor="partner-shift-select" className="text-sm font-semibold text-foreground">
+                  Partner&apos;s Shift Type
+                </label>
+              </div>
+              <select
+                id="partner-shift-select"
+                className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors appearance-none cursor-pointer"
+                value={partnerShift}
+                onChange={(e) => setPartnerShift(e.target.value)}
+              >
+                <option value="" disabled>Select shift type</option>
+                {shifts.map((shift) => (
+                  <option key={shift.id} value={shift.id}>
+                    {shift.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             {/* Form Summary */}
             {isFormValid && (
               <div className="bg-muted/50 rounded-lg p-3 border border-border">
@@ -138,24 +183,21 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                 </h3>
                 <div className="space-y-1 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Date:</span>
+                    <span className="text-muted-foreground">Your Shift:</span>
                     <span className="font-medium text-foreground">
-                      {new Date(shiftDate).toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric' 
-                      })}
+                      {yourShiftDate ? new Date(yourShiftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} - {shifts.find(s => s.id === selectedShift)?.name || 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Partner&apos;s Shift:</span>
+                    <span className="font-medium text-foreground">
+                      {partnerShiftDate ? new Date(partnerShiftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} - {shifts.find(s => s.id === partnerShift)?.name || 'N/A'}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Partner:</span>
                     <span className="font-medium text-foreground">
                       {residents.find(r => r.id === selectedResident)?.name || 'N/A'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Shift:</span>
-                    <span className="font-medium text-foreground">
-                      {shifts.find(s => s.id === selectedShift)?.name || 'N/A'}
                     </span>
                   </div>
                 </div>
@@ -194,9 +236,9 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                     Are you sure you want to submit this swap request? This action will notify your selected partner.
                   </p>
                   <div className="text-xs text-yellow-600 dark:text-yellow-400">
-                    <strong>Date:</strong> {new Date(shiftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}<br/>
-                    <strong>Partner:</strong> {residents.find(r => r.id === selectedResident)?.name}<br/>
-                    <strong>Shift:</strong> {shifts.find(s => s.id === selectedShift)?.name}
+                    <strong>Your Shift:</strong> {yourShiftDate ? new Date(yourShiftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''} - {shifts.find(s => s.id === selectedShift)?.name || 'N/A'}<br/>
+                    <strong>Partner&apos;s Shift:</strong> {partnerShiftDate ? new Date(partnerShiftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''} - {shifts.find(s => s.id === partnerShift)?.name || 'N/A'}<br/>
+                    <strong>Partner:</strong> {residents.find(r => r.id === selectedResident)?.name}
                   </div>
                 </div>
                 <div className="flex gap-2">
