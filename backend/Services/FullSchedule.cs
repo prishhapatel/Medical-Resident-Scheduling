@@ -6,6 +6,7 @@ using MedicalDemo.Models;
 using MedicalDemo.Repositories;
 using MedicalDemo.Models.DTO.Scheduling;
 using Microsoft.EntityFrameworkCore;
+using MedicalDemo.Utils;
 
 namespace MedicalDemo.Services
 {
@@ -34,7 +35,7 @@ namespace MedicalDemo.Services
             //return dates;
         }
 
-        public async Task GeneratePart1(int year)
+        public async Task GeneratePart1Async(int year)
         {
             Console.WriteLine("Part 1: Normal Schedule (July through December)");
 
@@ -55,46 +56,50 @@ namespace MedicalDemo.Services
             // Convert dates to DTOs
             var datesDTOs = _mapper.MapToDatesDTOs(dates);
 
+            //map to DTO
+            var pgy1DTOs = residents
+                   .Where(r => r.graduate_yr == 1)
+                   .Select(r => _mapper.MapToPGY1DTO(
+                       r,
+                       rotations.Where(rot => rot.ResidentId == r.resident_id).ToList(),
+                       vacations.Where(v => v.ResidentId == r.resident_id).ToList(),
+                       datesDTOs
+                   ))
+                   .ToList();
 
-            //for (int i = 0; i < pgy1Count; i++)
-            //{
-            //    var pgy1 = LoadPGY1(i);
-            //    pgy1.inTraining = false;
-            //    pgy1.lastTrainingDate = pgy1.workDaySet().Max();
-            //    allPgy1s.Add(pgy1);
-            //}
+            var pgy2DTOs = residents
+                    .Where(r => r.graduate_yr == 2)
+                    .Select(r => _mapper.MapToPGY2DTO(
+                        r,
+                        rotations.Where(rot => rot.ResidentId == r.resident_id).ToList(),
+                        vacations.Where(v => v.ResidentId == r.resident_id).ToList(),
+                        datesDTOs
+                    ))
+                    .ToList();
 
-            //for (int i = 0; i < pgy2Count; i++)
-            //{
-            //    var pgy2 = LoadPGY2(i);
-            //    pgy2.inTraining = false;
-            //    allPgy2s.Add(pgy2);
-            //}
+            // Track worked days
+            var workedDays = new HashSet<DateTime>();
+            foreach (var r in allPgy1s) workedDays.UnionWith(r.WorkDays);
+            foreach (var r in allPgy2s) workedDays.UnionWith(r.WorkDays);
 
-            //var workedDays = new HashSet<DateTime>();
-            //foreach (var res in allPgy1s) workedDays.UnionWith(res.workDaySet());
-            //foreach (var res in allPgy2s) workedDays.UnionWith(res.workDaySet());
+            DateTime startDay = new DateTime(year, 7, 7);
+            DateTime endDay = new DateTime(year, 12, 31);
 
-            //DateTime startDay = new DateTime(year, 7, 7);
-            //DateTime endDay = new DateTime(year, 12, 31);
+            var shiftTypeCount = new Dictionary<int, int>();
+            for (DateTime day = startDay; day <= endDay; day = day.AddDays(1))
+            {
+                if (workedDays.Contains(day)) continue;
+                int type = GetShiftType(day);
+                if (!shiftTypeCount.ContainsKey(type)) shiftTypeCount[type] = 0;
+                shiftTypeCount[type]++;
+            }
 
-            //var shiftTypeCount = new Dictionary<int, int>();
-            //for (DateTime curDay = startDay; curDay <= endDay; curDay = curDay.AddDays(1))
-            //{
-            //    if (workedDays.Contains(curDay)) continue;
+            while (!randomAssignment(allPgy1s, allPgy2s, startDay, endDay, shiftTypeCount, workedDays)) { }
 
-            //    int type = shiftType(curDay);
-            //    if (!shiftTypeCount.ContainsKey(type)) shiftTypeCount[type] = 0;
-            //    shiftTypeCount[type]++;
-            //}
+            await saveAsync(allPgy1s, allPgy2s, new List<PGY3>()); // Assuming async save
+            print(allPgy1s, allPgy2s, new List<PGY3>());
 
-            //while (!randomAssignment(allPgy1s, allPgy2s, startDay, endDay, shiftTypeCount, workedDays)) { }
-
-            //save(allPgy1s, allPgy2s, new List<PGY3>());  // PGY3s unused
-            //print(allPgy1s, allPgy2s, new List<PGY3>());
-
-            //// Return the full list of Dates generated for the DB/UI
-            //return allPgy1s.SelectMany(r => r.assignedDates).ToList();
+            return allPgy1s.SelectMany(r => r.assignedDates).ToList();
         }
 
 
@@ -103,5 +108,178 @@ namespace MedicalDemo.Services
             // TODO: Add logic for training schedule (Jan–June)
             return new List<Dates>();
         }
+
+
+        private int GetShiftType(DateTime curDate)
+        {
+            return curDate.DayOfWeek switch
+            {
+                DayOfWeek.Saturday => 24,
+                DayOfWeek.Sunday => 12,
+                _ => 3,
+            };
+        }
+
+        public bool RandomAssignment(
+    List<PGY1DTO> pgy1s,
+    List<PGY2DTO> pgy2s,
+    DateTime startDay,
+    DateTime endDay,
+    Dictionary<int, int> shiftTypeCount,
+    HashSet<DateTime> workedDays)
+        {
+            Console.WriteLine("Attempting random assignment of shifts...");
+
+            var rand = new Random();
+
+            // Initialize shift counters
+            var pgy1ShiftCount = pgy1s.Select(_ => new Dictionary<int, int> { [3] = 0, [12] = 0, [24] = 0 }).ToArray();
+            var pgy2ShiftCount = pgy2s.Select(_ => new Dictionary<int, int> { [3] = 0, [12] = 0, [24] = 0 }).ToArray();
+
+            // Initial shift distribution logic (implement separately)
+            InitialShiftAssignment(
+                pgy1s,
+                pgy2s,
+                shiftTypeCount,
+                pgy1ShiftCount,
+                pgy2ShiftCount,
+                rand
+            );
+            int[] pgy1WorkTime = new int[pgy1s.Count];
+            int[] pgy2WorkTime = new int[pgy2s.Count];
+            ComputeWorkTime(pgy1s, pgy2s, pgy1WorkTime, pgy2WorkTime, pgy1ShiftCount, pgy2ShiftCount);
+
+            // Balance hours within 24-hour window
+            while (pgy1WorkTime.Concat(pgy2WorkTime).Max() - pgy1WorkTime.Concat(pgy2WorkTime).Min() > 24)
+            {
+                SwapSomeShiftCount(pgy1s, pgy2s, pgy1ShiftCount, pgy2ShiftCount, rand, pgy1WorkTime, pgy2WorkTime);
+                ComputeWorkTime(pgy1s, pgy2s, pgy1WorkTime, pgy2WorkTime, pgy1ShiftCount, pgy2ShiftCount);
+            }
+
+            Console.WriteLine("Work hours balanced, building flow graph...");
+
+            // Setup graph
+            int totalResidents = pgy1s.Count + pgy2s.Count;
+            int totalNodes = totalResidents * 3 + 200 + 2;
+            int src = totalNodes - 2;
+            int sink = totalNodes - 1;
+            var g = new Graph(totalNodes);
+            var dayList = new List<DateTime>();
+
+            // Add edges from source to resident shift type nodes
+            for (int i = 0; i < pgy1s.Count; i++)
+                for (int t = 0; t < 3; t++)
+                    g.AddEdge(src, i * 3 + t, pgy1ShiftCount[i][GetShiftDuration(t)]);
+
+            for (int i = 0; i < pgy2s.Count; i++)
+                for (int t = 0; t < 3; t++)
+                    g.AddEdge(src, (pgy1s.Count + i) * 3 + t, pgy2ShiftCount[i][GetShiftDuration(t)]);
+
+            // Build day nodes and connect residents
+            for (DateTime curDay = startDay; curDay <= endDay; curDay = curDay.AddDays(1))
+            {
+                if (workedDays.Contains(curDay)) continue;
+
+                dayList.Add(curDay);
+                int shiftVal = GetShiftType(curDay);
+                int offset = shiftVal == 3 ? 0 : (shiftVal == 12 ? 1 : 2);
+                int dayIndex = totalResidents * 3 + dayList.Count - 1;
+
+                for (int i = 0; i < pgy1s.Count; i++)
+                    if (pgy1s[i].CanWork(curDay))
+                        g.addEdge(i * 3 + offset, dayIndex, 1);
+
+                for (int i = 0; i < pgy2s.Count; i++)
+                    if (pgy2s[i].CanWork(curDay))
+                        g.addEdge((pgy1s.Count + i) * 3 + offset, dayIndex, 1);
+
+                g.addEdge(dayIndex, sink, 1);
+            }
+
+            int flow = g.getFlow(src, sink);
+            Console.WriteLine($"[DEBUG] flow is {flow} out of {dayList.Count}");
+
+            if (flow != dayList.Count)
+            {
+                Console.WriteLine("[ERROR] Assignment failed: not all days covered.");
+                return false;
+            }
+
+            // Assign workdays based on flow
+            AssignFlowDays(pgy1s, pgy2s, g, dayList, totalResidents);
+
+            Console.WriteLine("[DEBUG] fixing weekends...");
+            FixWeekends(pgy1s, pgy2s);
+
+            return true;
+        }
+
+        private void InitialShiftAssignment(
+    List<PGY1DTO> pgy1s,
+    List<PGY2DTO> pgy2s,
+    Dictionary<int, int> shiftTypeCount,
+    Dictionary<int, int>[] pgy1ShiftCount,
+    Dictionary<int, int>[] pgy2ShiftCount,
+    Random rand)
+        {
+            foreach (var shift in shiftTypeCount.Keys)
+            {
+                for (int i = 0; i < shiftTypeCount[shift]; i++)
+                {
+                    if (rand.NextDouble() < 0.5) // 50% chance PGY1
+                    {
+                        int pgy1Index = rand.Next(pgy1s.Count);
+                        if (!pgy1ShiftCount[pgy1Index].ContainsKey(shift))
+                            pgy1ShiftCount[pgy1Index][shift] = 0;
+
+                        pgy1ShiftCount[pgy1Index][shift]++;
+                    }
+                    else // PGY2
+                    {
+                        int pgy2Index = rand.Next(pgy2s.Count);
+                        if (!pgy2ShiftCount[pgy2Index].ContainsKey(shift))
+                            pgy2ShiftCount[pgy2Index][shift] = 0;
+
+                        pgy2ShiftCount[pgy2Index][shift]++;
+                    }
+                }
+            }
+        }
+
+        private void ComputeWorkTime(
+    List<PGY1DTO> pgy1s,
+    List<PGY2DTO> pgy2s,
+    int[] pgy1WorkTime,
+    int[] pgy2WorkTime,
+    Dictionary<int, int>[] pgy1ShiftCount,
+    Dictionary<int, int>[] pgy2ShiftCount)
+        {
+            for (int i = 0; i < pgy1s.Count; i++)
+            {
+                pgy1WorkTime[i] = 0;
+                var resident = pgy1s[i];
+
+                foreach (var day in resident.WorkDays)
+                    pgy1WorkTime[i] += GetShiftType(day); // real shifts already assigned
+
+                foreach (var shift in pgy1ShiftCount[i].Keys)
+                    pgy1WorkTime[i] += shift * pgy1ShiftCount[i][shift]; // pending assignments
+            }
+
+            for (int i = 0; i < pgy2s.Count; i++)
+            {
+                pgy2WorkTime[i] = 0;
+                var resident = pgy2s[i];
+
+                foreach (var day in resident.WorkDays)
+                    pgy2WorkTime[i] += GetShiftType(day);
+
+                foreach (var shift in pgy2ShiftCount[i].Keys)
+                    pgy2WorkTime[i] += shift * pgy2ShiftCount[i][shift];
+            }
+        }
+
+
+
     }
 }
