@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { useTheme } from "next-themes";
 import { Card } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
+import { config } from "@/config";
 
 function RegisterContent() {
     const searchParams = useSearchParams();
@@ -75,7 +76,7 @@ function RegisterContent() {
 
         setIsLoading(true);
         try {
-            const res = await fetch("http://localhost:5109/api/register/complete", {
+            const res = await fetch(`${config.apiUrl}/api/register/complete`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -116,7 +117,7 @@ function RegisterContent() {
 
     useEffect(() => {
         // hit your GET /api/register/info endpoint
-        fetch(`http://localhost:5109/api/register/info?token=${token}`)
+        fetch(`${config.apiUrl}/api/register/info?token=${token}`)
             .then(res => res.json())
             .then(data => {
                 if (data.hasEmailOnFile) {

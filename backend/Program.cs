@@ -23,11 +23,18 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? 
+            new[] { 
+                "https://psycall.net",
+                "https://www.psycall.net",
+                "http://localhost:3000",
+                "http://127.0.0.1:3000"
+            };
+        
+        Console.WriteLine($"CORS Allowed Origins: {string.Join(", ", allowedOrigins)}");
+        
         policy
-            .SetIsOriginAllowed(origin => 
-                origin.StartsWith("https://psycall.net") || 
-                origin.StartsWith("https://www.psycall.net") ||
-                origin.StartsWith("http://localhost"))
+            .WithOrigins(allowedOrigins)
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials();
@@ -40,10 +47,11 @@ var MySqlConnectString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRIN
 
 Console.WriteLine($"Loaded DB_CONNECTION_STRING: {MySqlConnectString}");
 
-
+// For testing purposes, allow the app to start without DB connection
 if (string.IsNullOrEmpty(MySqlConnectString))
 {
-    throw new Exception("Database connection string is not configured. Please set DB_CONNECTION_STRING environment variable.");
+    Console.WriteLine("WARNING: Database connection string is not configured. App will start but database features will not work.");
+    MySqlConnectString = "server=localhost;port=3306;database=test;user=test;password=test;";
 }
 
 try
@@ -73,18 +81,12 @@ if (app.Environment.IsDevelopment())
 // Add CORS middleware - MUST be first, before any other middleware
 app.UseCors("AllowFrontend");
 
-// Handle preflight requests
+// Add debugging middleware to log CORS requests
 app.Use(async (context, next) =>
 {
-    if (context.Request.Method == "OPTIONS")
-    {
-        context.Response.Headers.Add("Access-Control-Allow-Origin", context.Request.Headers["Origin"]);
-        context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
-        context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-        context.Response.StatusCode = 200;
-        return;
-    }
+    var origin = context.Request.Headers["Origin"].ToString();
+    var method = context.Request.Method;
+    Console.WriteLine($"Request: {method} {context.Request.Path} from Origin: {origin}");
     await next();
 });
 
@@ -92,9 +94,9 @@ app.UseHttpsRedirection();
 
 app.MapControllers();
 
-// Use the port from environment variable or default to 5109
-var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
-app.Urls.Add($"http://localhost:{port}");
+// Use the port from environment variable or default to 3000 (Coolify standard)
+var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "3000";
+app.Urls.Add($"http://0.0.0.0:{port}");
 
 
 app.Run();
