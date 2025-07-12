@@ -29,17 +29,18 @@ interface AdminPageProps {
 }
 
 interface Request {
-  id?: string;
-  firstName?: string;
-  lastName?: string;
-  resident?: string;
-  residentName?: string;
-  reason?: string;
-  status?: string;
+  id: string;
+  firstName: string;
+  lastName: string;
+  reason: string;
+  status: string;
+  date: string;
   startDate?: string;
   endDate?: string;
-  date?: string;
+  residentId?: string;
+  details?: string;
 }
+
 
 // Modal component
 function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
@@ -57,7 +58,6 @@ function Modal({ open, onClose, title, children }: { open: boolean; onClose: () 
 
 const AdminPage: React.FC<AdminPageProps> = ({
   residents,
-  myTimeOffRequests,
   handleApproveRequest,
   handleDenyRequest,
   userInvitations,
@@ -77,6 +77,8 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const [message, setMessage] = useState("");
   const [showRequestsModal, setShowRequestsModal] = useState(false);
   const [showInvitationsModal, setShowInvitationsModal] = useState(false);
+  const [myTimeOffRequests, setMyTimeOffRequests] = useState<Request[]>([]);
+  console.log("RAW REQUESTS:", myTimeOffRequests);
 
   const handleGenerateSchedule = async () => {
     setGenerating(true);
@@ -113,51 +115,91 @@ const AdminPage: React.FC<AdminPageProps> = ({
       });
   }, []);
 
+  useEffect(() => {
+    fetch(`${config.apiUrl}/api/vacations`)
+      .then(res => res.json())
+      .then((data) => {
+        const mapped: Request[] = data.map((vac: any) => ({
+          id: vac.vacationId,
+          firstName: vac.firstName,
+          lastName: vac.lastName,
+          date: vac.date,
+          startDate: vac.date,
+          endDate: vac.date,
+          reason: vac.reason,
+          status: vac.status,
+          residentId: vac.residentId,
+          details: vac.details,
+        }));
+        setMyTimeOffRequests(mapped);
+      });
+  }, []);
+  
+
   // Group vacation requests by resident and reason into date ranges
   function groupRequests(requests: Request[]) {
     if (!requests || requests.length === 0) return [];
-    // Sort by resident, reason, then date
-    const sorted = [...requests].sort((a, b) => {
-      const nameA = (a.firstName || '') + (a.lastName || '');
-      const nameB = (b.firstName || '') + (b.lastName || '');
-      if (nameA !== nameB) return nameA.localeCompare(nameB);
-      if (a.reason !== b.reason) return (a.reason || '').localeCompare(b.reason || '');
-      return new Date(a.date || '').getTime() - new Date(b.date || '').getTime();
-    });
-    const groups = [];
-    let i = 0;
-    while (i < sorted.length) {
-      const curr = sorted[i];
-      const start = curr.date || '';
-      let end = curr.date || '';
-      let j = i + 1;
-      while (
-        j < sorted.length &&
-        (sorted[j].firstName === curr.firstName && sorted[j].lastName === curr.lastName) &&
-        sorted[j].reason === curr.reason &&
-        differenceInCalendarDays(parseISO(sorted[j].date || ''), parseISO(end)) === 1
-      ) {
-        end = sorted[j].date || '';
-        j++;
+  
+    const groupedMap = new Map<string, Request[]>();
+  
+    for (const req of requests) {
+      const key = `${req.firstName} ${req.lastName}||${req.reason}`;
+      if (!groupedMap.has(key)) {
+        groupedMap.set(key, []);
       }
-      groups.push({
-        id: curr.id,
-        firstName: curr.firstName,
-        lastName: curr.lastName,
-        reason: curr.reason,
-        status: curr.status,
-        startDate: start,
-        endDate: end,
-      });
-      i = j;
+      groupedMap.get(key)!.push(req);
     }
-    return groups;
+  
+    const result = [];
+  
+    for (const [key, entries] of groupedMap.entries()) {
+      const sorted = entries.sort((a, b) =>
+        new Date(a.startDate || "").getTime() - new Date(b.startDate || "").getTime()
+      );
+  
+      let i = 0;
+      while (i < sorted.length) {
+        const current = sorted[i];
+        let start = current.startDate!;
+        let end = current.endDate!;
+  
+        let j = i + 1;
+        while (
+          j < sorted.length &&
+          differenceInCalendarDays(parseISO(sorted[j].startDate!), parseISO(end)) <= 1
+        ) {
+          end = sorted[j].endDate!;
+          j++;
+        }
+  
+        result.push({
+          id: current.id,
+          residentId: current.residentId,
+          firstName: current.firstName,
+          lastName: current.lastName,
+          reason: current.reason,
+          status: current.status,
+          startDate: start,
+          endDate: end,
+        });
+        
+  
+        i = j;
+      }
+    }
+  
+    return result;
   }
+  
+  
 
   const groupedRequests = groupRequests(myTimeOffRequests);
+  console.log("Grouped requests:", groupedRequests);
+
 
   // Helper to format a date as MM/DD/YYYY
   const formatDate = (dateStr: string) => {
+    console.log("Parsing dateStr:", dateStr); // <-- Debug line
     if (!dateStr) return 'N/A';
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return 'N/A';
@@ -166,31 +208,23 @@ const AdminPage: React.FC<AdminPageProps> = ({
 
   // Helper to get date or date range
   const getRequestDate = (request: Request) => {
-    if (request.startDate && request.endDate && request.startDate !== request.endDate) {
-      return `${formatDate(request.startDate)} - ${formatDate(request.endDate)}`;
-    }
-    if (request.startDate) {
-      return formatDate(request.startDate);
-    }
-    if (request.date) {
-      return formatDate(request.date);
+    if (request.startDate && request.endDate) {
+      return request.startDate === request.endDate
+        ? formatDate(request.startDate)
+        : `${formatDate(request.startDate)} - ${formatDate(request.endDate)}`;
     }
     return 'N/A';
   };
+  
 
   // Helper to get resident name
   const getResidentName = (request: Request) => {
     if (request.firstName && request.lastName) {
       return `${request.firstName} ${request.lastName}`;
     }
-    if (request.resident) {
-      return request.resident;
-    }
-    if (request.residentName) {
-      return request.residentName;
-    }
     return 'N/A';
   };
+  
 
   return (
     <div className="w-full pt-4 h-[calc(100vh-4rem)] flex flex-col items-center pl-8">
@@ -293,14 +327,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
           />
-          <select
-            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
-            value={inviteRole}
-            onChange={e => setInviteRole(e.target.value)}
-          >
-            <option value="resident">Resident</option>
-            <option value="admin">Admin</option>
-          </select>
           <Button onClick={handleSendInvite} className="py-2 flex items-center justify-center gap-2">
             <Send className="h-5 w-5" />
             <span>Send Invitation</span>

@@ -594,7 +594,7 @@ function Dashboard() {
   };
 
   const handleSendInvite = async () => {
-    if (!inviteEmail) {
+    if (!inviteEmail.trim()) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -602,23 +602,22 @@ function Dashboard() {
       });
       return;
     }
-
+  
     try {
-      const response = await fetch(`${config.apiUrl}/api/invitations`, {
+      const response = await fetch(`${config.apiUrl}/api/invite/send`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: inviteEmail,
-          role: "resident",
+          email: inviteEmail.trim(),
         }),
       });
-
+  
       if (response.ok) {
         const newInvitation = {
           id: Date.now().toString(),
-          email: inviteEmail,
+          email: inviteEmail.trim(),
           status: "Pending" as const,
         };
         setUserInvitations((prev) => [...prev, newInvitation]);
@@ -626,20 +625,21 @@ function Dashboard() {
         toast({
           variant: "success",
           title: "Invitation Sent",
-          description: `Invitation sent to ${inviteEmail}.`,
+          description: `Invitation sent to ${inviteEmail.trim()}.`,
         });
       } else {
         throw new Error('Failed to send invitation');
       }
-    } catch {
-      console.error("Send invitation error");
+    } catch (error) {
+      console.error("Send invitation error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please enter an email address.",
+        description: "Failed to send invitation. Please check the email or try again.",
       });
     }
   };
+  
 
   const handleResendInvite = (id: string) => {
     toast({

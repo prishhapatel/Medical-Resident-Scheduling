@@ -53,26 +53,29 @@ namespace MedicalDemo.Controllers
         
         // GET: api/vacations
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetAllVacations()
-        {
-            var vacations = await _context.vacations.ToListAsync();
-            var residentIds = vacations.Select(v => v.ResidentId).Distinct().ToList();
-            var residents = await _context.residents
-                .Where(r => residentIds.Contains(r.resident_id))
-                .ToDictionaryAsync(r => r.resident_id);
+[HttpGet]
+public async Task<ActionResult<IEnumerable<VacationWithResidentDto>>> GetAllVacations()
+{
+    var vacations = await _context.vacations
+        .Join(_context.residents,
+            v => v.ResidentId,
+            r => r.resident_id,
+            (v, r) => new VacationWithResidentDto
+            {
+                VacationId = v.VacationId,
+                ResidentId = r.resident_id,
+                FirstName = r.first_name,
+                LastName = r.last_name,
+                Date = v.Date,
+                Reason = v.Reason,
+                Status = v.Status,
+                Details = v.Details
+            })
+        .ToListAsync();
 
-            var result = vacations.Select(v => new {
-                id = v.VacationId,
-                residentId = v.ResidentId,
-                firstName = residents.ContainsKey(v.ResidentId) ? residents[v.ResidentId].first_name : null,
-                lastName = residents.ContainsKey(v.ResidentId) ? residents[v.ResidentId].last_name : null,
-                date = v.Date,
-                reason = v.Reason,
-                status = v.Status
-            });
+    return Ok(vacations);
+}
 
-            return Ok(result);
-        }
 
         // GET: api/vacations/filter?residentId=&date=&reason=&status=
         [HttpGet("filter")]
@@ -82,36 +85,41 @@ namespace MedicalDemo.Controllers
 			[FromQuery] string? reason,
             [FromQuery] string? status)
         {
-            var query = _context.vacations.AsQueryable();
+           var query = _context.vacations
+    .Join(_context.residents,
+        v => v.ResidentId,
+        r => r.resident_id,
+        (v, r) => new VacationWithResidentDto
+        {
+            VacationId = v.VacationId,
+            ResidentId = v.ResidentId,
+            FirstName = r.first_name,
+            LastName = r.last_name,
+            Date = v.Date,
+            Reason = v.Reason,
+            Status = v.Status,
+            Details = v.Details
+        });
 
-            if (!string.IsNullOrEmpty(residentId))
-            {
-                query = query.Where(v => v.ResidentId == residentId);
-            }
+if (!string.IsNullOrEmpty(residentId))
+    query = query.Where(v => v.ResidentId == residentId);
 
-            if (date.HasValue)
-            {
-                query = query.Where(v => v.Date.Date == date.Value.Date);
-            }
+if (date.HasValue)
+    query = query.Where(v => v.Date.Date == date.Value.Date);
 
-			if (!string.IsNullOrEmpty(reason))
-            {
-                query = query.Where(v => v.Reason == reason);
-            }
+if (!string.IsNullOrEmpty(reason))
+    query = query.Where(v => v.Reason == reason);
 
-            if (!string.IsNullOrEmpty(status))
-            {
-                query = query.Where(v => v.Status == status);
-            }
+if (!string.IsNullOrEmpty(status))
+    query = query.Where(v => v.Status == status);
 
-            var results = await query.ToListAsync();
+var results = await query.ToListAsync();
 
-            if (results.Count == 0)
-            {
-                return NotFound("No matching vacation records found.");
-            }
+if (results.Count == 0)
+    return NotFound("No matching vacation records found.");
 
-            return Ok(results);
+return Ok(results);
+
         }
 
 		// PUT: api/vacations/{id}
