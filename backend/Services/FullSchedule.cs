@@ -169,11 +169,11 @@ namespace MedicalDemo.Services
             // Add edges from source to resident shift type nodes
             for (int i = 0; i < pgy1s.Count; i++)
                 for (int t = 0; t < 3; t++)
-                    g.AddEdge(src, i * 3 + t, pgy1ShiftCount[i][GetShiftDuration(t)]);
+                    g.AddEdge(src, i * 3 + t, pgy1ShiftCount[i][ShiftDuration(t)]);
 
             for (int i = 0; i < pgy2s.Count; i++)
                 for (int t = 0; t < 3; t++)
-                    g.AddEdge(src, (pgy1s.Count + i) * 3 + t, pgy2ShiftCount[i][GetShiftDuration(t)]);
+                    g.AddEdge(src, (pgy1s.Count + i) * 3 + t, pgy2ShiftCount[i][ShiftDuration(t)]);
 
             // Build day nodes and connect residents
             for (DateTime curDay = startDay; curDay <= endDay; curDay = curDay.AddDays(1))
@@ -187,16 +187,16 @@ namespace MedicalDemo.Services
 
                 for (int i = 0; i < pgy1s.Count; i++)
                     if (pgy1s[i].CanWork(curDay))
-                        g.addEdge(i * 3 + offset, dayIndex, 1);
+                        g.AddEdge(i * 3 + offset, dayIndex, 1);
 
                 for (int i = 0; i < pgy2s.Count; i++)
                     if (pgy2s[i].CanWork(curDay))
-                        g.addEdge((pgy1s.Count + i) * 3 + offset, dayIndex, 1);
+                        g.AddEdge((pgy1s.Count + i) * 3 + offset, dayIndex, 1);
 
-                g.addEdge(dayIndex, sink, 1);
+                g.AddEdge(dayIndex, sink, 1);
             }
 
-            int flow = g.getFlow(src, sink);
+            int flow = g.GetFlow(src, sink);
             Console.WriteLine($"[DEBUG] flow is {flow} out of {dayList.Count}");
 
             if (flow != dayList.Count)
@@ -279,7 +279,115 @@ namespace MedicalDemo.Services
             }
         }
 
+        private void SwapSomeShiftCount(
+    List<PGY1DTO> pgy1s,
+    List<PGY2DTO> pgy2s,
+    Dictionary<int, int>[] pgy1ShiftCount,
+    Dictionary<int, int>[] pgy2ShiftCount,
+    Random rand,
+    int[] pgy1WorkTime,
+    int[] pgy2WorkTime)
+        {
+            int total = pgy1s.Count + pgy2s.Count;
 
+            // 1. Find giver (highest work time)
+            int giverIndex = 0;
+            int giveHour = -1;
+
+            for (int i = 0; i < pgy1s.Count; i++)
+            {
+                if (pgy1WorkTime[i] > giveHour)
+                {
+                    giveHour = pgy1WorkTime[i];
+                    giverIndex = i;
+                }
+            }
+
+            for (int i = 0; i < pgy2s.Count; i++)
+            {
+                if (pgy2WorkTime[i] > giveHour)
+                {
+                    giveHour = pgy2WorkTime[i];
+                    giverIndex = i + pgy1s.Count;
+                }
+            }
+
+            // 2. Pick a valid receiver
+            int receiverIndex = rand.Next(total);
+            int receiveHour = (receiverIndex < pgy1s.Count) ? pgy1WorkTime[receiverIndex] : pgy2WorkTime[receiverIndex - pgy1s.Count];
+
+            while (giverIndex == receiverIndex || giveHour <= receiveHour + 24)
+            {
+                receiverIndex = rand.Next(total);
+                receiveHour = (receiverIndex < pgy1s.Count) ? pgy1WorkTime[receiverIndex] : pgy2WorkTime[receiverIndex - pgy1s.Count];
+            }
+
+            // 3. Try to transfer a random shift type (3, 12, or 24)
+            while (true)
+            {
+                int shiftType = rand.Next(0, 3) switch
+                {
+                    0 => 3,
+                    1 => 12,
+                    _ => 24
+                };
+
+                bool success = false;
+
+                // Giver is PGY1
+                if (giverIndex < pgy1s.Count)
+                {
+                    if (pgy1ShiftCount[giverIndex].TryGetValue(shiftType, out int count) && count > 0)
+                    {
+                        pgy1ShiftCount[giverIndex][shiftType]--;
+
+                        if (receiverIndex < pgy1s.Count)
+                            pgy1ShiftCount[receiverIndex].TryAdd(shiftType, 0);
+                        else
+                            pgy2ShiftCount[receiverIndex - pgy1s.Count].TryAdd(shiftType, 0);
+
+                        if (receiverIndex < pgy1s.Count)
+                            pgy1ShiftCount[receiverIndex][shiftType]++;
+                        else
+                            pgy2ShiftCount[receiverIndex - pgy1s.Count][shiftType]++;
+
+                        success = true;
+                    }
+                }
+                else // Giver is PGY2
+                {
+                    int index = giverIndex - pgy1s.Count;
+                    if (pgy2ShiftCount[index].TryGetValue(shiftType, out int count) && count > 0)
+                    {
+                        pgy2ShiftCount[index][shiftType]--;
+
+                        if (receiverIndex < pgy1s.Count)
+                            pgy1ShiftCount[receiverIndex].TryAdd(shiftType, 0);
+                        else
+                            pgy2ShiftCount[receiverIndex - pgy1s.Count].TryAdd(shiftType, 0);
+
+                        if (receiverIndex < pgy1s.Count)
+                            pgy1ShiftCount[receiverIndex][shiftType]++;
+                        else
+                            pgy2ShiftCount[receiverIndex - pgy1s.Count][shiftType]++;
+
+                        success = true;
+                    }
+                }
+
+                if (success) return;
+            }
+        }
+        private int ShiftDuration(int type)
+        {
+            return type switch
+            {
+                0 => 3,
+                1 => 12,
+                2 => 24,
+                _ => throw new ArgumentOutOfRangeException(nameof(type), "Invalid shift type index")
+            };
+        }
 
     }
 }
