@@ -94,7 +94,7 @@ namespace MedicalDemo.Services
                 shiftTypeCount[type]++;
             }
 
-            while (!randomAssignment(allPgy1s, allPgy2s, startDay, endDay, shiftTypeCount, workedDays)) { }
+            while (!RandomAssignment(allPgy1s, allPgy2s, startDay, endDay, shiftTypeCount, workedDays)) { }
 
             await saveAsync(allPgy1s, allPgy2s, new List<PGY3>()); // Assuming async save
             print(allPgy1s, allPgy2s, new List<PGY3>());
@@ -436,6 +436,141 @@ namespace MedicalDemo.Services
                     }
                 }
             }
+        }
+
+
+        private void FixWeekends(List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s)
+        {
+            foreach (var res in pgy1s)
+            {
+                DateTime firstDay = res.FirstWorkDay();
+                DateTime lastDay = res.LastWorkDay();
+
+                for (DateTime curDay = firstDay; curDay <= lastDay; curDay = curDay.AddDays(1))
+                {
+                    if (res.IsWorking(curDay) && !res.CanWork(curDay) && !res.CommitedWorkDay(curDay))
+                    {
+                        bool found = false;
+
+                        // Try to swap with another PGY1
+                        foreach (var res2 in pgy1s)
+                        {
+                            if (res == res2 || !res2.CanWork(curDay)) continue;
+
+                            foreach (var otherDay in res2.WorkDays)
+                            {
+                                if (GetShiftType(curDay) == GetShiftType(otherDay) &&
+                                    res.CanWork(otherDay) && !res2.CommitedWorkDay(otherDay))
+                                {
+                                    SwapWorkDays1(res, res2, curDay, otherDay);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (found) break;
+                        }
+
+                        // Try to swap with a PGY2
+                        if (!found)
+                        {
+                            foreach (var res2 in pgy2s)
+                            {
+                                if (!res2.CanWork(curDay)) continue;
+
+                                foreach (var otherDay in res2.WorkDays)
+                                {
+                                    if (GetShiftType(curDay) == GetShiftType(otherDay) &&
+                                        res.CanWork(otherDay) && !res2.CommitedWorkDay(otherDay))
+                                    {
+                                        SwapWorkDays12(res, res2, curDay, otherDay);
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (found) break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach (var res in pgy2s)
+            {
+                DateTime firstDay = res.FirstWorkDay();
+                DateTime lastDay = res.LastWorkDay();
+
+                for (DateTime curDay = firstDay; curDay <= lastDay; curDay = curDay.AddDays(1))
+                {
+                    if (res.IsWorking(curDay) && !res.CanWork(curDay) && !res.CommitedWorkDay(curDay))
+                    {
+                        bool found = false;
+
+                        // Try to swap with another PGY2
+                        foreach (var res2 in pgy2s)
+                        {
+                            if (res == res2 || !res2.CanWork(curDay)) continue;
+
+                            foreach (var otherDay in res2.WorkDays)
+                            {
+                                if (GetShiftType(curDay) == GetShiftType(otherDay) &&
+                                    res.CanWork(otherDay) && !res2.CommitedWorkDay(otherDay))
+                                {
+                                    SwapWorkDays2(res, res2, curDay, otherDay);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (found) break;
+                        }
+
+                        // Try to swap with a PGY1
+                        if (!found)
+                        {
+                            foreach (var res2 in pgy1s)
+                            {
+                                if (!res2.CanWork(curDay)) continue;
+
+                                foreach (var otherDay in res2.WorkDays)
+                                {
+                                    if (GetShiftType(curDay) == GetShiftType(otherDay) &&
+                                        res.CanWork(otherDay) && !res2.CommitedWorkDay(otherDay))
+                                    {
+                                        SwapWorkDays12(res2, res, otherDay, curDay);
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (found) break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        private void SwapWorkDays1(PGY1DTO res1, PGY1DTO res2, DateTime day1, DateTime day2)
+        {
+            res1.RemoveWorkDay(day1);
+            res2.RemoveWorkDay(day2);
+
+            res1.AddWorkDay(day2);
+            res2.AddWorkDay(day1);
+        }
+
+        private void SwapWorkDays12(PGY1DTO res1, PGY2DTO res2, DateTime day1, DateTime day2)
+        {
+            res1.RemoveWorkDay(day1);
+            res2.RemoveWorkDay(day2);
+
+            res1.AddWorkDay(day2);
+            res2.AddWorkDay(day1);
+        }
+        private void SwapWorkDays2(PGY2DTO res1, PGY2DTO res2, DateTime day1, DateTime day2)
+        {
+            res1.RemoveWorkDay(day1);
+            res2.RemoveWorkDay(day2);
+
+            res1.AddWorkDay(day2);
+            res2.AddWorkDay(day1);
         }
 
     }
