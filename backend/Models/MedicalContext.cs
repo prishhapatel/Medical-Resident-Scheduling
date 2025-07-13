@@ -16,12 +16,33 @@ namespace MedicalDemo.Data.Models
         public DbSet<Blackouts> blackouts { get; set; }
         public DbSet<Vacations> vacations { get; set; }
 		public DbSet<Invitation> Invitations { get; set; }
+		public DbSet<SwapRequest> SwapRequests { get; set; }
 
 
-        public MedicalContext(DbContextOptions options) : base(options) { }
+		public MedicalContext(DbContextOptions options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
+			// Map SwapId as binary(16)
+			modelBuilder.Entity<SwapRequest>()
+				.Property(s => s.SwapId)
+				.HasColumnType("binary(16)");
+			
+			// Map ScheduleSwapId as binary(16)
+			modelBuilder.Entity<SwapRequest>()
+				.Property(s => s.ScheduleSwapId)
+				.HasColumnType("binary(16)");
+			
+			// Create Timestamps for the swap requests on creation
+			modelBuilder.Entity<SwapRequest>()
+				.Property(b => b.CreatedAt)
+				.HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+			// Create Timestamps for the swap requests on creation/update
+			modelBuilder.Entity<SwapRequest>()
+				.Property(b => b.UpdatedAt)
+				.HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+			
 			// Map BlackoutId as binary(16)
 			modelBuilder.Entity<Blackouts>()
 				.Property(s => s.BlackoutId)
