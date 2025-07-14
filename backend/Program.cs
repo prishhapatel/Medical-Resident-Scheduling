@@ -1,7 +1,6 @@
 using MedicalDemo.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
-using MedicalDemo.Repositories;
 using MedicalDemo.Services;
 
 // Load .env file
@@ -13,7 +12,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddScoped<IMedicalRepository, MedicalDataRepository>();
 builder.Services.AddScoped<SchedulingMapperService>();
 builder.Services.AddScoped<SchedulerService>();
 builder.Services.AddScoped<PostmarkService>();

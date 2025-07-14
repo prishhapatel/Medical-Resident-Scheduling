@@ -2,17 +2,6 @@
 {
     public class PGY2DTO : ResidentDTO
     {
-        public HospitalRole[] RolePerMonth { get; set; } = new HospitalRole[12];
-        
-        public bool IsVacation(DateTime curDay) => VacationRequests.Contains(curDay);
-        public bool IsWorking(DateTime curDay) => WorkDays.Contains(curDay);
-        
-        public void RequestVacation(DateTime curDay)
-        {
-            if (IsVacation(curDay)) return;
-            VacationRequests.Add(curDay);
-        }
-
         public override bool CanWork(DateTime curDay)
         {
             if (IsVacation(curDay)) return false;
@@ -49,9 +38,6 @@
             
             return true;
         }
-
-        public DateTime LastWorkDay() => WorkDays.Count > 0 ? WorkDays.Max() : new DateTime(1, 1, 1);
-        public DateTime FirstWorkDay() => WorkDays.Count > 0 ? WorkDays.Min() : new DateTime(9999, 12, 31);
 
         public override void AddWorkDay(DateTime curDay)
         {
