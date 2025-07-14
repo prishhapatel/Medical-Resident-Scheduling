@@ -13,7 +13,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<FullSchedule>();
+
 builder.Services.AddScoped<IMedicalRepository, MedicalDataRepository>();
+
 builder.Services.AddScoped<SchedulingMapperService>();
 builder.Services.AddScoped<SchedulerService>();
 builder.Services.AddScoped<PostmarkService>();
@@ -59,6 +62,8 @@ try
     builder.Services.AddDbContext<MedicalContext>(options =>
     {
         Console.WriteLine("Attempting to connect to database...");
+        Console.WriteLine($"[DEBUG] Using MySQL Connection: {MySqlConnectString}");
+
         options.UseMySql(MySqlConnectString, ServerVersion.AutoDetect(MySqlConnectString));
     });
 }
@@ -98,6 +103,22 @@ app.MapControllers();
 var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "3000";
 app.Urls.Add($"http://0.0.0.0:{port}");
 
+using (var scope = app.Services.CreateScope())
+{
+    var fullSchedule = scope.ServiceProvider.GetRequiredService<FullSchedule>();
+    var context = scope.ServiceProvider.GetRequiredService<MedicalContext>();
 
-app.Run();
+    var entireSchedule = await fullSchedule.GenerateSchedule(2025);
+
+    Console.WriteLine("Loaded Full Schedule:");
+    foreach (var date in entireSchedule)
+    {
+        Console.WriteLine($"DateId: {date.DateId}, " +
+                          $"ScheduleId: {date.ScheduleId}, " +
+                          $"ResidentId: {date.ResidentId}, " +
+                          $"Date: {date.Date.ToShortDateString()}, " +
+                          $"CallType: {date.CallType}");
+    }
+}
+    app.Run();
 

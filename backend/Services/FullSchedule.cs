@@ -22,20 +22,23 @@ namespace MedicalDemo.Services
             _mapper = mapper;
         }
 
-        public async Task GenerateSchedule(int year)
+        public async Task<List<Dates>> GenerateSchedule(int year)
         {
             var dates = new List<Dates>();
 
             // Run both parts
-            //var part1 = GeneratePart1(year);
-            var part2 = GeneratePart2(year);
+            var part1 = await GeneratePart1Async(year);
+            //var part2 = await GeneratePart2Async(year);
 
             dates.AddRange(part1);
-            dates.AddRange(part2);
+            //dates.AddRange(part2);
             //return dates;
+
+            return dates;
+
         }
 
-        public async Task GeneratePart1Async(int year)
+        public async Task<List<Dates>> GeneratePart1Async(int year)
         {
             Console.WriteLine("Part 1: Normal Schedule (July through December)");
 
@@ -67,6 +70,8 @@ namespace MedicalDemo.Services
                    ))
                    .ToList();
 
+            allPgy1s = pgy1DTOs;
+
             var pgy2DTOs = residents
                     .Where(r => r.graduate_yr == 2)
                     .Select(r => _mapper.MapToPGY2DTO(
@@ -76,7 +81,7 @@ namespace MedicalDemo.Services
                         datesDTOs
                     ))
                     .ToList();
-
+            allPgy2s = pgy2DTOs;
             // Track worked days
             var workedDays = new HashSet<DateTime>();
             foreach (var r in allPgy1s) workedDays.UnionWith(r.WorkDays);
@@ -94,12 +99,46 @@ namespace MedicalDemo.Services
                 shiftTypeCount[type]++;
             }
 
-            while (!RandomAssignment(allPgy1s, allPgy2s, startDay, endDay, shiftTypeCount, workedDays)) { }
+            int attempts = 0;
+            while (!RandomAssignment(allPgy1s, allPgy2s, startDay, endDay, shiftTypeCount, workedDays) && attempts++ < 50)
+            {
 
-            await saveAsync(allPgy1s, allPgy2s, new List<PGY3>()); // Assuming async save
-            print(allPgy1s, allPgy2s, new List<PGY3>());
+                Console.WriteLine($"Retry #{attempts}");
+            }
+            if (attempts == 50)
+            {
+                Console.WriteLine("[FATAL] Could not find valid schedule in 50 tries.");
+                return new List<Dates>(); // return empty list or throw exception
+            }
+            // Convert PGY1 and PGY2 workdays to Dates
+            var generatedDates = allPgy1s
+                .SelectMany(p => p.WorkDays.Select(d => new Dates
+                      {
+                        DateId = Guid.NewGuid(),
+                        ScheduleId = Guid.Empty, // Or generate/set a real ScheduleId if available
+                        ResidentId = p.ResidentId,
+                        Date = d,
+                        CallType = GetCallTypeString(d)
+                          }))
+                       .ToList();
 
-            return allPgy1s.SelectMany(r => r.assignedDates).ToList();
+            generatedDates.AddRange(
+                allPgy2s
+                .SelectMany(p => p.WorkDays.Select(d => new Dates
+                {
+                    DateId = Guid.NewGuid(),
+                    ScheduleId = Guid.Empty,
+                    ResidentId = p.ResidentId,
+                    Date = d,
+                    CallType = GetCallTypeString(d)
+                }))
+            );
+
+            // Save to DB
+            //await _context.dates.AddRangeAsync(generatedDates);
+            //await _context.SaveChangesAsync();
+
+            return generatedDates;
         }
 
 
@@ -120,6 +159,17 @@ namespace MedicalDemo.Services
             };
         }
 
+
+
+        private string GetCallTypeString(DateTime date)
+        {
+            return date.DayOfWeek switch
+            {
+                DayOfWeek.Saturday => "24h",
+                DayOfWeek.Sunday => "12h",
+                _ => "Short"
+            };
+        }
         public bool RandomAssignment(
     List<PGY1DTO> pgy1s,
     List<PGY2DTO> pgy2s,
@@ -215,36 +265,42 @@ namespace MedicalDemo.Services
         }
 
         private void InitialShiftAssignment(
-    List<PGY1DTO> pgy1s,
-    List<PGY2DTO> pgy2s,
-    Dictionary<int, int> shiftTypeCount,
-    Dictionary<int, int>[] pgy1ShiftCount,
-    Dictionary<int, int>[] pgy2ShiftCount,
-    Random rand)
+     List<PGY1DTO> pgy1s,
+     List<PGY2DTO> pgy2s,
+     Dictionary<int, int> shiftTypeCount,
+     Dictionary<int, int>[] pgy1ShiftCount,
+     Dictionary<int, int>[] pgy2ShiftCount,
+     Random rand)
         {
             foreach (var shift in shiftTypeCount.Keys)
             {
                 for (int i = 0; i < shiftTypeCount[shift]; i++)
                 {
-                    if (rand.NextDouble() < 0.5) // 50% chance PGY1
-                    {
-                        int pgy1Index = rand.Next(pgy1s.Count);
-                        if (!pgy1ShiftCount[pgy1Index].ContainsKey(shift))
-                            pgy1ShiftCount[pgy1Index][shift] = 0;
+                    bool assigned = false;
 
-                        pgy1ShiftCount[pgy1Index][shift]++;
-                    }
-                    else // PGY2
+                    for (int attempt = 0; attempt < 50 && !assigned; attempt++)
                     {
-                        int pgy2Index = rand.Next(pgy2s.Count);
-                        if (!pgy2ShiftCount[pgy2Index].ContainsKey(shift))
-                            pgy2ShiftCount[pgy2Index][shift] = 0;
-
-                        pgy2ShiftCount[pgy2Index][shift]++;
+                        if (rand.NextDouble() < 0.5 && pgy1s.Count > 0) // PGY1
+                        {
+                            int index = rand.Next(pgy1s.Count);
+                            pgy1ShiftCount[index][shift]++;
+                            assigned = true;
+                        }
+                        else if (pgy2s.Count > 0) // PGY2
+                        {
+                            int index = rand.Next(pgy2s.Count);
+                            pgy2ShiftCount[index][shift]++;
+                            assigned = true;
+                        }
                     }
+
+                    if (!assigned)
+                        Console.WriteLine($"[WARN] Could not assign shift type {shift}");
                 }
             }
         }
+
+
 
         private void ComputeWorkTime(
     List<PGY1DTO> pgy1s,
