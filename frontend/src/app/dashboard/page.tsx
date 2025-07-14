@@ -938,21 +938,55 @@ function Dashboard() {
   // Render main content based on selected menu item
   const renderMainContent = () => {
     switch (selected) {
-      case "Home":
-        return (
-          <HomePage
-            displayName={displayName}
-            rotation={null}
-            rotationEndDate={null}
-            monthlyHours={null}
-            hasData={false}
-            onNavigateToSwapCalls={() => setSelected("Swap Calls")}
-            onNavigateToRequestOff={() => setSelected("Request Off")}
-            onNavigateToSchedule={() => setSelected("Check My Schedule")}
-            userId={user?.id || ""}
-            calendarEvents={calendarEvents}
-          />
-        );
+case "Home":
+  if (isAdmin) {
+    return (
+      <AdminPage
+        residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }))}
+        myTimeOffRequests={myTimeOffRequests.map(r => ({
+          id: r.id,
+          startDate: r.date || '',
+          endDate: r.date || '',
+          resident: r.residentId || '',
+          reason: r.reason,
+          status: r.status,
+        }))}
+        shifts={shifts.map(s => ({
+          id: s.id,
+          name: s.name
+        }))}
+        handleApproveRequest={handleApproveRequest}
+        handleDenyRequest={handleDenyRequest}
+        userInvitations={userInvitations}
+        inviteEmail={inviteEmail}
+        setInviteEmail={setInviteEmail}
+        handleSendInvite={handleSendInvite}
+        handleResendInvite={handleResendInvite}
+        users={users}
+        handleChangeRole={handleChangeRole}
+        handleDeleteUser={handleDeleteUser}
+        inviteRole={inviteRole}
+        setInviteRole={setInviteRole}
+        onClearRequests={handleClearRequests}
+      />
+    );
+  }
+  else{
+    return (
+      <HomePage
+        displayName={displayName}
+        rotation={null}
+        rotationEndDate={null}
+        monthlyHours={null}
+        hasData={false}
+        onNavigateToSwapCalls={() => setSelected("Swap Calls")}
+        onNavigateToRequestOff={() => setSelected("Request Off")}
+        onNavigateToSchedule={() => setSelected("Check My Schedule")}
+        userId={user?.id || ""}
+        calendarEvents={calendarEvents}
+      />
+    );
+  }
 
       case "Calendar":
         return (
@@ -1140,7 +1174,7 @@ function Dashboard() {
   const displayName = user ? `${user.firstName} ${user.lastName}` : "John Doe";
   const displayEmail = user?.email || "john.doe@email.com";
   const filteredMenuItems = menuItems.filter(item => {
-    if (item.title === "Admin") return isAdmin;
+    if (item.title === "Admin") return false; //hide admin option
     if (item.title === "Request Off") return !isAdmin;
     return true;
   });
