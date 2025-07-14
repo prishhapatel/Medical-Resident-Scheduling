@@ -32,7 +32,7 @@ namespace MedicalDemo.Controllers
 
                 // Execute scheduling algorithm
                 await _scheduler.GenerateTrainingSchedule(year);
-                
+
                 return Ok(new { 
                     Success = true,
                     Message = $"Training schedule for {year} generated successfully",

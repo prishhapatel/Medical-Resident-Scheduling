@@ -42,104 +42,89 @@ namespace MedicalDemo.Services
         {
             Console.WriteLine("Part 1: Normal Schedule (July through December)");
 
-            int pgy1Count = 8;
-            int pgy2Count = 8;
-
-            var allPgy1s = new List<PGY1DTO>();
-            var allPgy2s = new List<PGY2DTO>();
-
             // Load data
             var residents = await _context.residents.ToListAsync();
             var rotations = await _context.rotations.ToListAsync();
-            var vacations = await _context.vacations
-                .Where(v => v.Status == "Confirmed")  // Add this filter
-                .ToListAsync();
+            var vacations = await _context.vacations.Where(v => v.Status == "Confirmed").ToListAsync();
             var dates = await _context.dates.ToListAsync();
-
-            // Convert dates to DTOs
             var datesDTOs = _mapper.MapToDatesDTOs(dates);
 
-            //map to DTO
-            var pgy1DTOs = residents
-                   .Where(r => r.graduate_yr == 1)
-                   .Select(r => _mapper.MapToPGY1DTO(
-                       r,
-                       rotations.Where(rot => rot.ResidentId == r.resident_id).ToList(),
-                       vacations.Where(v => v.ResidentId == r.resident_id).ToList(),
-                       datesDTOs
-                   ))
-                   .ToList();
+            // Map PGY1 and PGY2 with availability for this year
+            var allPgy1s = residents
+                .Where(r => r.graduate_yr == 1)
+                .Select(r => _mapper.MapToPGY1DTO(
+                    r,
+                    rotations.Where(rot => rot.ResidentId == r.resident_id).ToList(),
+                    vacations.Where(v => v.ResidentId == r.resident_id).ToList(),
+                    datesDTOs,
+                    year))
+                .ToList();
 
-            allPgy1s = pgy1DTOs;
+            var allPgy2s = residents
+                .Where(r => r.graduate_yr == 2)
+                .Select(r => _mapper.MapToPGY2DTO(
+                    r,
+                    rotations.Where(rot => rot.ResidentId == r.resident_id).ToList(),
+                    vacations.Where(v => v.ResidentId == r.resident_id).ToList(),
+                    datesDTOs,
+                    year))
+                .ToList();
 
-            var pgy2DTOs = residents
-                    .Where(r => r.graduate_yr == 2)
-                    .Select(r => _mapper.MapToPGY2DTO(
-                        r,
-                        rotations.Where(rot => rot.ResidentId == r.resident_id).ToList(),
-                        vacations.Where(v => v.ResidentId == r.resident_id).ToList(),
-                        datesDTOs
-                    ))
-                    .ToList();
-            allPgy2s = pgy2DTOs;
-            // Track worked days
+            // Track previously worked days
             var workedDays = new HashSet<DateTime>();
-            foreach (var r in allPgy1s) workedDays.UnionWith(r.WorkDays);
-            foreach (var r in allPgy2s) workedDays.UnionWith(r.WorkDays);
+            foreach (var p in allPgy1s) workedDays.UnionWith(p.CommitedWorkDays);
+            foreach (var p in allPgy2s) workedDays.UnionWith(p.CommitedWorkDays);
 
-            DateTime startDay = new DateTime(year, 7, 7);
-            DateTime endDay = new DateTime(year, 12, 31);
+            // Schedule window
+            var startDay = new DateTime(year, 7, 7);
+            var endDay = new DateTime(year, 12, 31);
 
+            // Count shift demands
             var shiftTypeCount = new Dictionary<int, int>();
-            for (DateTime day = startDay; day <= endDay; day = day.AddDays(1))
+            for (var day = startDay; day <= endDay; day = day.AddDays(1))
             {
                 if (workedDays.Contains(day)) continue;
                 int type = GetShiftType(day);
-                if (!shiftTypeCount.ContainsKey(type)) shiftTypeCount[type] = 0;
-                shiftTypeCount[type]++;
+                shiftTypeCount[type] = shiftTypeCount.GetValueOrDefault(type) + 1;
             }
 
+            // Random assignment retry loop
             int attempts = 0;
             while (!RandomAssignment(allPgy1s, allPgy2s, startDay, endDay, shiftTypeCount, workedDays) && attempts++ < 50)
-            {
-
                 Console.WriteLine($"Retry #{attempts}");
-            }
+
             if (attempts == 50)
             {
                 Console.WriteLine("[FATAL] Could not find valid schedule in 50 tries.");
-                return new List<Dates>(); // return empty list or throw exception
+                return new List<Dates>();
             }
-            // Convert PGY1 and PGY2 workdays to Dates
-            var generatedDates = allPgy1s
-                .SelectMany(p => p.WorkDays.Select(d => new Dates
-                      {
-                        DateId = Guid.NewGuid(),
-                        ScheduleId = Guid.Empty, // Or generate/set a real ScheduleId if available
-                        ResidentId = p.ResidentId,
-                        Date = d,
-                        CallType = GetCallTypeString(d)
-                          }))
-                       .ToList();
 
-            generatedDates.AddRange(
-                allPgy2s
-                .SelectMany(p => p.WorkDays.Select(d => new Dates
+            // Build Dates entities from WorkDays
+            var generatedDates = new List<Dates>();
+
+            foreach (var p in allPgy1s)
+                generatedDates.AddRange(p.WorkDays.Select(d => new Dates
                 {
                     DateId = Guid.NewGuid(),
                     ScheduleId = Guid.Empty,
                     ResidentId = p.ResidentId,
                     Date = d,
                     CallType = GetCallTypeString(d)
-                }))
-            );
+                }));
 
-            // Save to DB
-            //await _context.dates.AddRangeAsync(generatedDates);
-            //await _context.SaveChangesAsync();
+            foreach (var p in allPgy2s)
+                generatedDates.AddRange(p.WorkDays.Select(d => new Dates
+                {
+                    DateId = Guid.NewGuid(),
+                    ScheduleId = Guid.Empty,
+                    ResidentId = p.ResidentId,
+                    Date = d,
+                    CallType = GetCallTypeString(d)
+                }));
 
             return generatedDates;
         }
+
 
 
         private List<Dates> GeneratePart2(int year)

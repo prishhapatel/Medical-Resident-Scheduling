@@ -3,9 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling;
-using Microsoft.EntityFrameworkCore;
+using MedicalDemo.Models;
 
 namespace MedicalDemo.Services
 {
@@ -18,14 +17,23 @@ namespace MedicalDemo.Services
             _context = context;
         }
 
-        public PGY1DTO MapToPGY1DTO(Residents resident, List<Rotations> rotations, List<Vacations> vacations, List<DatesDTO> dates)
+        /// <summary>
+        /// Maps a Resident to PGY1DTO, including available days for July-Dec of the given year.
+        /// </summary>
+        public PGY1DTO MapToPGY1DTO(
+            Residents resident,
+            List<Rotations> rotations,
+            List<Vacations> vacations,
+            List<DatesDTO> dates,
+            int year)
         {
+            // Existing committed dates
             var committedDates = dates
                 .Where(d => d.ResidentId == resident.resident_id && d.IsCommitted)
                 .Select(d => d.Date)
                 .ToList();
 
-            return new PGY1DTO
+            var dto = new PGY1DTO
             {
                 ResidentId = resident.resident_id,
                 Name = $"{resident.first_name} {resident.last_name}",
@@ -34,16 +42,34 @@ namespace MedicalDemo.Services
                 CommitedWorkDays = new HashSet<DateTime>(committedDates),
                 InTraining = resident.graduate_yr == 1
             };
+
+            // Build AvailableDays: July 7 through Dec 31 of schedule year
+            var startDate = new DateTime(year, 7, 7);
+            var endDate = new DateTime(year, 12, 31);
+            dto.AvailableDays = Enumerable.Range(0, (endDate - startDate).Days + 1)
+                .Select(offset => startDate.AddDays(offset))
+                .Where(d => !dto.VacationRequests.Contains(d) && !dto.CommitedWorkDays.Contains(d))
+                .ToList();
+
+            return dto;
         }
 
-        public PGY2DTO MapToPGY2DTO(Residents resident, List<Rotations> rotations, List<Vacations> vacations, List<DatesDTO> dates)
+        /// <summary>
+        /// Maps a Resident to PGY2DTO, including available days for July-Dec of the given year.
+        /// </summary>
+        public PGY2DTO MapToPGY2DTO(
+            Residents resident,
+            List<Rotations> rotations,
+            List<Vacations> vacations,
+            List<DatesDTO> dates,
+            int year)
         {
             var committedDates = dates
                 .Where(d => d.ResidentId == resident.resident_id && d.IsCommitted)
                 .Select(d => d.Date)
                 .ToList();
 
-            return new PGY2DTO
+            var dto = new PGY2DTO
             {
                 ResidentId = resident.resident_id,
                 Name = $"{resident.first_name} {resident.last_name}",
@@ -52,37 +78,34 @@ namespace MedicalDemo.Services
                 CommitedWorkDays = new HashSet<DateTime>(committedDates),
                 InTraining = resident.graduate_yr == 2
             };
-        }
 
-        public PGY3DTO MapToPGY3DTO(Residents resident, List<Vacations> vacations, List<DatesDTO> dates)
-        {
-            var committedDates = dates
-                .Where(d => d.ResidentId == resident.resident_id && d.IsCommitted)
-                .Select(d => d.Date)
+            // Build AvailableDays: July 7 through Dec 31 of schedule year
+            var startDate = new DateTime(year, 7, 7);
+            var endDate = new DateTime(year, 12, 31);
+            dto.AvailableDays = Enumerable.Range(0, (endDate - startDate).Days + 1)
+                .Select(offset => startDate.AddDays(offset))
+                .Where(d => !dto.VacationRequests.Contains(d) && !dto.CommitedWorkDays.Contains(d))
                 .ToList();
 
-            return new PGY3DTO
-            {
-                ResidentId = resident.resident_id,
-                Name = $"{resident.first_name} {resident.last_name}",
-                VacationRequests = new HashSet<DateTime>(vacations.Select(v => v.Date)),
-                CommitedWorkDays = new HashSet<DateTime>(committedDates)
-            };
+            return dto;
         }
+
+        // other methods unchanged...
 
         public List<DatesDTO> MapToDatesDTOs(List<Dates> dates)
         {
-            return dates.Select(d => new DatesDTO
-            {
-                DateId = d.DateId,
-                ScheduleId = d.ScheduleId,
-                ResidentId = d.ResidentId,
-                Date = d.Date,
-                CallType = d.CallType,
-                IsCommitted = true  // All existing dates are considered committed
-            }).ToList();
+            return dates
+              .Select(d => new DatesDTO
+              {
+                  DateId = d.DateId,
+                  ScheduleId = d.ScheduleId,
+                  ResidentId = d.ResidentId,
+                  Date = d.Date,
+                  CallType = d.CallType,
+                  IsCommitted = true
+              })
+              .ToList();
         }
-
         private HospitalRole[] MapRotationsToRoles(List<Rotations> rotations)
         {
             var roles = new HospitalRole[12];
@@ -97,7 +120,6 @@ namespace MedicalDemo.Services
         private HospitalRole MapRotationNameToRole(string rotationName)
         {
             rotationName = rotationName.Trim();
-
             return rotationName switch
             {
                 "Inpt Psy" => HospitalRole.Inpatient,
