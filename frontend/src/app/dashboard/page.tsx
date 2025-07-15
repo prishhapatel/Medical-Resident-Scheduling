@@ -783,9 +783,9 @@ function Dashboard() {
       });
       return;
     }
-
+  
     console.log('[RequestOff] Submitting vacation request for residentId:', user?.id);
-
+  
     if (!startDate || !endDate || !reason) {
       toast({
         variant: "destructive",
@@ -794,7 +794,7 @@ function Dashboard() {
       });
       return;
     }
-
+  
     if (new Date(startDate) > new Date(endDate)) {
       toast({
         variant: "destructive",
@@ -803,53 +803,56 @@ function Dashboard() {
       });
       return;
     }
-
+  
     try {
-      // Create vacation requests for each day in the range
       const start = new Date(startDate);
       const end = new Date(endDate);
       const requests = [];
-      
+  
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         requests.push({
-          residentId: user.id,
-          date: d.toISOString().split('T')[0],
-          reason: reason,
-          description: description || '',
+          ResidentId: user.id,
+          Date: d.toISOString().split('T')[0],
+          Reason: reason,
+          Description: description || '',
+          Status: 'Pending',
         });
       }
-
-      // Send all requests
-      const response = await fetch(`${config.apiUrl}/api/vacations`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requests),
+  
+      //Loop through and send each request for algo
+      for (const request of requests) {
+        const response = await fetch(`${config.apiUrl}/api/vacations`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(request),
+        });
+  
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Failed to submit request:", response.status, errorText);
+          throw new Error("One of the vacation requests failed");
+        }
+      }
+  
+      toast({
+        variant: "success",
+        title: "Request Submitted",
+        description: `Time off request submitted for ${startDate} to ${endDate}.`,
       });
-
-      if (response.ok) {
-        toast({
-          variant: "success",
-          title: "Request Submitted",
-          description: `Time off request submitted for ${startDate} to ${endDate}.`,
-        });
-        
-        // Clear form
-        setStartDate("");
-        setEndDate("");
-        setReason("");
-        setDescription("");
-        
-        // Refresh data
-        fetchMyTimeOffRequests();
-        
-        // Add to recent activity
-      } else {
-        throw new Error('Failed to submit request');
-      }
-    } catch {
-      console.error('Error submitting vacation request');
+  
+      //Clear form
+      setStartDate("");
+      setEndDate("");
+      setReason("");
+      setDescription("");
+  
+      //Refresh
+      fetchMyTimeOffRequests();
+  
+    } catch (err) {
+      console.error('Error submitting vacation request:', err);
       toast({
         variant: "destructive",
         title: "Error",
@@ -857,6 +860,7 @@ function Dashboard() {
       });
     }
   };
+  
 
   const handleLogout = async () => {
     removeAuthToken();
