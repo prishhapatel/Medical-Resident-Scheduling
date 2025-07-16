@@ -25,28 +25,47 @@ namespace MedicalDemo.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateSwapRequest([FromBody] SwapRequest swapRequest)
         {
-            if (swapRequest == null)
+            // Console.WriteLine("Received swap request: " + System.Text.Json.JsonSerializer.Serialize(swapRequest));
+
+            if (swapRequest == null) {
+                // Console.WriteLine("SwapRequest object is null.");
                 return BadRequest("SwapRequest object is null.");
+            }
+
+            // Console.WriteLine($"swapRequest.RequesterId: {swapRequest.RequesterId}, swapRequest.RequesterDate: {swapRequest.RequesterDate:yyyy-MM-dd}");
+            // Console.WriteLine($"swapRequest.RequesteeId: {swapRequest.RequesteeId}, swapRequest.RequesteeDate: {swapRequest.RequesteeDate:yyyy-MM-dd}");
 
             // Fetch residents
             var requester = await _context.residents.FirstOrDefaultAsync(r => r.resident_id == swapRequest.RequesterId);
             var requestee = await _context.residents.FirstOrDefaultAsync(r => r.resident_id == swapRequest.RequesteeId);
-            if (requester == null || requestee == null)
+            // Console.WriteLine($"Requester: {requester?.resident_id}, PGY: {requester?.graduate_yr}; Requestee: {requestee?.resident_id}, PGY: {requestee?.graduate_yr}");
+            if (requester == null || requestee == null) {
+                // Console.WriteLine("Requester or requestee not found.");
                 return BadRequest("Requester or requestee not found.");
+            }
 
             // Check PGY (graduate_yr)
-            if (requester.graduate_yr != requestee.graduate_yr)
+            if (requester.graduate_yr != requestee.graduate_yr) {
+                // Console.WriteLine($"PGY mismatch: {requester.graduate_yr} vs {requestee.graduate_yr}");
                 return BadRequest("Both residents must be the same PGY level to swap.");
+            }
 
             // Fetch dates
             var requesterDate = await _context.dates.FirstOrDefaultAsync(d => d.ResidentId == swapRequest.RequesterId && d.Date.Date == swapRequest.RequesterDate.Date);
             var requesteeDate = await _context.dates.FirstOrDefaultAsync(d => d.ResidentId == swapRequest.RequesteeId && d.Date.Date == swapRequest.RequesteeDate.Date);
-            if (requesterDate == null || requesteeDate == null)
+            // Console.WriteLine($"DB Query for requester: ResidentId={swapRequest.RequesterId}, Date={swapRequest.RequesterDate:yyyy-MM-dd} => Found: {(requesterDate != null ? "Yes" : "No")}");
+            // Console.WriteLine($"DB Query for requestee: ResidentId={swapRequest.RequesteeId}, Date={swapRequest.RequesteeDate:yyyy-MM-dd} => Found: {(requesteeDate != null ? "Yes" : "No")}");
+            if (requesterDate == null || requesteeDate == null) {
+                // Console.WriteLine("Could not find both shift dates for the swap.");
                 return BadRequest("Could not find both shift dates for the swap.");
+            }
 
             // Check shift type
-            if (requesterDate.CallType != requesteeDate.CallType)
+            if (!AreEquivalentCallTypes(requesterDate.CallType, requesteeDate.CallType))
+            {
+                // Console.WriteLine($"Shift type mismatch: {requesterDate.CallType} vs {requesteeDate.CallType}");
                 return BadRequest("Both shifts must be the same type (e.g., Sunday with Sunday, Saturday with Saturday, Short with Short).");
+            }
 
             if (swapRequest.SwapId == Guid.Empty)
                 swapRequest.SwapId = Guid.NewGuid();
@@ -213,6 +232,16 @@ namespace MedicalDemo.Controllers
             // Add recent activity for requester (handled in dashboard fetch for now)
 
             return Ok(swap);
+        }
+
+        // Helper to compare call types
+        private bool AreEquivalentCallTypes(string a, string b)
+        {
+            var sundayTypes = new[] { "Sunday", "12h" };
+            var saturdayTypes = new[] { "Saturday", "24h" };
+            if (sundayTypes.Contains(a) && sundayTypes.Contains(b)) return true;
+            if (saturdayTypes.Contains(a) && saturdayTypes.Contains(b)) return true;
+            return a == b;
         }
 
         public class DenySwapRequestDto

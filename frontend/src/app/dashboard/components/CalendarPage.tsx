@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { ChevronLeft, ChevronRight, CalendarDays, Home, Repeat2, Calendar, User, Shield, Settings as SettingsIcon } from "lucide-react";
 
 interface CalendarEvent {
@@ -35,9 +35,11 @@ interface CalendarPageProps {
 const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCalls, onNavigateToRequestOff, onNavigateToCheckSchedule, onNavigateToAdmin, onNavigateToSettings, onNavigateToHome, onDateChange, isAdmin }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [modalPosition, setModalPosition] = useState<{ x: number; y: number } | null>(null);
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month' | 'year'>('month');
   const [isUpcomingOpen, setIsUpcomingOpen] = useState(true);
   const [eventPopover, setEventPopover] = useState<{ event: CalendarEvent; x: number; y: number } | null>(null);
+  const calendarGridRef = useRef<HTMLDivElement>(null);
 
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -180,6 +182,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
     const dayEvents = getEventsForDate(date);
     if (dayEvents.length === 1) {
       setSelectedEvent(dayEvents[0]);
+      setModalPosition({ x: 0, y: 0 }); // Fallback to center if no specific position
     }
   };
 
@@ -383,7 +386,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
       {/* Main Content: Calendar + Upcoming */}
       <div className="flex flex-1 w-full relative pt-[9rem]">
         {/* Calendar Grid */}
-        <div className={`flex-1 p-8 transition-all duration-300 ${isUpcomingOpen ? 'mr-[24rem]' : ''}`}>
+        <div className={`flex-1 p-8 transition-all duration-300 ${isUpcomingOpen ? 'mr-[24rem]' : ''}`} ref={calendarGridRef}>
           <div className="bg-card rounded-2xl shadow-xl border border-border overflow-hidden h-full">
             {viewMode === 'day' ? (
               // Day View
@@ -406,9 +409,18 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                           key={index}
                           className="p-4 rounded-lg border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all duration-200 cursor-pointer"
                           style={{ borderLeftColor: getPGYColor(event), borderLeftWidth: '4px' }}
-                          onClick={() => {
-                            // Close any other open modals first
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setSelectedEvent(event);
+                            const labelRect = e.currentTarget.getBoundingClientRect();
+                            const gridRect = calendarGridRef.current?.getBoundingClientRect();
+                            const modalWidth = 340; // match max-w-[340px]
+                            let left = labelRect.right - (gridRect?.left || 0) + 8;
+                            let top = labelRect.top - (gridRect?.top || 0);
+                            if (left + modalWidth > (gridRect?.width || window.innerWidth)) {
+                              left = (gridRect?.width || window.innerWidth) - modalWidth - 16;
+                            }
+                            setModalPosition({ x: left, y: top });
                           }}
                         >
                           <h4 className="font-semibold text-gray-900 dark:text-gray-100">{event.title}</h4>
@@ -456,6 +468,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                                 e.stopPropagation();
                                 // Close any other open modals first
                                 setSelectedEvent(event);
+                                setModalPosition({ x: 0, y: 0 }); // Fallback to center
                               }}
                               title={event.title}
                             >
@@ -584,6 +597,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedEvent(event);
+                                setModalPosition({ x: 0, y: 0 }); // Fallback to center
                               }}
                               title={event.title}
                             >
@@ -637,6 +651,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                     className="p-4 rounded-xl border border-gray-200 dark:border-gray-600 hover:shadow-md dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer"
                     onClick={() => {
                       setSelectedEvent(event);
+                      setModalPosition({ x: 0, y: 0 }); // Fallback to center
                     }}
                   >
                     <div className="flex items-start space-x-3">
@@ -667,8 +682,8 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
 
       {/* Event Detail Modal */}
       {selectedEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40" onClick={() => setSelectedEvent(null)}>
-          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl p-8 min-w-[320px] max-w-[90vw]" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent" onClick={() => { setSelectedEvent(null); }}>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 min-w-[320px] max-w-[340px] border border-gray-300 dark:border-gray-700" style={{ borderRadius: '18px' }} onClick={e => e.stopPropagation()}>
             <h2 className="text-xl font-bold mb-2">{selectedEvent.title}</h2>
             <div className="mb-2">
               <span className="font-semibold">Date: </span>
@@ -688,7 +703,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                 {selectedEvent.extendedProps.pgyLevel}
               </div>
             )}
-            <button className="mt-4 px-4 py-2 bg-primary text-white rounded" onClick={() => setSelectedEvent(null)}>
+            <button className="mt-4 px-4 py-2 bg-primary text-white rounded" onClick={() => { setSelectedEvent(null); }}>
               Close
             </button>
           </div>
