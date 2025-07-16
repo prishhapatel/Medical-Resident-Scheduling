@@ -217,16 +217,6 @@ function Dashboard() {
     }
   };
 
-  // Utility to get YYYY-MM-DD from a Date or string
-  function formatDate(date: Date | string): string {
-    if (typeof date === 'string') {
-      // If already in YYYY-MM-DD format, return as is
-      if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
-      return new Date(date).toISOString().slice(0, 10);
-    }
-    return date.toISOString().slice(0, 10);
-  }
-
   function mapShiftType(shift) {
     if (shift === "Saturday") return ["24h", "Saturday"];
     if (shift === "Sunday") return ["12h", "Sunday"];
