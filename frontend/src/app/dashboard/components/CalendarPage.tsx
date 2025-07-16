@@ -35,6 +35,7 @@ interface CalendarPageProps {
 const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCalls, onNavigateToRequestOff, onNavigateToCheckSchedule, onNavigateToAdmin, onNavigateToSettings, onNavigateToHome, onDateChange, isAdmin }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [modalPosition, setModalPosition] = useState<{ x: number; y: number } | null>(null);
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month' | 'year'>('month');
   const [isUpcomingOpen, setIsUpcomingOpen] = useState(true);
   const [eventPopover, setEventPopover] = useState<{ event: CalendarEvent; x: number; y: number } | null>(null);
@@ -415,6 +416,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                             const gridRect = calendarGridRef.current?.getBoundingClientRect();
                             const modalWidth = 340; // match max-w-[340px]
                             let left = labelRect.right - (gridRect?.left || 0) + 8;
+
                             if (left + modalWidth > (gridRect?.width || window.innerWidth)) {
                               left = (gridRect?.width || window.innerWidth) - modalWidth - 16;
                             }
@@ -466,7 +468,6 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                                 e.stopPropagation();
                                 // Close any other open modals first
                                 setSelectedEvent(event);
-                                // Fallback to center
                               }}
                               title={event.title}
                             >
@@ -595,8 +596,6 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedEvent(event);
-                                // Fallback to center
-                              }}
                               title={event.title}
                             >
                               {event.title}
@@ -649,7 +648,6 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                     className="p-4 rounded-xl border border-gray-200 dark:border-gray-600 hover:shadow-md dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer"
                     onClick={() => {
                       setSelectedEvent(event);
-                      // Fallback to center
                     }}
                   >
                     <div className="flex items-start space-x-3">
