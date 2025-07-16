@@ -15,19 +15,19 @@
             FlexLong = flexLong;
         }
 
-        public static readonly HospitalRole Inpatient = new(true, true, false, false);
-        public static readonly HospitalRole Geriatric = new(true, true, false, false);
-        public static readonly HospitalRole PHPandIOP = new(true, true, false, false);
-        public static readonly HospitalRole PsychConsults = new(true, true, false, false);
-        public static readonly HospitalRole CommP = new(false, true, false, false);
-        public static readonly HospitalRole CAP = new(false, true, false, false);
-        public static readonly HospitalRole Addiction = new(false, true, false, false);
-        public static readonly HospitalRole Forensic = new(false, true, false, false);
-        public static readonly HospitalRole Float = new(false, true, false, false);
-        public static readonly HospitalRole Neurology = new(false, true, true, false);
-        public static readonly HospitalRole IMOutpatient = new(false, true, true, false);
-        public static readonly HospitalRole IMInpatient = new(false, false, false, true);
-        public static readonly HospitalRole NightFloat = new(false, false, false, false);
-        public static readonly HospitalRole EmergencyMed = new(false, false, false, true);
+        public static HospitalRole Inpatient => new(true, true, false, false);
+        public static HospitalRole Geriatric => new(true, true, false, false);
+        public static HospitalRole PHPandIOP => new(true, true, false, false);
+        public static HospitalRole PsychConsults => new(true, true, false, false);
+        public static HospitalRole CommP => new(false, true, false, false);
+        public static HospitalRole CAP => new(false, true, false, false);
+        public static HospitalRole Addiction => new(false, true, false, false);
+        public static HospitalRole Forensic => new(false, true, false, false);
+        public static HospitalRole Float => new(false, true, false, false);
+        public static HospitalRole Neurology => new(false, true, true, false);
+        public static HospitalRole IMOutpatient => new(false, true, true, false);
+        public static HospitalRole IMInpatient => new(false, false, false, true);
+        public static HospitalRole NightFloat => new(false, false, false, false);
+        public static HospitalRole EmergencyMed => new(false, false, false, true);
     }
 }

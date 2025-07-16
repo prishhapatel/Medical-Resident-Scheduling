@@ -146,35 +146,4 @@ public class Graph
         // Return the resulting maximum flow
         return flow;
     }
-
-    static void test1()
-    {
-        int answer = 23;
-
-        Graph g = new Graph(6);
-        g.addEdge(0, 2, 12);
-        g.addEdge(0, 1, 11);
-        g.addEdge(2, 1, 1);
-        g.addEdge(1, 3, 12);
-        g.addEdge(2, 4, 11);
-        g.addEdge(4, 5, 4);
-        g.addEdge(4, 3, 7);
-        g.addEdge(3, 5, 19);
-        int result = g.getFlow(0, 5);
-        if (answer == result)
-        {
-            Console.WriteLine("Passed test 1.");
-        }
-        else
-        {
-            Console.WriteLine("Failed test 1.");
-            Console.WriteLine($"Expected {answer}");
-            Console.WriteLine($"Recieved {result}");
-        }
-    }
-
-    static void oldMain()
-    {
-        test1();
-    }
 }

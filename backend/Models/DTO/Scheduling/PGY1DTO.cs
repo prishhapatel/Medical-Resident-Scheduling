@@ -10,8 +10,12 @@
 
             int monthIndex = (curDay.Month + 5) % 12;
             var role = RolePerMonth[monthIndex];
-            
-            if (role == null) return false;
+
+            if (role == null)
+            {
+                Console.WriteLine($"[DEBUG] {Name} has null role for {curDay:MM/dd/yyyy} (index={monthIndex})");
+                return false;
+            }
             
             if (curDay.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
             {
