@@ -35,7 +35,6 @@ interface CalendarPageProps {
 const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCalls, onNavigateToRequestOff, onNavigateToCheckSchedule, onNavigateToAdmin, onNavigateToSettings, onNavigateToHome, onDateChange, isAdmin }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [modalPosition, setModalPosition] = useState<{ x: number; y: number } | null>(null);
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month' | 'year'>('month');
   const [isUpcomingOpen, setIsUpcomingOpen] = useState(true);
   const [eventPopover, setEventPopover] = useState<{ event: CalendarEvent; x: number; y: number } | null>(null);
@@ -596,6 +595,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedEvent(event);
+                              }}
                               title={event.title}
                             >
                               {event.title}
