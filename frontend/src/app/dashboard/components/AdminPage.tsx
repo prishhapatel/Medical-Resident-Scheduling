@@ -39,6 +39,7 @@ interface Request {
   endDate?: string;
   residentId?: string;
   details?: string;
+  groupId: string;
 }
 
 
@@ -129,6 +130,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
           status: string;
           residentId: string;
           details?: string;
+          groupId: string;
         }) => ({
           id: vac.vacationId,
           firstName: vac.firstName,
@@ -140,6 +142,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
           status: vac.status,
           residentId: vac.residentId,
           details: vac.details,
+          groupId: vac.groupId
         }));
         setMyTimeOffRequests(mapped);
       });
@@ -191,6 +194,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
           status: current.status,
           startDate: start,
           endDate: end,
+          groupId:   current.groupId,
         });
         
   
@@ -234,7 +238,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
     }
     return 'N/A';
   };
-  
 
   return (
     <div className="w-full pt-4 h-[calc(100vh-4rem)] flex flex-col items-center pl-8">
@@ -298,10 +301,10 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       {request.status === "Pending" && (
                         <div className="flex items-center space-x-2">
-                          <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-500 hover:text-white" onClick={() => handleApproveRequest(request.id || '')}>
+                          <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-500 hover:text-white" onClick={() => handleApproveRequest(request.groupId || '')}>
                             <Check className="h-4 w-4 mr-2" /> Approve
                           </Button>
-                          <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDenyRequest(request.id || '')}>
+                          <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDenyRequest(request.groupId || '')}>
                             <X className="h-4 w-4 mr-2" /> Deny
                           </Button>
                         </div>
@@ -408,10 +411,10 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       {request.status === "Pending" && (
                         <div className="flex items-center space-x-2">
-                          <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-500 hover:text-white" onClick={() => handleApproveRequest(request.id || '')}>
+                          <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-500 hover:text-white" onClick={() => handleApproveRequest(request.groupId || '')}>
                             <Check className="h-4 w-4 mr-2" /> Approve
                           </Button>
-                          <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDenyRequest(request.id || '')}>
+                          <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDenyRequest(request.groupId || '')}>
                             <X className="h-4 w-4 mr-2" /> Deny
                           </Button>
                         </div>

@@ -33,6 +33,15 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    },
+    "MedicalDemo": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "POSTMARK_API_KEY": "1d025633-72fd-4627-b022-f49b44e0e450",
+        "FROM_EMAIL":        "na638630@ucf.edu",
+        "FROM_NAME":         "Psycall Admin"
+      }
     }
   }
 }

@@ -5,7 +5,7 @@ using MedicalDemo.Repositories;
 using MedicalDemo.Services;
 
 // Load .env file
-DotNetEnv.Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env.local"));
+DotNetEnv.Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -95,7 +95,7 @@ app.UseHttpsRedirection();
 app.MapControllers();
 
 // Use the port from environment variable or default to 3000 (Coolify standard)
-var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5000";
+var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "3000";
 app.Urls.Add($"http://0.0.0.0:{port}");
 
 

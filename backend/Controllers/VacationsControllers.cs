@@ -6,6 +6,11 @@ using System;
 
 namespace MedicalDemo.Controllers
 {
+    public class UpdateStatusDto
+    {
+        public string Status { get; set; } = string.Empty;
+    }
+
     [ApiController]
     [Route("api/[controller]")]
     public class VacationsController : ControllerBase
@@ -50,36 +55,67 @@ namespace MedicalDemo.Controllers
 
             return CreatedAtAction(nameof(FilterVacations), new { id = vacation.VacationId }, vacation);
         }
-        
+
         // GET: api/vacations
         [HttpGet]
-[HttpGet]
-public async Task<ActionResult<IEnumerable<VacationWithResidentDto>>> GetAllVacations()
+        public async Task<ActionResult<IEnumerable<VacationWithResidentDto>>> GetAllVacations()
+        {
+            var vacations = await _context.vacations
+                .Join(_context.residents,
+                    v => v.ResidentId,
+                    r => r.resident_id,
+                    (v, r) => new VacationWithResidentDto
+                    {
+                        VacationId = v.VacationId,
+                        ResidentId = r.resident_id,
+                        FirstName = r.first_name,
+                        LastName = r.last_name,
+                        Date = v.Date,
+                        Reason = v.Reason,
+                        Status = v.Status,
+                        Details = v.Details,
+                        GroupId = v.GroupId
+                    })
+                .ToListAsync();
+
+            return Ok(vacations);
+        }
+
+// PUT: api/vacations/group/{groupId}/status
+[HttpPut("group/{groupId}/status")]
+public async Task<IActionResult> UpdateStatusByGroup(string groupId, [FromBody] UpdateStatusDto input)
 {
-    var vacations = await _context.vacations
-        .Join(_context.residents,
-            v => v.ResidentId,
-            r => r.resident_id,
-            (v, r) => new VacationWithResidentDto
+    Console.WriteLine("Received groupId: " + groupId);
+
+    if (string.IsNullOrWhiteSpace(input.Status))
             {
-                VacationId = v.VacationId,
-                ResidentId = r.resident_id,
-                FirstName = r.first_name,
-                LastName = r.last_name,
-                Date = v.Date,
-                Reason = v.Reason,
-                Status = v.Status,
-                Details = v.Details
-            })
+                return BadRequest("Status is required.");
+            }
+
+    var matchingRequests = await _context.vacations
+        .Where(v => v.GroupId == groupId)
         .ToListAsync();
 
-    return Ok(vacations);
+    if (!matchingRequests.Any())
+    {
+        return NotFound($"No vacation requests found for groupId '{groupId}'.");
+    }
+
+    foreach (var request in matchingRequests)
+    {
+        request.Status = input.Status;
+    }
+
+    await _context.SaveChangesAsync();
+
+    return Ok(new { message = $"Status updated to '{input.Status}' for groupId '{groupId}'." });
 }
+
 
 
         // GET: api/vacations/filter?residentId=&date=&reason=&status=
         [HttpGet("filter")]
-        public async Task<ActionResult<IEnumerable<Vacations>>> FilterVacations(
+        public async Task<ActionResult<IEnumerable<VacationWithResidentDto>>> FilterVacations(
             [FromQuery] string? residentId,
             [FromQuery] DateTime? date,
 			[FromQuery] string? reason,
@@ -98,7 +134,8 @@ public async Task<ActionResult<IEnumerable<VacationWithResidentDto>>> GetAllVaca
             Date = v.Date,
             Reason = v.Reason,
             Status = v.Status,
-            Details = v.Details
+            Details = v.Details,
+            GroupId = v.GroupId 
         });
 
 if (!string.IsNullOrEmpty(residentId))

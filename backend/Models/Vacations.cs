@@ -9,7 +9,7 @@ namespace MedicalDemo.Data.Models
     {
         [Key]
         [Column("vacation_id")]
-        public Guid VacationId { get; set; }  // binary(16) typically maps to Guid in EF Core
+        public Guid VacationId { get; set; }
 
         [Column("resident_id")]
         [MaxLength(15)]
@@ -29,6 +29,11 @@ namespace MedicalDemo.Data.Models
         [Column("details")]
         [MaxLength(255)]
         public string? Details { get; set; }
+
+        [Column("groupId")]
+        [MaxLength(45)]
+        public string GroupId { get; set; }
+
 
     }
 }
