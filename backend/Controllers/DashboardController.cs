@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using MedicalDemo.Data.Models;
 using System;
 using System.Threading.Tasks;
+using System.Collections.Generic; // Added for List
+using System.Linq; // Added for Where, ToList, Any, Select
 
 namespace MedicalDemo.Server.Controllers
 {
@@ -54,9 +56,6 @@ namespace MedicalDemo.Server.Controllers
                 }
                 else
                 {
-                    // Debug: Log what month formats we're looking for
-                    Console.WriteLine($"No rotation found for resident {residentId}. Looking for months: {string.Join(", ", currentMonthFormats)}");
-                    
                     // Get all rotations for this resident to see what format is used
                     var allRotations = await _context.rotations
                         .Where(r => r.ResidentId == residentId)
@@ -64,15 +63,15 @@ namespace MedicalDemo.Server.Controllers
                     
                     if (allRotations.Any())
                     {
-                        Console.WriteLine($"Found {allRotations.Count} rotations for resident {residentId}:");
-                        foreach (var rot in allRotations)
-                        {
-                            Console.WriteLine($"  Month: '{rot.Month}', Rotation: '{rot.Rotation}'");
-                        }
+                        // Console.WriteLine($"Found {allRotations.Count} rotations for resident {residentId}:");
+                        // foreach (var rot in allRotations)
+                        // {
+                        //     Console.WriteLine($"  Month: '{rot.Month}', Rotation: '{rot.Rotation}'");
+                        // }
                     }
                     else
                     {
-                        Console.WriteLine($"No rotations found for resident {residentId}");
+                        // Console.WriteLine($"No rotations found for resident {residentId}");
                     }
                 }
 
@@ -88,10 +87,10 @@ namespace MedicalDemo.Server.Controllers
                 dashboardData.MonthlyHours = thisMonthDates.Count * 8; // Assuming 8 hours per shift
                 
                 // Debug: Log the hours calculation
-                Console.WriteLine($"Resident {residentId}: Found {thisMonthDates.Count} dates in {DateTime.Now:MMMM yyyy}, calculated {dashboardData.MonthlyHours} hours");
+                // Console.WriteLine($"Resident {residentId}: Found {thisMonthDates.Count} dates in {DateTime.Now:MMMM yyyy}, calculated {dashboardData.MonthlyHours} hours");
                 if (thisMonthDates.Any())
                 {
-                    Console.WriteLine($"Dates: {string.Join(", ", thisMonthDates.Select(d => d.Date.ToString("MM/dd/yyyy")))}");
+                    // Console.WriteLine($"Dates: {string.Join(", ", thisMonthDates.Select(d => d.Date.ToString("MM/dd/yyyy")))}");
                 }
 
                 // Get upcoming shifts (next 3)
@@ -128,6 +127,73 @@ namespace MedicalDemo.Server.Controllers
                         Type = "upcoming",
                         Message = $"Next shift: {nextShift.CallType} on {nextShift.Date:MM/dd/yyyy}",
                         Date = "Upcoming"
+                    });
+                }
+
+                // Add pending swap requests for this resident (as requestee)
+                var pendingSwaps = await _context.SwapRequests
+                    .Where(s => s.RequesteeId == residentId && s.Status == "Pending")
+                    .ToListAsync();
+                var requesterIds = pendingSwaps.Select(s => s.RequesterId).Distinct().ToList();
+                var requesterMap = await _context.residents
+                    .Where(r => requesterIds.Contains(r.resident_id))
+                    .ToDictionaryAsync(r => r.resident_id, r => r.first_name + " " + r.last_name);
+                foreach (var swap in pendingSwaps)
+                {
+                    string requesterName = requesterMap.ContainsKey(swap.RequesterId) ? requesterMap[swap.RequesterId] : swap.RequesterId;
+                    dashboardData.RecentActivity.Add(new RecentActivity
+                    {
+                        Id = swap.SwapId.ToString(),
+                        Type = "swap_pending",
+                        Message = $"Swap request from {requesterName} for {swap.RequesterDate:MM/dd/yyyy} (your shift: {swap.RequesteeDate:MM/dd/yyyy})",
+                        Date = swap.CreatedAt.ToString("MM/dd/yyyy")
+                    });
+                }
+
+                // Add swap requests where this resident is the requester and status is Approved or Denied
+                var respondedSwaps = await _context.SwapRequests
+                    .Where(s => s.RequesterId == residentId && (s.Status == "Approved" || s.Status == "Denied"))
+                    .OrderByDescending(s => s.UpdatedAt)
+                    .ToListAsync();
+                // Fetch all requestee IDs for these swaps
+                var requesteeIds = respondedSwaps.Select(s => s.RequesteeId).Distinct().ToList();
+                var requesteeMap = await _context.residents
+                    .Where(r => requesteeIds.Contains(r.resident_id))
+                    .ToDictionaryAsync(r => r.resident_id, r => r.first_name + " " + r.last_name);
+                foreach (var swap in respondedSwaps)
+                {
+                    string requesteeName = requesteeMap.ContainsKey(swap.RequesteeId) ? requesteeMap[swap.RequesteeId] : swap.RequesteeId;
+                    string message = swap.Status == "Approved"
+                        ? $"Your swap request for {swap.RequesterDate:MM/dd/yyyy} (with {requesteeName}) was approved."
+                        : $"Your swap request for {swap.RequesterDate:MM/dd/yyyy} (with {requesteeName}) was denied. Reason: {swap.Details}";
+                    dashboardData.RecentActivity.Add(new RecentActivity
+                    {
+                        Id = swap.SwapId.ToString(),
+                        Type = swap.Status == "Approved" ? "swap_approved" : "swap_denied",
+                        Message = message,
+                        Date = swap.UpdatedAt.ToString("MM/dd/yyyy")
+                    });
+                }
+
+                // Add swap activity for the requestee (approver) when a swap is approved
+                var approvedAsRequestee = await _context.SwapRequests
+                    .Where(s => s.RequesteeId == residentId && s.Status == "Approved")
+                    .OrderByDescending(s => s.UpdatedAt)
+                    .ToListAsync();
+                var approvedRequesterIds = approvedAsRequestee.Select(s => s.RequesterId).Distinct().ToList();
+                var approvedRequesterMap = await _context.residents
+                    .Where(r => approvedRequesterIds.Contains(r.resident_id))
+                    .ToDictionaryAsync(r => r.resident_id, r => r.first_name + " " + r.last_name);
+                foreach (var swap in approvedAsRequestee)
+                {
+                    string requesterName = approvedRequesterMap.ContainsKey(swap.RequesterId) ? approvedRequesterMap[swap.RequesterId] : swap.RequesterId;
+                    string message = $"You swapped your shift on {swap.RequesteeDate:MM/dd/yyyy} with {requesterName}.";
+                    dashboardData.RecentActivity.Add(new RecentActivity
+                    {
+                        Id = swap.SwapId.ToString() + "-as-approver",
+                        Type = "swap_approved",
+                        Message = message,
+                        Date = swap.UpdatedAt.ToString("MM/dd/yyyy")
                     });
                 }
 

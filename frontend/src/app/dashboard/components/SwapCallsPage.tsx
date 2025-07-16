@@ -21,6 +21,13 @@ interface SwapCallsPageProps {
   handleSubmitSwap: () => void;
 }
 
+// Add this utility function for shift mapping
+function mapShiftType(shift: string) {
+  if (shift === "Saturday") return ["24h", "Saturday"];
+  if (shift === "Sunday") return ["12h", "Sunday"];
+  return [shift]; // "Short" stays "Short"
+}
+
 const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
   yourShiftDate,
   setYourShiftDate,
@@ -185,13 +192,21 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Your Shift:</span>
                     <span className="font-medium text-foreground">
-                      {yourShiftDate ? new Date(yourShiftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} - {shifts.find(s => s.id === selectedShift)?.name || 'N/A'}
+                      {yourShiftDate ? (() => {
+                        const [year, month, day] = yourShiftDate.split('-');
+                        const localDate = new Date(Number(year), Number(month) - 1, Number(day));
+                        return localDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      })() : ''} - {selectedShift ? mapShiftType(shifts.find(s => s.id === selectedShift)?.name || '').join(' / ') : 'N/A'}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Partner&apos;s Shift:</span>
                     <span className="font-medium text-foreground">
-                      {partnerShiftDate ? new Date(partnerShiftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} - {shifts.find(s => s.id === partnerShift)?.name || 'N/A'}
+                      {partnerShiftDate ? (() => {
+                        const [year, month, day] = partnerShiftDate.split('-');
+                        const localDate = new Date(Number(year), Number(month) - 1, Number(day));
+                        return localDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      })() : ''} - {partnerShift ? mapShiftType(shifts.find(s => s.id === partnerShift)?.name || '').join(' / ') : 'N/A'}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -236,8 +251,16 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                     Are you sure you want to submit this swap request? This action will notify your selected partner.
                   </p>
                   <div className="text-xs text-yellow-600 dark:text-yellow-400">
-                    <strong>Your Shift:</strong> {yourShiftDate ? new Date(yourShiftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''} - {shifts.find(s => s.id === selectedShift)?.name || 'N/A'}<br/>
-                    <strong>Partner&apos;s Shift:</strong> {partnerShiftDate ? new Date(partnerShiftDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''} - {shifts.find(s => s.id === partnerShift)?.name || 'N/A'}<br/>
+                    <strong>Your Shift:</strong> {yourShiftDate ? (() => {
+                      const [year, month, day] = yourShiftDate.split('-');
+                      const localDate = new Date(Number(year), Number(month) - 1, Number(day));
+                      return localDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    })() : ''} - {selectedShift ? mapShiftType(shifts.find(s => s.id === selectedShift)?.name || '').join(' / ') : 'N/A'}<br/>
+                    <strong>Partner&apos;s Shift:</strong> {partnerShiftDate ? (() => {
+                      const [year, month, day] = partnerShiftDate.split('-');
+                      const localDate = new Date(Number(year), Number(month) - 1, Number(day));
+                      return localDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    })() : ''} - {partnerShift ? mapShiftType(shifts.find(s => s.id === partnerShift)?.name || '').join(' / ') : 'N/A'}<br/>
                     <strong>Partner:</strong> {residents.find(r => r.id === selectedResident)?.name}
                   </div>
                 </div>

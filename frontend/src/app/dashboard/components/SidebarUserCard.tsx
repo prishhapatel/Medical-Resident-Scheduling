@@ -22,7 +22,7 @@ export function SidebarUserCard({ name, email }: SidebarUserCardProps) {
           <AvatarFallback>{getInitials(name)}</AvatarFallback>
         </Avatar>
       </div>
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 max-w-[140px]">
         <p className="text-sm font-medium truncate">{name}</p>
         <p className="text-xs text-gray-500 truncate">{email}</p>
       </div>
