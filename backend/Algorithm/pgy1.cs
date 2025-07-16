@@ -30,6 +30,12 @@ public class PGY1
         inTraining = true; // move to 0 after all training complete
         lastTrainingDate = new DateTime(1, 1, 1); // far past date
         commitedWorkDays = new HashSet<DateTime>();
+        
+        // TODO: remove this after all testing complete. it assigned random roles for testing
+        for (int i = 0; i < 12; i++)
+        {
+            rolePerMonth[i] = HospitalRole.random();
+        }
     }
 
     // check if the pgy1 is requesting vacation on curDay

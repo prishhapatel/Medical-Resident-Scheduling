@@ -1,3 +1,8 @@
+//
+//
+//
+//
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -12,37 +17,213 @@ using MedicalDemo.Models.DTO.Scheduling; //for array min/max
 
 class Schedule
 {
-    // === NEW OVERLOAD METHODS FOR BACKEND INTEGRATION ===
-    public static void Training(int year, List<PGY1> pgy1s, List<PGY2> pgy2s, List<PGY3> pgy3s)
+    // inputs
+    static PGY1 LoadPGY1(int id)
     {
-        ArrayList pgys1 = new ArrayList(pgy1s);
-        ArrayList pgys2 = new ArrayList(pgy2s);
-        ArrayList pgys3 = new ArrayList(pgy3s);
-        Training(year, pgys1, pgys2, pgys3);
+        // get name, role, vacation days 
+        if (id == 0)
+        {
+            PGY1 resident = new PGY1("Samantha Berner-Cronin");
+            resident.rolePerMonth[0] = HospitalRole.EmergencyMed; // july they are psych consult
+            resident.rolePerMonth[1] = HospitalRole.Neurology; // august they are inpatient psych
+            resident.id = "HKU2780";
+            return resident;
+        }
+        if (id == 1)
+        {
+            PGY1 resident = new PGY1("Carolyn Lara Coles");
+            resident.rolePerMonth[0] = HospitalRole.Inpatient;
+            resident.rolePerMonth[1] = HospitalRole.Inpatient;
+            resident.id = "FXI2766";
+            return resident;
+        }
+        if (id == 2)
+        {
+            PGY1 resident = new PGY1("Ninoshka Rosalyn Hidalgo Martinez");
+            resident.rolePerMonth[0] = HospitalRole.Inpatient;
+            resident.rolePerMonth[1] = HospitalRole.PsychConsults;
+            resident.id = "RUZ2717";
+            return resident;
+        }
+        if (id == 3)
+        {
+            PGY1 resident = new PGY1("Cody James Holland");
+            resident.rolePerMonth[0] = HospitalRole.Inpatient;
+            resident.rolePerMonth[1] = HospitalRole.Inpatient;
+            resident.id = "KOS3940";
+            return resident;
+        }
+        if (id == 4)
+        {
+            PGY1 resident = new PGY1("Lawrence Chun To Ku");
+            resident.rolePerMonth[0] = HospitalRole.Neurology;
+            resident.rolePerMonth[1] = HospitalRole.IMOutpatient;
+            resident.id = "COH3276";
+            return resident;
+        }
+        if (id == 5)
+        {
+            PGY1 resident = new PGY1("Pooja Sanat Patel");
+            resident.rolePerMonth[0] = HospitalRole.IMOutpatient;
+            resident.rolePerMonth[1] = HospitalRole.IMInpatient;
+            resident.id = "MGE3752";
+            return resident;
+        }
+        if (id == 6)
+        {
+            PGY1 resident = new PGY1("Roshni Patel");
+            resident.rolePerMonth[0] = HospitalRole.PsychConsults;
+            resident.rolePerMonth[1] = HospitalRole.Inpatient;
+            resident.id = "FEU3416";
+            return resident;
+        }
+        if (id == 7)
+        {
+            PGY1 resident = new PGY1("Lauren Maria Rafanan");
+            resident.rolePerMonth[0] = HospitalRole.Neurology;
+            resident.rolePerMonth[1] = HospitalRole.EmergencyMed;
+            resident.id = "GKU3319";
+            return resident;
+        }
+        return null;
+    }
+    static PGY2 LoadPGY2(int id)
+    {
+        // get name, role, vacation days 
+        if (id == 0)
+        {
+            PGY2 resident = new PGY2("Melissa Chen");
+            resident.rolePerMonth[0] = HospitalRole.Addiction; // july they are psych consult
+            resident.rolePerMonth[1] = HospitalRole.CAP; // august they are inpatient psych
+            resident.id = "IDP3419";
+            return resident;
+        }
+        if (id == 1)
+        {
+            PGY2 resident = new PGY2("Malissa Descalzo");
+            resident.rolePerMonth[0] = HospitalRole.NightFloat;
+            resident.rolePerMonth[1] = HospitalRole.Inpatient;
+            resident.id = "MPE3473";
+            return resident;
+        }
+        if (id == 2)
+        {
+            PGY2 resident = new PGY2("Haley Danielle Gallaher");
+            resident.rolePerMonth[0] = HospitalRole.Inpatient;
+            resident.rolePerMonth[1] = HospitalRole.NightFloat;
+            resident.id = "MPE3472";
+            return resident;
+        }
+        if (id == 3)
+        {
+            PGY2 resident = new PGY2("Felix Adrian Hernandez Perez");
+            resident.rolePerMonth[0] = HospitalRole.CAP;
+            resident.rolePerMonth[1] = HospitalRole.CAP;
+            resident.id = "LLU6249";
+            return resident;
+        }
+        if (id == 4)
+        {
+            PGY2 resident = new PGY2("Haider Khan");
+            resident.rolePerMonth[0] = HospitalRole.NightFloat;
+            resident.rolePerMonth[1] = HospitalRole.Geriatric;
+            resident.id = "JXU4079";
+            return resident;
+        }
+        if (id == 5)
+        {
+            PGY2 resident = new PGY2("Rachel Penumudi");
+            resident.rolePerMonth[0] = HospitalRole.Geriatric;
+            resident.rolePerMonth[1] = HospitalRole.NightFloat;
+            resident.id = "CTE3965";
+            return resident;
+        }
+        if (id == 6)
+        {
+            PGY2 resident = new PGY2("Alexis Mitra Shahidi");
+            resident.rolePerMonth[0] = HospitalRole.CommP;
+            resident.rolePerMonth[1] = HospitalRole.Forensic;
+            resident.id = "FVO3464";
+            return resident;
+        }
+        if (id == 7)
+        {
+            PGY2 resident = new PGY2("Insherah Sughayer");
+            resident.rolePerMonth[0] = HospitalRole.Forensic;
+            resident.rolePerMonth[1] = HospitalRole.Addiction;
+            resident.id = "BEA3374";
+            return resident;
+        }
+        return null;
+    }
+    static PGY3 LoadPGY3(int id)
+    {
+        // get name, vacation days 
+        if (id == 0)
+        {
+            PGY3 resident = new PGY3("Anne-Sophie Attoungbre");
+            resident.id = "HQU5921";
+            return resident;
+        }
+        if (id == 1)
+        {
+            PGY3 resident = new PGY3("Kendall Kelsey Beltran");
+            resident.id = "RCU4642";
+            return resident;
+        }
+        if (id == 2)
+        {
+            PGY3 resident = new PGY3("Hanna Castano");
+            resident.id = "EIC4231";
+            return resident;
+        }
+        if (id == 3)
+        {
+            PGY3 resident = new PGY3("Tyler Michael Halbig");
+            resident.id = "GMO4083";
+            return resident;
+        }
+        if (id == 4)
+        {
+            PGY3 resident = new PGY3("Gautam Kanakamedala");
+            resident.id = "GEV4598";
+            return resident;
+        }
+        if (id == 5)
+        {
+            PGY3 resident = new PGY3("Lekhya Kintada");
+            resident.id = "JCI5092";
+            return resident;
+        }
+        if (id == 6)
+        {
+            PGY3 resident = new PGY3("Stephany Mejias Urrutia");
+            resident.id = "RRO4170";
+            return resident;
+        }
+        if (id == 7)
+        {
+            PGY3 resident = new PGY3("Reema Shailesh Patel");
+            resident.id = "LZU4568";
+            return resident;
+        }
+        return null;
     }
 
-    public static void Part1(int year, List<PGY1> pgy1s, List<PGY2> pgy2s)
-    {
-        ArrayList pgys1 = new ArrayList(pgy1s);
-        ArrayList pgys2 = new ArrayList(pgy2s);
-        Part1(year, pgys1, pgys2);
-    }
-
-    public static void Part2(int year, List<PGY1> pgy1s, List<PGY2> pgy2s)
-    {
-        ArrayList pgys1 = new ArrayList(pgy1s);
-        ArrayList pgys2 = new ArrayList(pgy2s);
-        Part2(year, pgys1, pgys2);
-    }
-    
-    public static void Training(int year, ArrayList pgy1s, ArrayList pgy2s, ArrayList pgy3s)
+    public static async Task Training(int year, Guid scheduleId, MedicalContext context)
     {
         int pgy1 = 8;
         int pgy2 = 8;
         int pgy3 = 8;
-        ArrayList AllPgy1s = pgy1s;
-        ArrayList AllPgy2s = pgy2s;
-        ArrayList AllPgy3s = pgy3s;
+        ArrayList AllPgy1s = new ArrayList();
+        ArrayList AllPgy2s = new ArrayList();
+        ArrayList AllPgy3s = new ArrayList();
+        for (int i = 0; i < pgy1; i++)
+        {
+            AllPgy1s.Add(LoadPGY1(i));
+            AllPgy2s.Add(LoadPGY2(i));
+            AllPgy3s.Add(LoadPGY3(i));
+        }
         TrainingCalendar tCalendar = new TrainingCalendar(year);
 
         int Sat24hCallAmt = tCalendar.dayOfWeekAmt[6]; // how many saturday calls for training
@@ -390,7 +571,7 @@ class Schedule
         FixWeekends2(AllPgy2s);
 
         // debug print for verification
-        print(AllPgy1s, AllPgy2s, AllPgy3s);
+        await CollectScheduleResultsAsync(scheduleId, AllPgy1s, AllPgy2s, AllPgy3s, context);
 
         // save content
         save(AllPgy1s, AllPgy2s, AllPgy3s);
@@ -413,71 +594,76 @@ class Schedule
         }
     }
 
-    public static void print(ArrayList pgy1s, ArrayList pgy2s, ArrayList pgy3s)
+    public static List<Dates> SaveDatesToDatabase(Guid scheduleId, ArrayList pgy1s, ArrayList pgy2s, ArrayList pgy3s)
     {
+        var dateEntities = new List<Dates>();
+
         foreach (PGY1 res in pgy1s)
         {
-            Console.WriteLine($"PGY1 {res.name} works:");
-            // print all their work days in sorted order
-            ArrayList workedDays = new ArrayList();
             foreach (DateTime curDay in res.workDaySet())
             {
-                workedDays.Add(curDay);
-            }
-
-            // sort the worked days array list
-            workedDays.Sort();
-
-            foreach (DateTime curDay in workedDays)
-            {
-                Console.WriteLine($"  {curDay} {curDay.DayOfWeek}");
+                dateEntities.Add(new Dates
+                {
+                    DateId = Guid.NewGuid(),
+                    ScheduleId = scheduleId,
+                    ResidentId = res.id, // assumes each PGY has a unique `id`
+                    Date = curDay,
+                    CallType = GetCallType(curDay)
+                });
             }
         }
+
         foreach (PGY2 res in pgy2s)
         {
-            Console.WriteLine($"PGY2 {res.name} works:");
-            // print all their work days in sorted order
-            ArrayList workedDays = new ArrayList();
             foreach (DateTime curDay in res.workDaySet())
             {
-                workedDays.Add(curDay);
-            }
-
-            // sort the worked days array list
-            workedDays.Sort();
-
-            foreach (DateTime curDay in workedDays)
-            {
-                Console.WriteLine($"  {curDay} {curDay.DayOfWeek}");
+                dateEntities.Add(new Dates
+                {
+                    DateId = Guid.NewGuid(),
+                    ScheduleId = scheduleId,
+                    ResidentId = res.id,
+                    Date = curDay,
+                    CallType = GetCallType(curDay)
+                });
             }
         }
+
         foreach (PGY3 res in pgy3s)
         {
-            Console.WriteLine($"PGY3 {res.name} works:");
-            // print all their work days in sorted order
-            ArrayList workedDays = new ArrayList();
             foreach (DateTime curDay in res.workDaySet())
             {
-                workedDays.Add(curDay);
-            }
-
-            // sort the worked days array list
-            workedDays.Sort();
-
-            foreach (DateTime curDay in workedDays)
-            {
-                Console.WriteLine($"  {curDay} {curDay.DayOfWeek}");
+                dateEntities.Add(new Dates
+                {
+                    DateId = Guid.NewGuid(),
+                    ScheduleId = scheduleId,
+                    ResidentId = res.id,
+                    Date = curDay,
+                    CallType = GetCallType(curDay)
+                });
             }
         }
+
+        return dateEntities;
     }
 
-    public static void Part2(int year, ArrayList pgy1s, ArrayList pgy2s)
+    public static async Task Part2(int year, Guid scheduleId, MedicalContext context)
     {
         Console.WriteLine("part 2: normal schedule (january through june)");
         int pgy1 = 8;
         int pgy2 = 8;
-        ArrayList AllPgy1s = pgy1s;
-        ArrayList AllPgy2s = pgy2s;
+        ArrayList AllPgy1s = new ArrayList();
+        ArrayList AllPgy2s = new ArrayList();
+
+        for (int i = 0; i < pgy1; i++)
+        {
+            AllPgy1s.Add(LoadPGY1(i));
+            ((PGY1)AllPgy1s[i]).inTraining = false;
+        }
+        for (int i = 0; i < pgy2; i++)
+        {
+            AllPgy2s.Add(LoadPGY2(i));
+            ((PGY2)AllPgy2s[i]).inTraining = false;
+        }
 
         // store days currently worked by anyone
         HashSet<DateTime> workedDays = new HashSet<DateTime>();
@@ -523,18 +709,33 @@ class Schedule
         // save (and commit)
         save(AllPgy1s, AllPgy2s, new ArrayList()); // PGY3s are not used in part 1
         Console.WriteLine("Part 2 completed successfully.");
-
-        // Print
-        print(AllPgy1s, AllPgy2s, new ArrayList()); // PGY3s are not used in part 1
+        
+        await CollectScheduleResultsAsync(scheduleId, AllPgy1s, AllPgy2s, new ArrayList(), context);
     }
 
-    public static void Part1(int year, ArrayList pgy1s, ArrayList pgy2s)
+    public static async Task Part1(int year, Guid scheduleId, MedicalContext context)
     {
         Console.WriteLine("part 1: normal schedule (july through december)");
         int pgy1 = 8;
         int pgy2 = 8;
-        ArrayList AllPgy1s = pgy1s;
-        ArrayList AllPgy2s = pgy2s;
+        ArrayList AllPgy1s = new ArrayList();
+        ArrayList AllPgy2s = new ArrayList();
+
+        for (int i = 0; i < pgy1; i++)
+        {
+            AllPgy1s.Add(LoadPGY1(i));
+            ((PGY1)AllPgy1s[i]).inTraining = false;
+
+            // assign the training date of the pgy1s based on their last worked day
+            var workDays = ((PGY1)AllPgy1s[i]).workDaySet();
+            ((PGY1)AllPgy1s[i]).lastTrainingDate = workDays.Count > 0 ? workDays.Max() : default;
+
+        }
+        for (int i = 0; i < pgy2; i++)
+        {
+            AllPgy2s.Add(LoadPGY2(i));
+            ((PGY2)AllPgy2s[i]).inTraining = false;
+        }
 
         // store days currently worked by anyone
         HashSet<DateTime> workedDays = new HashSet<DateTime>();
@@ -580,9 +781,8 @@ class Schedule
         // save (and commit)
         save(AllPgy1s, AllPgy2s, new ArrayList()); // PGY3s are not used in part 1
         Console.WriteLine("Part 1 completed successfully.");
-
-        // Print
-        print(AllPgy1s, AllPgy2s, new ArrayList()); // PGY3s are not used in part 1
+        
+        await CollectScheduleResultsAsync(scheduleId, AllPgy1s, AllPgy2s, new ArrayList(), context);
     }
     
     public static void computeWorkTime(ArrayList pgy1s, ArrayList pgy2s, int[] pgy1WorkTime, int[] pgy2WorkTime, Dictionary<int, int>[] pgy1ShiftCount, Dictionary<int, int>[] pgy2ShiftCount)
@@ -1203,61 +1403,6 @@ class Schedule
         }
     }
 
-    public static List<DatesDTO> GenerateDateRecords(Guid scheduleId, List<PGY1> pgy1s, List<PGY2> pgy2s, List<PGY3> pgy3s)
-    {
-        var dateRecords = new List<DatesDTO>();
-
-        foreach (var res in pgy1s)
-        {
-            foreach (var day in res.workDaySet())
-            {
-                dateRecords.Add(new DatesDTO
-                {
-                    DateId = Guid.NewGuid(),
-                    ScheduleId = scheduleId,
-                    ResidentId = res.id, // Assuming `id` exists in PGY1 class and maps to the backend
-                    Date = day,
-                    CallType = GetCallType(day),
-                    IsCommitted = true
-                });
-            }
-        }
-
-        foreach (var res in pgy2s)
-        {
-            foreach (var day in res.workDaySet())
-            {
-                dateRecords.Add(new DatesDTO
-                {
-                    DateId = Guid.NewGuid(),
-                    ScheduleId = scheduleId,
-                    ResidentId = res.id,
-                    Date = day,
-                    CallType = GetCallType(day),
-                    IsCommitted = true
-                });
-            }
-        }
-
-        foreach (var res in pgy3s)
-        {
-            foreach (var day in res.workDaySet())
-            {
-                dateRecords.Add(new DatesDTO
-                {
-                    DateId = Guid.NewGuid(),
-                    ScheduleId = scheduleId,
-                    ResidentId = res.id,
-                    Date = day,
-                    CallType = GetCallType(day),
-                    IsCommitted = true
-                });
-            }
-        }
-
-        return dateRecords;
-    }
-
     private static string GetCallType(DateTime date)
     {
         return date.DayOfWeek switch
@@ -1267,6 +1412,69 @@ class Schedule
             _ => "Short"
         };
     }
+    
+    public static async Task<List<Dates>> CollectScheduleResultsAsync(
+        Guid scheduleId,
+        ArrayList pgy1s,
+        ArrayList pgy2s,
+        ArrayList pgy3s,
+        MedicalContext _context) // or whatever your DbContext is named
+    {
+        var results = new List<Dates>();
+
+        foreach (PGY1 res in pgy1s)
+        {
+            foreach (DateTime date in res.workDaySet())
+            {
+                results.Add(new Dates
+                {
+                    DateId = Guid.NewGuid(),
+                    ScheduleId = scheduleId,
+                    ResidentId = res.id,
+                    Date = date,
+                    CallType = GetCallType(date)
+                });
+            }
+        }
+
+        foreach (PGY2 res in pgy2s)
+        {
+            foreach (DateTime date in res.workDaySet())
+            {
+                results.Add(new Dates
+                {
+                    DateId = Guid.NewGuid(),
+                    ScheduleId = scheduleId,
+                    ResidentId = res.id,
+                    Date = date,
+                    CallType = GetCallType(date)
+                });
+            }
+        }
+
+        foreach (PGY3 res in pgy3s)
+        {
+            foreach (DateTime date in res.workDaySet())
+            {
+                results.Add(new Dates
+                {
+                    DateId = Guid.NewGuid(),
+                    ScheduleId = scheduleId,
+                    ResidentId = res.id,
+                    Date = date,
+                    CallType = GetCallType(date)
+                });
+            }
+        }
+
+        // 🔥 Save to database
+        _context.dates.AddRange(results);
+        await _context.SaveChangesAsync();
+
+        return results;
+    }
+
+
 }
 
 

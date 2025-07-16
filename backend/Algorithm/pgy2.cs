@@ -31,6 +31,12 @@ public class PGY2
         hoursWorked6months = 0; hoursWorkedTotal = 0;
         inTraining = true;
         commitedWorkDays = new HashSet<DateTime>();
+        
+        // TODO: remove this assigned random roles for testing
+        for (int i = 0; i < 12; i++)
+        {
+            rolePerMonth[i] = HospitalRole.random();
+        }
     }
 
     // check if the pgy1 is requesting vacation on curDay

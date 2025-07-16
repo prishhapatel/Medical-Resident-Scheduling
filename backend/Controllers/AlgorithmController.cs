@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace MedicalDemo.Controllers
 {
     [ApiController]
-    [Route("api/schedule")]
+    [Route("api/algorithm")]
     public class ScheduleController : ControllerBase
     {
         private readonly SchedulerService _schedulerService;
@@ -16,7 +16,7 @@ namespace MedicalDemo.Controllers
             _schedulerService = schedulerService;
         }
         
-        [HttpPost("generate/{year}")]
+        [HttpPost("training/{year}")]
         public async Task<IActionResult> GenerateFullSchedule(int year)
         {
             if (year < DateTime.Now.Year)

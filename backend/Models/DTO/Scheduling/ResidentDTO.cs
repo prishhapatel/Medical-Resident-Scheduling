@@ -4,6 +4,7 @@
     {
         public string ResidentId { get; set; }
         public string Name { get; set; }
+        public string Id { get; set; }
         public bool InTraining { get; set; }
         public HashSet<DateTime> VacationRequests { get; set; } = new HashSet<DateTime>();
         public HashSet<DateTime> WorkDays { get; set; } = new HashSet<DateTime>();
