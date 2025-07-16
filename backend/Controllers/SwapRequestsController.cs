@@ -28,6 +28,26 @@ namespace MedicalDemo.Controllers
             if (swapRequest == null)
                 return BadRequest("SwapRequest object is null.");
 
+            // Fetch residents
+            var requester = await _context.residents.FirstOrDefaultAsync(r => r.resident_id == swapRequest.RequesterId);
+            var requestee = await _context.residents.FirstOrDefaultAsync(r => r.resident_id == swapRequest.RequesteeId);
+            if (requester == null || requestee == null)
+                return BadRequest("Requester or requestee not found.");
+
+            // Check PGY (graduate_yr)
+            if (requester.graduate_yr != requestee.graduate_yr)
+                return BadRequest("Both residents must be the same PGY level to swap.");
+
+            // Fetch dates
+            var requesterDate = await _context.dates.FirstOrDefaultAsync(d => d.ResidentId == swapRequest.RequesterId && d.Date.Date == swapRequest.RequesterDate.Date);
+            var requesteeDate = await _context.dates.FirstOrDefaultAsync(d => d.ResidentId == swapRequest.RequesteeId && d.Date.Date == swapRequest.RequesteeDate.Date);
+            if (requesterDate == null || requesteeDate == null)
+                return BadRequest("Could not find both shift dates for the swap.");
+
+            // Check shift type
+            if (requesterDate.CallType != requesteeDate.CallType)
+                return BadRequest("Both shifts must be the same type (e.g., Sunday with Sunday, Saturday with Saturday, Short with Short).");
+
             if (swapRequest.SwapId == Guid.Empty)
                 swapRequest.SwapId = Guid.NewGuid();
 
@@ -122,6 +142,82 @@ namespace MedicalDemo.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        // POST: api/swaprequests/{id}/approve
+        [HttpPost("{id}/approve")]
+        public async Task<IActionResult> ApproveSwapRequest(Guid id)
+        {
+            var swap = await _context.SwapRequests.FindAsync(id);
+            if (swap == null)
+                return NotFound("SwapRequest not found.");
+            if (swap.Status != "Pending")
+                return BadRequest("SwapRequest is not pending.");
+
+            // Helper to match callType robustly
+            bool CallTypeMatches(string a, string b)
+            {
+                var sundaySet = new HashSet<string> { "Sunday", "12h" };
+                var saturdaySet = new HashSet<string> { "Saturday", "24h" };
+                if (sundaySet.Contains(a) && sundaySet.Contains(b)) return true;
+                if (saturdaySet.Contains(a) && saturdaySet.Contains(b)) return true;
+                if (a == "Short" && b == "Short") return true;
+                return false;
+            }
+
+            // Fetch all candidate dates for each resident/date
+            var requesterDates = await _context.dates
+                .Where(d => d.ResidentId == swap.RequesterId && d.Date.Date == swap.RequesterDate.Date)
+                .ToListAsync();
+            var requesteeDates = await _context.dates
+                .Where(d => d.ResidentId == swap.RequesteeId && d.Date.Date == swap.RequesteeDate.Date)
+                .ToListAsync();
+
+            // Find the best match in memory
+            var requesterDate = requesterDates.FirstOrDefault(d => CallTypeMatches(d.CallType, swap.RequesterDate.ToString("dddd")))
+                ?? requesterDates.FirstOrDefault();
+            var requesteeDate = requesteeDates.FirstOrDefault(d => CallTypeMatches(d.CallType, swap.RequesteeDate.ToString("dddd")))
+                ?? requesteeDates.FirstOrDefault();
+
+            if (requesterDate == null || requesteeDate == null)
+                return BadRequest("Could not find both shift dates to perform the swap.");
+
+            // Swap the resident IDs
+            var tempResidentId = requesterDate.ResidentId;
+            requesterDate.ResidentId = requesteeDate.ResidentId;
+            requesteeDate.ResidentId = tempResidentId;
+
+            swap.Status = "Approved";
+            swap.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return Ok(swap);
+        }
+
+        // POST: api/swaprequests/{id}/deny
+        [HttpPost("{id}/deny")]
+        public async Task<IActionResult> DenySwapRequest(Guid id, [FromBody] DenySwapRequestDto dto)
+        {
+            var swap = await _context.SwapRequests.FindAsync(id);
+            if (swap == null)
+                return NotFound("SwapRequest not found.");
+            if (swap.Status != "Pending")
+                return BadRequest("SwapRequest is not pending.");
+
+            swap.Status = "Denied";
+            swap.Details = dto?.Reason ?? "";
+            swap.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            // Optionally: Add logic to notify users, etc.
+            // Add recent activity for requester (handled in dashboard fetch for now)
+
+            return Ok(swap);
+        }
+
+        public class DenySwapRequestDto
+        {
+            public string? Reason { get; set; }
         }
     }
 }

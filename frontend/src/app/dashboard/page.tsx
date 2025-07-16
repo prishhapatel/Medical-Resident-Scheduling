@@ -217,10 +217,14 @@ function Dashboard() {
     }
   };
 
-  // Helper to compare only the date part
-  function toISODateString(date: string | Date) {
-    if (typeof date === 'string') date = new Date(date);
-    return date.toISOString().split('T')[0];
+  // Utility to get YYYY-MM-DD from a Date or string
+  function formatDate(date: Date | string): string {
+    if (typeof date === 'string') {
+      // If already in YYYY-MM-DD format, return as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
+      return new Date(date).toISOString().slice(0, 10);
+    }
+    return date.toISOString().slice(0, 10);
   }
 
   // API functions
@@ -688,32 +692,30 @@ function Dashboard() {
     }
 
     try {
-      // Debug: Log all candidate events for user and partner
-      console.log('--- DEBUG SWAP ---');
-      console.log('User:', user?.id, 'Partner:', selectedResident);
-      console.log('Your Shift Date:', yourShiftDate, 'Type:', selectedShift);
-      console.log('Partner Shift Date:', partnerShiftDate, 'Type:', partnerShift);
-      console.log('All calendar events:', calendarEvents);
-      const myCandidates = calendarEvents.filter((event) =>
-        event.extendedProps?.residentId === user?.id &&
-        event.extendedProps?.callType === selectedShift
-      );
-      const partnerCandidates = calendarEvents.filter((event) =>
-        event.extendedProps?.residentId === selectedResident &&
-        event.extendedProps?.callType === partnerShift
-      );
-      console.log('My candidate events:', myCandidates);
-      console.log('Partner candidate events:', partnerCandidates);
-      // Find the current user's shift on their selected date/type
-      const myShift = myCandidates.find((event) =>
-        toISODateString(event.start) === toISODateString(yourShiftDate)
-      );
-      // Find the partner's shift on their selected date/type
-      const partnerShiftEvent = partnerCandidates.find((event) =>
-        toISODateString(event.start) === toISODateString(partnerShiftDate)
-      );
-      console.log('My shift found:', myShift);
-      console.log('Partner shift found:', partnerShiftEvent);
+      // Filter for user's shift
+      const myCandidates = calendarEvents.filter((event) => {
+        const eventDate = formatDate(event.start);
+        const eventCallType = (event.extendedProps?.callType || "").trim();
+        const eventResidentId = (event.extendedProps?.residentId || "").trim();
+        const match =
+          eventResidentId === (user?.id || "").trim() &&
+          eventCallType === selectedShift &&
+          eventDate === formatDate(yourShiftDate);
+        return match;
+      });
+      // Filter for partner's shift
+      const partnerCandidates = calendarEvents.filter((event) => {
+        const eventDate = formatDate(event.start);
+        const eventCallType = (event.extendedProps?.callType || "").trim();
+        const eventResidentId = (event.extendedProps?.residentId || "").trim();
+        const match =
+          eventResidentId === (selectedResident || "").trim() &&
+          eventCallType === partnerShift &&
+          eventDate === formatDate(partnerShiftDate);
+        return match;
+      });
+      const myShift = myCandidates[0];
+      const partnerShiftEvent = partnerCandidates[0];
       if (!myShift || !partnerShiftEvent) {
         toast({
           variant: "destructive",
@@ -722,49 +724,41 @@ function Dashboard() {
         });
         return;
       }
-      // Swap the shifts
-      const updateMyShift = fetch(`${config.apiUrl}/api/dates/${myShift.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          dateId: myShift.id,
-          scheduleId: myShift.extendedProps.scheduleId,
-          residentId: selectedResident,
-          date: yourShiftDate,
-          callType: selectedShift
-        })
+      // Create a swap request (pending approval)
+      const swapRequest = {
+        ScheduleSwapId: myShift.extendedProps.scheduleId, // or partnerShiftEvent.extendedProps.scheduleId
+        RequesterId: user?.id,
+        RequesteeId: selectedResident,
+        RequesterDate: yourShiftDate,
+        RequesteeDate: partnerShiftDate,
+        Status: "Pending",
+        Details: ""
+      };
+      const response = await fetch(`${config.apiUrl}/api/swaprequests`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(swapRequest)
       });
-      const updatePartnerShift = fetch(`${config.apiUrl}/api/dates/${partnerShiftEvent.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          dateId: partnerShiftEvent.id,
-          scheduleId: partnerShiftEvent.extendedProps.scheduleId,
-          residentId: user?.id,
-          date: partnerShiftDate,
-          callType: partnerShift
-        })
-      });
-      const [response1, response2] = await Promise.all([updateMyShift, updatePartnerShift]);
-      if (response1.ok && response2.ok) {
-        const targetResident = residents.find(r => r.resident_id === selectedResident);
-        const targetName = targetResident ? `${targetResident.first_name} ${targetResident.last_name}` : selectedResident;
+      if (response.ok) {
         toast({
           variant: "success",
-          title: "Swap Request Completed",
-          description: `Your shift has been swapped with ${targetName}.`,
+          title: "Swap Request Sent",
+          description: "Your swap request has been sent and is pending approval.",
         });
-        fetchCalendarEvents();
-        fetchMySchedule();
       } else {
-        throw new Error('Failed to complete swap');
+        const error = await response.text();
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error || "Failed to create swap request.",
+        });
       }
     } catch (error) {
-      console.error('Error swapping shifts:', error);
+      console.error('Error creating swap request:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to swap shifts. Please try again.",
+        description: "Failed to create swap request. Please try again.",
       });
     }
     setSelectedResident("");
@@ -784,7 +778,7 @@ function Dashboard() {
       return;
     }
 
-    console.log('[RequestOff] Submitting vacation request for residentId:', user?.id);
+    // console.log('[RequestOff] Submitting vacation request for residentId:', user?.id);
 
     if (!startDate || !endDate || !reason) {
       toast({
@@ -935,6 +929,10 @@ function Dashboard() {
     setMyTimeOffRequests([]);
   };
 
+  const refreshCalendar = async () => {
+    await fetchCalendarEvents();
+  };
+
   // Render main content based on selected menu item
   const renderMainContent = () => {
     switch (selected) {
@@ -951,6 +949,7 @@ function Dashboard() {
             onNavigateToSchedule={() => setSelected("Check My Schedule")}
             userId={user?.id || ""}
             calendarEvents={calendarEvents}
+            onRefreshCalendar={refreshCalendar}
           />
         );
 

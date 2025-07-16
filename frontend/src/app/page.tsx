@@ -31,11 +31,11 @@ export default function Home() {
   // handle form submission and login
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log('Login attempt with email:', formData.email);
+    // console.log('Login attempt with email:', formData.email);
     setIsLoading(true);
 
     try {
-      console.log('Sending login request to:', `${config.apiUrl}/api/auth/login`);
+      // console.log('Sending login request to:', `${config.apiUrl}/api/auth/login`);
       const response = await fetch(`${config.apiUrl}/api/auth/login`, {
         method: 'POST',
         headers: {
@@ -48,8 +48,8 @@ export default function Home() {
       });
 
       const data = await response.json();
-      console.log('Login response status:', response.status);
-      console.log('Login response data:', { ...data, token: data.token ? '[REDACTED]' : null });
+      // console.log('Login response status:', response.status);
+      // console.log('Login response data:', { ...data, token: data.token ? '[REDACTED]' : null });
 
       if (response.ok) {
         setAuthToken(data.token);
@@ -62,9 +62,9 @@ export default function Home() {
         localStorage.setItem("user", JSON.stringify(user));
         setUser(user);
       
-        console.log("Saved user to localStorage:", user);
-        console.log("Login successful, user data:", user);
-        console.log("Is admin?", user?.isAdmin);
+        // console.log("Saved user to localStorage:", user);
+        // console.log("Login successful, user data:", user);
+        // console.log("Is admin?", user?.isAdmin);
       
         toast({
           variant: "success",
@@ -80,7 +80,7 @@ export default function Home() {
         }
       }
       else {
-        console.log('Login failed:', data.message);
+        // console.log('Login failed:', data.message);
         toast({
           variant: "destructive",
           title: "Error",
