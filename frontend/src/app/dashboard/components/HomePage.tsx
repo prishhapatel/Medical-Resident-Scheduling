@@ -3,6 +3,7 @@ import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { Calendar, Clock, RotateCcw, CalendarCheck, Bell, Users } from "lucide-react";
 import { config } from "../../../config";
+import { Dialog } from "../../../components/ui/dialog";
 
 interface HomeProps {
   displayName: string;
@@ -14,6 +15,8 @@ interface HomeProps {
   onNavigateToRequestOff: () => void;
   onNavigateToSchedule: () => void;
   userId: string;
+  calendarEvents?: CalendarEvent[];
+  onRefreshCalendar?: () => void;
 }
 
 interface DashboardData {
@@ -42,13 +45,14 @@ interface CalendarEvent {
   };
 }
 
-const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId: string }> = ({
+const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId: string; onRefreshCalendar?: () => void }> = ({
   displayName,
   onNavigateToSwapCalls,
   onNavigateToRequestOff,
   onNavigateToSchedule,
   userId,
   calendarEvents = [], // Accept calendarEvents as prop if available
+  onRefreshCalendar,
 }) => {
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     monthlyHours: 0,
@@ -58,6 +62,63 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
   });
   const [loading, setLoading] = useState(true);
   const [hoursThisMonth, setHoursThisMonth] = useState(0);
+  const [denyModalOpen, setDenyModalOpen] = useState(false);
+  const [denyReason, setDenyReason] = useState("");
+  const [pendingDenyId, setPendingDenyId] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const refreshDashboard = async () => {
+    setLoading(true);
+    try {
+      const dashboardResponse = await fetch(`${config.apiUrl}/api/dashboard/resident/${userId}`);
+      if (dashboardResponse.ok) {
+        const data = await dashboardResponse.json();
+        setDashboardData({
+          monthlyHours: data.monthlyHours,
+          upcomingShifts: data.upcomingShifts,
+          recentActivity: data.recentActivity,
+          teamUpdates: data.teamUpdates
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApprove = async (swapId: string) => {
+    setActionLoading(true);
+    try {
+      await fetch(`${config.apiUrl}/api/swaprequests/${swapId}/approve`, { method: "POST" });
+      await refreshDashboard();
+      if (onRefreshCalendar) onRefreshCalendar();
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeny = (swapId: string) => {
+    setPendingDenyId(swapId);
+    setDenyModalOpen(true);
+  };
+
+  const submitDeny = async () => {
+    if (!pendingDenyId) return;
+    setActionLoading(true);
+    try {
+      await fetch(`${config.apiUrl}/api/swaprequests/${pendingDenyId}/deny`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: denyReason })
+      });
+      setDenyModalOpen(false);
+      setDenyReason("");
+      setPendingDenyId(null);
+      await refreshDashboard();
+      if (onRefreshCalendar) onRefreshCalendar();
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -231,9 +292,9 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
             <div className="space-y-3">
               {filteredRecentActivity.length > 0 ? (
                 filteredRecentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                  <div key={activity.id} className={`flex items-start gap-3 p-3 rounded-lg ${activity.type === 'swap_approved' ? 'bg-green-100' : activity.type === 'swap_denied' ? 'bg-red-100' : 'bg-muted/50'}`}>
                     <div className="p-2 bg-primary/10 rounded-full">
-                      {activity.type === 'swap' ? (
+                      {activity.type.startsWith('swap') ? (
                         <RotateCcw className="h-4 w-4 text-primary" />
                       ) : (
                         <Calendar className="h-4 w-4 text-primary" />
@@ -242,6 +303,12 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
                     <div className="flex-1">
                       <p className="text-sm font-medium">{activity.message}</p>
                       <p className="text-xs text-muted-foreground">{activity.date}</p>
+                      {activity.type === 'swap_pending' && (
+                        <div className="flex gap-2 mt-2">
+                          <Button size="sm" disabled={actionLoading} onClick={() => handleApprove(activity.id)} className="bg-green-600 text-white hover:bg-green-700">Approve</Button>
+                          <Button size="sm" disabled={actionLoading} onClick={() => handleDeny(activity.id)} className="bg-red-600 text-white hover:bg-red-700">Deny</Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))
@@ -272,6 +339,26 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
           </Card>
         </div>
       </div>
+      {/* Deny Reason Modal */}
+      <Dialog open={denyModalOpen} onOpenChange={setDenyModalOpen}>
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Deny Swap Request</h3>
+            <label className="block mb-2 text-sm font-medium">Reason for denial:</label>
+            <textarea
+              className="w-full border rounded p-2 mb-4"
+              rows={3}
+              value={denyReason}
+              onChange={e => setDenyReason(e.target.value)}
+              disabled={actionLoading}
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setDenyModalOpen(false)} disabled={actionLoading}>Cancel</Button>
+              <Button onClick={submitDeny} disabled={actionLoading || !denyReason.trim()} className="bg-red-600 text-white hover:bg-red-700">Submit Denial</Button>
+            </div>
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 };
