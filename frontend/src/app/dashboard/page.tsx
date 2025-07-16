@@ -217,14 +217,26 @@ function Dashboard() {
     }
   };
 
-  // Utility to get YYYY-MM-DD from a Date or string
-  function formatDate(date: Date | string): string {
-    if (typeof date === 'string') {
-      // If already in YYYY-MM-DD format, return as is
-      if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
-      return new Date(date).toISOString().slice(0, 10);
-    }
-    return date.toISOString().slice(0, 10);
+  function mapShiftType(shift) {
+    if (shift === "Saturday") return ["24h", "Saturday"];
+    if (shift === "Sunday") return ["12h", "Sunday"];
+    return [shift]; // "Short" stays "Short"
+  }
+
+  function parseLocalDate(dateStr: string) {
+    if (!dateStr) return null;
+    const [year, month, day] = dateStr.split('-');
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  function isSameDay(date1: Date | string, date2: Date | string) {
+    const d1 = (typeof date1 === 'string') ? parseLocalDate(date1) : new Date(date1);
+    const d2 = (typeof date2 === 'string') ? parseLocalDate(date2) : new Date(date2);
+    return (
+      d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate()
+    );
   }
 
   function mapShiftType(shift) {
