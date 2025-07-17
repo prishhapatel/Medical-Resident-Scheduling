@@ -1,6 +1,3 @@
 export const config = {
-  apiUrl:
-    process.env.NODE_ENV === "development"
-      ? "http://localhost:5109"
-      : "https://psycall.net"
+  apiUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 };

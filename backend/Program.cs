@@ -91,7 +91,7 @@ app.UseHttpsRedirection();
 app.MapControllers();
 
 // Use the port from environment variable or default to 5109
-var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
+var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5000";
 app.Urls.Add($"http://0.0.0.0:{port}");
 
 
