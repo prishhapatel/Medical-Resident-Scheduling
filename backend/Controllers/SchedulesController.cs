@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MedicalDemo.Data.Models;  // Adjust namespace based on your project
-using MedicalDemo.Repositories; // Add this for IMedicalRepository
 
 namespace MedicalDemo.Controllers
 {
@@ -12,12 +11,10 @@ namespace MedicalDemo.Controllers
     {
 
         private readonly MedicalContext _context;
-        private readonly IMedicalRepository _repo;
 
-        public SchedulesController(MedicalContext context, IMedicalRepository repo)
+        public SchedulesController(MedicalContext context)
         {
             _context = context;
-            _repo = repo;
         }
 
 		// POST: api/schedules
@@ -91,49 +88,5 @@ namespace MedicalDemo.Controllers
 
     		return NoContent(); // 204 No Content
 		}
-
-        // POST: api/schedules/generate
-        [HttpPost("generate")]
-        public async Task<IActionResult> GenerateNewSchedule()
-        {
-            // Generate the training schedule dates
-            var trainingDates = await _repo.GenerateTrainingScheduleAsync();
-
-            // Create a new schedule
-            var newSchedule = new Schedules
-            {
-                ScheduleId = Guid.NewGuid(),
-                Status = "Under review"
-            };
-            _context.schedules.Add(newSchedule);
-            await _context.SaveChangesAsync();
-
-            // Insert the schedule dates into the database
-            foreach (var date in trainingDates)
-            {
-                if (!string.IsNullOrWhiteSpace(date.ResidentId))
-                {
-                    // If ResidentId contains multiple IDs separated by commas, split them
-                    var residentIds = date.ResidentId.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-                    foreach (var residentId in residentIds)
-                    {
-                        var trimmedResidentId = residentId.Trim();
-                        var entry = new Dates
-                        {
-                            DateId = Guid.NewGuid(),
-                            ScheduleId = newSchedule.ScheduleId,
-                            ResidentId = trimmedResidentId,
-                            Date = date.Date,
-                            CallType = date.CallType
-                        };
-                        _context.dates.Add(entry);
-                    }
-                }
-            }
-            await _context.SaveChangesAsync();
-
-            return Ok(new { scheduleId = newSchedule.ScheduleId });
-        }
     }
 }
