@@ -6,48 +6,27 @@ using System.Threading.Tasks;
 namespace MedicalDemo.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
-    public class AlgorithmController : ControllerBase
+    [Route("api/algorithm")]
+    public class ScheduleController : ControllerBase
     {
-        private readonly SchedulerService _scheduler;
+        private readonly SchedulerService _schedulerService;
 
-        public AlgorithmController(SchedulerService scheduler)
+        public ScheduleController(SchedulerService schedulerService)
         {
-            _scheduler = scheduler;
+            _schedulerService = schedulerService;
         }
-
+        
         [HttpPost("training/{year}")]
-        public async Task<IActionResult> GenerateTrainingSchedule(int year)
+        public async Task<IActionResult> GenerateFullSchedule(int year)
         {
-            try
-            {
-                // Validate year input
-                if (year < DateTime.Now.Year - 1)
-                {
-                    return BadRequest(new {
-                        Success = false,
-                        Message = "Invalid year value. Please provide a valid year."
-                    });
-                }
+            if (year < DateTime.Now.Year)
+                return BadRequest(new { success = false, error = "Year must be the current year or later." });
 
-                // Execute scheduling algorithm
-                await _scheduler.GenerateTrainingSchedule(year);
-                
-                return Ok(new { 
-                    Success = true,
-                    Message = $"Training schedule for {year} generated successfully",
-                    GeneratedAt = DateTime.UtcNow
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new {
-                    Success = false,
-                    Message = "Scheduling failed",
-                    Error = ex.Message,
-                    StackTrace = ex.StackTrace  // Remove in production
-                });
-            }
+            var (success, error) = await _schedulerService.GenerateFullSchedule(year);
+            if (!success)
+                return StatusCode(500, new { success = false, error });
+
+            return Ok(new { success = true, message = "Schedule generated and saved successfully." });
         }
     }
 }

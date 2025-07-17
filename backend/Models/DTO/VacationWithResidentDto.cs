@@ -8,4 +8,5 @@ public class VacationWithResidentDto
     public string Reason { get; set; }
     public string Status { get; set; }
     public string? Details { get; set; }
+    public string GroupId { get; set; } = string.Empty;
 }

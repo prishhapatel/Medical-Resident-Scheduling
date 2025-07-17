@@ -66,7 +66,7 @@ namespace MedicalDemo.Controllers
                 // Console.WriteLine($"Shift type mismatch: {requesterDate.CallType} vs {requesteeDate.CallType}");
                 return BadRequest("Both shifts must be the same type (e.g., Sunday with Sunday, Saturday with Saturday, Short with Short).");
             }
-
+                
             if (swapRequest.SwapId == Guid.Empty)
                 swapRequest.SwapId = Guid.NewGuid();
 

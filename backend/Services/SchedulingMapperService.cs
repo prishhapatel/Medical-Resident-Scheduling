@@ -28,7 +28,7 @@ namespace MedicalDemo.Services
             return new PGY1DTO
             {
                 ResidentId = resident.resident_id,
-                Name = $"{resident.first_name} {resident.last_name}",
+                Name = resident.first_name + " " + resident.last_name,
                 VacationRequests = new HashSet<DateTime>(vacations.Select(v => v.Date)),
                 RolePerMonth = MapRotationsToRoles(rotations),
                 CommitedWorkDays = new HashSet<DateTime>(committedDates),
@@ -46,7 +46,7 @@ namespace MedicalDemo.Services
             return new PGY2DTO
             {
                 ResidentId = resident.resident_id,
-                Name = $"{resident.first_name} {resident.last_name}",
+                Name = resident.first_name + " " + resident.last_name,
                 VacationRequests = new HashSet<DateTime>(vacations.Select(v => v.Date)),
                 RolePerMonth = MapRotationsToRoles(rotations),
                 CommitedWorkDays = new HashSet<DateTime>(committedDates),
@@ -64,7 +64,7 @@ namespace MedicalDemo.Services
             return new PGY3DTO
             {
                 ResidentId = resident.resident_id,
-                Name = $"{resident.first_name} {resident.last_name}",
+                Name = resident.first_name + " " + resident.last_name,
                 VacationRequests = new HashSet<DateTime>(vacations.Select(v => v.Date)),
                 CommitedWorkDays = new HashSet<DateTime>(committedDates)
             };
@@ -79,47 +79,110 @@ namespace MedicalDemo.Services
                 ResidentId = d.ResidentId,
                 Date = d.Date,
                 CallType = d.CallType,
-                IsCommitted = true  // All existing dates are considered committed
+                IsCommitted = true
             }).ToList();
         }
 
         private HospitalRole[] MapRotationsToRoles(List<Rotations> rotations)
         {
             var roles = new HospitalRole[12];
+
             foreach (var rotation in rotations)
             {
-                int monthIndex = DateTime.ParseExact(rotation.Month, "MMMM", CultureInfo.InvariantCulture).Month - 1;
-                roles[monthIndex] = MapRotationNameToRole(rotation.Rotation);
+                var key = rotation.Rotation?.Trim().ToLowerInvariant();
+                int month = DateTime.ParseExact(rotation.Month.Trim(), "MMMM", CultureInfo.InvariantCulture).Month;
+                int academicMonthIndex = (month + 5) % 12;
+                roles[academicMonthIndex] = MapRotationNameToRole(rotation.Rotation);
             }
+
             return roles;
         }
 
         private HospitalRole MapRotationNameToRole(string rotationName)
         {
-            rotationName = rotationName.Trim();
+            if (string.IsNullOrWhiteSpace(rotationName))
+                throw new ArgumentException("Rotation name is null or empty.");
 
-            return rotationName switch
+            var key = rotationName.Trim().ToLowerInvariant();
+
+            return key switch
             {
-                "Inpt Psy" => HospitalRole.Inpatient,
-                "Geri" => HospitalRole.Geriatric,
-                "PHP/IOP" => HospitalRole.PHPandIOP,
-                "Consult" => HospitalRole.PsychConsults,
-                "Addiction" => HospitalRole.Addiction,
-                "Forensic" => HospitalRole.Forensic,
-                "Float" => HospitalRole.Float,
-                "Neuro" => HospitalRole.Neurology,
-                "IMOP" => HospitalRole.IMOutpatient,
-                "IMIP" => HospitalRole.IMInpatient,
-                "Night Float" => HospitalRole.NightFloat,
-                "Emergency Med" => HospitalRole.EmergencyMed,
-                "ER-P" => HospitalRole.NightFloat,
-                "ER P/CL" => HospitalRole.NightFloat,
-                "Child" => HospitalRole.CAP,
-                "Comm" => HospitalRole.CommP,
-                "CL/ER P" => HospitalRole.NightFloat,
-                "EM" => HospitalRole.EmergencyMed,
-                _ => throw new ArgumentException($"Unknown rotation: {rotationName}")
+                "inpt psy" => HospitalRole.Inpatient,
+                "geri" => HospitalRole.Geriatric,
+                "php/iop" => HospitalRole.PHPandIOP,
+                "consult" => HospitalRole.PsychConsults,
+                "addiction" => HospitalRole.Addiction,
+                "forensic" => HospitalRole.Forensic,
+                "float" => HospitalRole.Float,
+                "neuro" => HospitalRole.Neurology,
+                "imop" => HospitalRole.IMOutpatient,
+                "imip" => HospitalRole.IMInpatient,
+                "night float" => HospitalRole.NightFloat,
+                "emergency med" => HospitalRole.EmergencyMed,
+                "er-p" => HospitalRole.NightFloat,
+                "er p/cl" => HospitalRole.NightFloat,
+                "child" => HospitalRole.CAP,
+                "comm" => HospitalRole.CommP,
+                "cl/er p" => HospitalRole.NightFloat,
+                "em" => HospitalRole.EmergencyMed,
+                _ => throw new ArgumentException("Unknown rotation: '" + rotationName + "'")
             };
+        }
+
+        // === Mapping to Algorithm Classes ===
+        public List<PGY1> MapToPGY1AlgoModels(List<PGY1DTO> dtos)
+        {
+            return dtos.Select(dto =>
+            {
+                var model = new PGY1(dto.Name)
+                {
+                    inTraining = dto.InTraining,
+                    lastTrainingDate = dto.LastTrainingDate
+                };
+                for (int i = 0; i < 12; i++)
+                    model.rolePerMonth[i] = dto.RolePerMonth[i];
+
+                foreach (var day in dto.VacationRequests)
+                    model.requestVacation(day);
+                foreach (var day in dto.CommitedWorkDays)
+                    model.addWorkDay(day);
+
+                return model;
+            }).ToList();
+        }
+
+        public List<PGY2> MapToPGY2AlgoModels(List<PGY2DTO> dtos)
+        {
+            return dtos.Select(dto =>
+            {
+                var model = new PGY2(dto.Name)
+                {
+                    inTraining = dto.InTraining
+                };
+                for (int i = 0; i < 12; i++)
+                    model.rolePerMonth[i] = dto.RolePerMonth[i];
+
+                foreach (var day in dto.VacationRequests)
+                    model.requestVacation(day);
+                foreach (var day in dto.CommitedWorkDays)
+                    model.addWorkDay(day);
+
+                return model;
+            }).ToList();
+        }
+
+        public List<PGY3> MapToPGY3AlgoModels(List<PGY3DTO> dtos)
+        {
+            return dtos.Select(dto =>
+            {
+                var model = new PGY3(dto.Name);
+                foreach (var day in dto.VacationRequests)
+                    model.requestVacation(day);
+                foreach (var day in dto.CommitedWorkDays)
+                    model.addWorkDay(day);
+
+                return model;
+            }).ToList();
         }
     }
 }
