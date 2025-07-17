@@ -41,11 +41,11 @@ namespace MedicalDemo.Server.Controllers
             string url;
             if (resident != null)
             {
-                url = $"http://localhost:3000/register?token={token}";
+                url = $"https://psycall.net/register?token={token}";
             }
             else
             {
-                url = $"http://localhost:3000/register-new?token={token}&email={Uri.EscapeDataString(request.Email)}";
+                url = $"https://psycall.net/register-new?token={token}&email={Uri.EscapeDataString(request.Email)}";
             }
 
 
