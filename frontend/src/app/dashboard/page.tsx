@@ -1061,9 +1061,9 @@ function Dashboard() {
     setMyTimeOffRequests([]);
   };
 
-  const refreshCalendar = async () => {
-    await fetchCalendarEvents();
-  };
+  // const refreshCalendar = async () => {
+  //   await fetchCalendarEvents();
+  // };
 
   // Render main content based on selected menu item
   const renderMainContent = () => {
