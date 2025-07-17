@@ -117,6 +117,12 @@ function SidebarFloatingTrigger() {
   );
 }
 
+function mapShiftType(shift: string) {
+  if (shift === "Saturday") return ["24h", "Saturday"];
+  if (shift === "Sunday") return ["12h", "Sunday"];
+  return [shift]; // "Short" stays "Short"
+}
+
 function Dashboard() {
   const router = useRouter();
   const { setTheme } = useTheme();
@@ -217,14 +223,20 @@ function Dashboard() {
     }
   };
 
-  // Utility to get YYYY-MM-DD from a Date or string
-  function formatDate(date: Date | string): string {
-    if (typeof date === 'string') {
-      // If already in YYYY-MM-DD format, return as is
-      if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
-      return new Date(date).toISOString().slice(0, 10);
-    }
-    return date.toISOString().slice(0, 10);
+  function parseLocalDate(dateStr: string) {
+    if (!dateStr) return null;
+    const [year, month, day] = dateStr.split('-');
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  function isSameDay(date1: Date | string, date2: Date | string) {
+    const d1 = (typeof date1 === 'string') ? parseLocalDate(date1) : new Date(date1);
+    const d2 = (typeof date2 === 'string') ? parseLocalDate(date2) : new Date(date2);
+    return (
+      d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate()
+    );
   }
 
   // API functions
@@ -333,10 +345,15 @@ function Dashboard() {
             ? `${date.firstName} ${date.lastName}`
             : date.residentId;
 
+          // Standardize callType
+          let callType = date.callType;
+          if (callType === 'Sunday') callType = '12h';
+          if (callType === 'Saturday') callType = '24h';
+
           // Find the resident to get graduate_yr directly (for details only)
           const resident = residents.find(r => r.resident_id === date.residentId);
           const graduateYear = resident?.graduate_yr;
-          const eventColor = getEventColor(date.callType, graduateYear);
+          const eventColor = getEventColor(callType, graduateYear);
 
           return {
             id: date.dateId,
@@ -350,7 +367,7 @@ function Dashboard() {
               residentId: date.residentId,
               firstName: date.firstName,
               lastName: date.lastName,
-              callType: date.callType,
+              callType: callType,
               dateId: date.dateId,
               pgyLevel: graduateYear
             }
@@ -598,7 +615,7 @@ function Dashboard() {
   };
 
   const handleSendInvite = async () => {
-    if (!inviteEmail) {
+    if (!inviteEmail.trim()) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -606,23 +623,22 @@ function Dashboard() {
       });
       return;
     }
-
+  
     try {
-      const response = await fetch(`${config.apiUrl}/api/invitations`, {
+      const response = await fetch(`${config.apiUrl}/api/invite/send`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: inviteEmail,
-          role: "resident",
+          email: inviteEmail.trim(),
         }),
       });
-
+  
       if (response.ok) {
         const newInvitation = {
           id: Date.now().toString(),
-          email: inviteEmail,
+          email: inviteEmail.trim(),
           status: "Pending" as const,
         };
         setUserInvitations((prev) => [...prev, newInvitation]);
@@ -630,20 +646,21 @@ function Dashboard() {
         toast({
           variant: "success",
           title: "Invitation Sent",
-          description: `Invitation sent to ${inviteEmail}.`,
+          description: `Invitation sent to ${inviteEmail.trim()}.`,
         });
       } else {
         throw new Error('Failed to send invitation');
       }
-    } catch {
-      console.error("Send invitation error");
+    } catch (error) {
+      console.error("Send invitation error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please enter an email address.",
+        description: "Failed to send invitation. Please check the email or try again.",
       });
     }
   };
+  
 
   const handleResendInvite = (id: string) => {
     toast({
@@ -670,6 +687,22 @@ function Dashboard() {
   };
 
   const handleSubmitSwap = async () => {
+    console.log('handleSubmitSwap called');
+    if (!selectedResident) {
+      console.log('Validation failed: selectedResident is missing');
+    }
+    if (!selectedShift) {
+      console.log('Validation failed: selectedShift is missing');
+    }
+    if (!yourShiftDate) {
+      console.log('Validation failed: yourShiftDate is missing');
+    }
+    if (!partnerShiftDate) {
+      console.log('Validation failed: partnerShiftDate is missing');
+    }
+    if (!partnerShift) {
+      console.log('Validation failed: partnerShift is missing');
+    }
     if (!selectedResident || !selectedShift || !yourShiftDate || !partnerShiftDate || !partnerShift) {
       toast({
         variant: "destructive",
@@ -694,26 +727,65 @@ function Dashboard() {
     try {
       // Filter for user's shift
       const myCandidates = calendarEvents.filter((event) => {
-        const eventDate = formatDate(event.start);
         const eventCallType = (event.extendedProps?.callType || "").trim();
         const eventResidentId = (event.extendedProps?.residentId || "").trim();
-        const match =
+        const validCallTypes = mapShiftType(selectedShift);
+        if (
           eventResidentId === (user?.id || "").trim() &&
-          eventCallType === selectedShift &&
-          eventDate === formatDate(yourShiftDate);
-        return match;
+          validCallTypes.includes(eventCallType)
+        ) {
+          const eventDateLocal = new Date(event.start);
+          const yourShiftDateLocal = parseLocalDate(yourShiftDate);
+          const equal = isSameDay(eventDateLocal, yourShiftDateLocal);
+          console.log("Date compare (my):", {
+            eventDate: eventDateLocal.toString(),
+            yourShiftDate: yourShiftDateLocal?.toString(),
+            equal,
+          });
+          return equal;
+        }
+        return false;
       });
+
+      console.log(
+        'All events for my user on yourShiftDate:',
+        calendarEvents.filter(
+          (event) =>
+            (event.extendedProps?.residentId || '').trim() === (user?.id || '').trim() &&
+            isSameDay(event.start, parseLocalDate(yourShiftDate))
+        )
+      );
+
+      const myEventsOnDate = calendarEvents.filter(
+        (event) =>
+          (event.extendedProps?.residentId || '').trim() === (user?.id || '').trim() &&
+          isSameDay(event.start, parseLocalDate(yourShiftDate))
+      );
+      console.log('All events for my user on yourShiftDate (full details):', JSON.stringify(myEventsOnDate, null, 2));
+
       // Filter for partner's shift
       const partnerCandidates = calendarEvents.filter((event) => {
-        const eventDate = formatDate(event.start);
         const eventCallType = (event.extendedProps?.callType || "").trim();
         const eventResidentId = (event.extendedProps?.residentId || "").trim();
-        const match =
+        const validCallTypes = mapShiftType(partnerShift);
+        if (
           eventResidentId === (selectedResident || "").trim() &&
-          eventCallType === partnerShift &&
-          eventDate === formatDate(partnerShiftDate);
-        return match;
+          validCallTypes.includes(eventCallType)
+        ) {
+          const eventDateLocal = new Date(event.start);
+          const partnerShiftDateLocal = parseLocalDate(partnerShiftDate);
+          const equal = isSameDay(eventDateLocal, partnerShiftDateLocal);
+          console.log("Date compare (partner):", {
+            eventDate: eventDateLocal.toString(),
+            partnerShiftDate: partnerShiftDateLocal?.toString(),
+            equal,
+          });
+          return equal;
+        }
+        return false;
       });
+      console.log('myCandidates:', myCandidates);
+      console.log('partnerCandidates:', partnerCandidates);
       const myShift = myCandidates[0];
       const partnerShiftEvent = partnerCandidates[0];
       if (!myShift || !partnerShiftEvent) {
@@ -734,6 +806,7 @@ function Dashboard() {
         Status: "Pending",
         Details: ""
       };
+      console.log('Submitting swapRequest:', swapRequest);
       const response = await fetch(`${config.apiUrl}/api/swaprequests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
