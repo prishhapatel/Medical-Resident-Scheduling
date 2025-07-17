@@ -27,6 +27,7 @@ builder.Services.AddCors(options =>
             .SetIsOriginAllowed(origin => 
                 origin.StartsWith("https://psycall.net") || 
                 origin.StartsWith("https://www.psycall.net") ||
+                origin.StartsWith("https://backend.psycall.net") ||
                 origin.StartsWith("http://localhost"))
             .AllowAnyMethod()
             .AllowAnyHeader()
