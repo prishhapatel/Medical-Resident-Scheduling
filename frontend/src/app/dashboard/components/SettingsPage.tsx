@@ -49,115 +49,115 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   };
 
   return (
-    <div className="w-full h-full bg-background p-4 overflow-hidden">
-      <div className="max-w-xl mx-auto h-full flex flex-col">
+    <div className="w-full bg-background p-4 overflow-x-hidden">
+      <div className="max-w-xl mx-auto flex flex-col">
         {/* Header */}
         <div className="text-center mb-5">
           <h1 className="text-2xl font-bold text-foreground">Profile</h1>
           <p className="text-sm text-muted-foreground mt-2">Manage your profile settings</p>
         </div>
 
-      {/* Basic Info Section */}
-      <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
-        <div className="border-b border-border pb-4 mb-6">
-          <h2 className="text-xl font-semibold text-foreground">Basic info</h2>
-          <p className="text-muted-foreground text-sm mt-1">Tell us your basic info details</p>
-        </div>
-
-        <div className="space-y-6">
-          {/* Full Name */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Full name
-            </label>
-            <input
-              type="text"
-              value={`${firstName} ${lastName}`}
-              disabled
-              className="w-full px-4 py-3 border border-border rounded-lg bg-muted text-muted-foreground cursor-not-allowed focus:outline-none"
-            />
+      {/* Main Settings Sections: Side by Side on Desktop */}
+      <div className="flex flex-col md:flex-row gap-8 w-full">
+        {/* Basic Info Section */}
+        <div className="flex-1 md:flex-[2.2] bg-card rounded-lg border border-border p-6 shadow-sm">
+          <div className="border-b border-border pb-4 mb-6">
+            <h2 className="text-xl font-semibold text-foreground">Basic info</h2>
+            <p className="text-muted-foreground text-sm mt-1">Tell us your basic info details</p>
           </div>
 
-          {/* Email */}
-          <div>
-            <label htmlFor="email-input" className="block text-sm font-medium text-foreground mb-2">
-              Email
-            </label>
-            <div className="flex gap-3">
+          <div className="space-y-6">
+            {/* Full Name */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Full name
+              </label>
               <input
-                id="email-input"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 px-4 py-3 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
-                placeholder="your.email@example.com"
+                type="text"
+                value={`${firstName} ${lastName}`}
+                disabled
+                className="w-full px-2 py-2 text-sm border border-border rounded-lg bg-muted text-muted-foreground cursor-not-allowed focus:outline-none"
               />
-              <Button 
-                onClick={handleUpdateEmail}
-                className="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors"
-              >
-                Update
-              </Button>
+            </div>
+
+            {/* Email */}
+            <div>
+              <label htmlFor="email-input" className="block text-sm font-medium text-foreground mb-2">
+                Email
+              </label>
+              <div className="flex gap-3">
+                <input
+                  id="email-input"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 px-2 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+                  placeholder="your.email@example.com"
+                />
+                <Button 
+                  onClick={handleUpdateEmail}
+                  className="px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors"
+                >
+                  Update
+                </Button>
+              </div>
+            </div>
+
+            {/* Phone Number */}
+            <div>
+              <label htmlFor="phone-number" className="block text-sm font-medium text-foreground mb-2">
+                Phone number
+              </label>
+              <div className="flex gap-3">
+                <input
+                  id="phone-number"
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={handlePhoneChange}
+                  className="flex-1 px-2 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+                  placeholder="123-456-7890"
+                  maxLength={12}
+                />
+                <Button 
+                  onClick={handleUpdatePhoneNumber} 
+                  className="px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors"
+                >
+                  Update
+                </Button>
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Phone Number */}
-          <div>
-            <label htmlFor="phone-number" className="block text-sm font-medium text-foreground mb-2">
-              Phone number
-            </label>
-            <div className="flex gap-3">
-              <input
-                id="phone-number"
-                type="tel"
-                value={phoneNumber}
-                onChange={handlePhoneChange}
-                className="flex-1 px-4 py-3 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
-                placeholder="123-456-7890"
-                maxLength={12}
-              />
-              <Button 
-                onClick={handleUpdatePhoneNumber} 
-                className="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors"
-              >
-                Update
-              </Button>
-            </div>
+        {/* Theme Settings Section */}
+        <div className="flex-1 md:flex-[0.3] bg-card rounded-lg border border-border p-6 shadow-sm h-fit">
+          <div className="border-b border-border pb-4 mb-6">
+            <h2 className="text-xl font-semibold text-foreground">Appearance</h2>
+            <p className="text-muted-foreground text-sm mt-1">Customize how the interface looks</p>
           </div>
-        </div>
-      </div>
 
-      {/* Add space between sections */}
-      <div className="h-8" />
-
-      {/* Theme Settings Section */}
-      <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
-        <div className="border-b border-border pb-4 mb-6">
-          <h2 className="text-xl font-semibold text-foreground">Appearance</h2>
-          <p className="text-muted-foreground text-sm mt-1">Customize how the interface looks</p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-3">
-            Theme preference
-          </label>
-          <Button
-            variant="outline"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="flex items-center gap-3 px-4 py-3 border border-border rounded-lg bg-background hover:bg-muted text-foreground transition-colors"
-          >
-            {theme === "dark" ? (
-              <>
-                <Sun className="h-5 w-5" />
-                <span>Switch to Light Mode</span>
-              </>
-            ) : (
-              <>
-                <Moon className="h-5 w-5" />
-                <span>Switch to Dark Mode</span>
-              </>
-            )}
-          </Button>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-3">
+              Theme preference
+            </label>
+            <Button
+              variant="outline"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="flex items-center gap-3 px-4 py-3 border border-border rounded-lg bg-background hover:bg-muted text-foreground transition-colors"
+            >
+              {theme === "dark" ? (
+                <>
+                  <Sun className="h-5 w-5" />
+                  <span>Switch to Light Mode</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="h-5 w-5" />
+                  <span>Switch to Dark Mode</span>
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
       </div>
