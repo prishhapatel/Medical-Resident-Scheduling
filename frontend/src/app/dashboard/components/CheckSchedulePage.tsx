@@ -113,9 +113,6 @@ const CheckSchedulePage: React.FC<CheckSchedulePageProps> = ({ mySchedule }) => 
             </div>
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">My Upcoming Schedule</h1>
-          <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-            Here&apos;s an overview of your upcoming shifts and rotations. Stay organized and never miss a shift.
-          </p>
         </div>
 
         {/* Schedule Content */}

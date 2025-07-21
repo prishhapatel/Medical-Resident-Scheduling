@@ -106,7 +106,6 @@ export default function Page() {
   const handleDenyRequest = () => {};
   const handleSendInvite = () => {};
   const handleResendInvite = () => {};
-  const handleChangeRole = () => {};
   const handleDeleteUser = () => {};
   const handleClearRequests = () => setMyTimeOffRequests([]);
 
@@ -128,7 +127,6 @@ export default function Page() {
       handleSendInvite={handleSendInvite}
       handleResendInvite={handleResendInvite}
       users={users}
-      handleChangeRole={handleChangeRole}
       handleDeleteUser={handleDeleteUser}
       inviteRole={inviteRole}
       setInviteRole={handleSetInviteRole}

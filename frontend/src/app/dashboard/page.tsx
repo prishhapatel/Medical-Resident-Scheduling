@@ -997,38 +997,6 @@ function Dashboard() {
     router.push("/");
   };
 
-  const handleChangeRole = async (user: { id: string; first_name: string; last_name: string; email: string; role: string }, newRole: string) => {
-    try {
-      const response = await fetch(`${config.apiUrl}/api/users/${user.id}/role`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ role: newRole }),
-      });
-
-      if (response.ok) {
-        setUsers(prev => prev.map(u => 
-          u.id === user.id ? { ...u, role: newRole } : u
-        ));
-        toast({
-          variant: 'success',
-          title: 'Role Updated',
-          description: `${user.first_name} ${user.last_name}'s role has been updated to ${newRole}.`
-        });
-      } else {
-        throw new Error('Failed to update role');
-      }
-    } catch {
-      console.error('Error updating user role');
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to update user role.'
-      });
-    }
-  };
-
   const handleDeleteUser = async (user: { id: string; role: string }) => {
     try {
       const endpoint = user.role === 'admin' ? 'Admins' : 'Residents';
@@ -1093,7 +1061,6 @@ case "Home":
         handleSendInvite={handleSendInvite}
         handleResendInvite={handleResendInvite}
         users={users}
-        handleChangeRole={handleChangeRole}
         handleDeleteUser={handleDeleteUser}
         inviteRole={inviteRole}
         setInviteRole={setInviteRole}
@@ -1125,7 +1092,6 @@ case "Home":
             onNavigateToSwapCalls={() => setSelected("Swap Calls")}
             onNavigateToRequestOff={() => setSelected("Request Off")}
             onNavigateToCheckSchedule={() => setSelected("Check My Schedule")}
-            onNavigateToAdmin={() => setSelected("Admin")}
             onNavigateToSettings={() => setSelected("Settings")}
             onNavigateToHome={() => setSelected("Home")}
             isAdmin={isAdmin}
@@ -1229,7 +1195,6 @@ case "Home":
             handleSendInvite={handleSendInvite}
             handleResendInvite={handleResendInvite}
             users={users}
-            handleChangeRole={handleChangeRole}
             handleDeleteUser={handleDeleteUser}
             inviteRole={inviteRole}
             setInviteRole={setInviteRole}
