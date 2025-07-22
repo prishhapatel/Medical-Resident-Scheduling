@@ -25,15 +25,40 @@ namespace MedicalDemo.Services
         {
             try
             {
+                var residentData = await LoadResidentData(year);
+                
+                // Map DTOs to original algorithm classes
+                var pgy1Models = residentData.PGY1s.Select(dto => MapToPGY1(dto)).ToList();
+                var pgy2Models = residentData.PGY2s.Select(dto => MapToPGY2(dto)).ToList();
+                var pgy3Models = residentData.PGY3s.Select(dto => MapToPGY3(dto)).ToList();
+
+                // Phase 1: Training Schedule (July–August)
+                Schedule.Training(year, pgy1Models, pgy2Models, pgy3Models);
+
+                // Phase 2: Normal Schedule (Sept–Dec and Jan–June)
+                Schedule.Part1(year, pgy1Models, pgy2Models);
+                Schedule.Part2(year, pgy1Models, pgy2Models);
+
                 // Save schedule record
-                var schedule = new Schedules { ScheduleId = Guid.NewGuid(), Status = "Generated" };
+                var schedule = new Schedules { ScheduleId = Guid.NewGuid(), Status = "Under Review" };
                 _context.schedules.Add(schedule);
                 await _context.SaveChangesAsync();
-                
-                // Run the full training and normal schedule generation (internal state stored in Schedule.cs)
-                await Schedule.Training(year, schedule.ScheduleId, _context);
-                await Schedule.Part1(year, schedule.ScheduleId, _context);
-                await Schedule.Part2(year, schedule.ScheduleId, _context);
+
+                // Generate DatesDTOs from PGY models
+                var dateDTOs = Schedule.GenerateDateRecords(schedule.ScheduleId, pgy1Models, pgy2Models, pgy3Models);
+
+                // Convert DTOs to Entities
+                var dateEntities = dateDTOs.Select(dto => new Dates
+                {
+                    DateId = dto.DateId,
+                    ScheduleId = dto.ScheduleId,
+                    ResidentId = dto.ResidentId,
+                    Date = dto.Date,
+                    CallType = dto.CallType
+                }).ToList();
+
+                await _context.dates.AddRangeAsync(dateEntities);
+                await _context.SaveChangesAsync();
 
                 return (true, null);
             }
@@ -47,9 +72,9 @@ namespace MedicalDemo.Services
         {
             var model = new PGY1(dto.Name)
             {
+                id = dto.ResidentId,  
                 inTraining = dto.InTraining,
-                lastTrainingDate = dto.LastTrainingDate,
-                id = dto.Id
+                lastTrainingDate = dto.LastTrainingDate
             };
 
             for (int i = 0; i < 12; i++)
@@ -68,8 +93,8 @@ namespace MedicalDemo.Services
         {
             var model = new PGY2(dto.Name)
             {
-                inTraining = dto.InTraining,
-                id = dto.Id
+                id = dto.ResidentId,  
+                inTraining = dto.InTraining
             };
 
             for (int i = 0; i < 12; i++)
@@ -88,7 +113,7 @@ namespace MedicalDemo.Services
         {
             var model = new PGY3(dto.Name)
             {
-                id = dto.Id
+                id = dto.ResidentId  
             };
 
             foreach (var v in dto.VacationRequests)
@@ -99,6 +124,7 @@ namespace MedicalDemo.Services
 
             return model;
         }
+
 
         private async Task<ResidentData> LoadResidentData(int year)
         {

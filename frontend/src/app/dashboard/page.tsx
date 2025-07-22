@@ -1081,6 +1081,7 @@ case "Home":
         onNavigateToSchedule={() => setSelected("Check My Schedule")}
         userId={user?.id || ""}
         calendarEvents={calendarEvents}
+        isAdmin={isAdmin}
       />
     );
   }
@@ -1271,6 +1272,7 @@ case "Home":
   const filteredMenuItems = menuItems.filter(item => {
     if (item.title === "Admin") return false; //hide admin option
     if (item.title === "Request Off") return !isAdmin;
+    if (item.title === "Check My Schedule") return !isAdmin;
     return true;
   });
 
