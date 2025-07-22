@@ -369,9 +369,12 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                 <Calendar className="w-5 h-5" /> Request Off
               </button>
             )}
-            <button onClick={onNavigateToCheckSchedule} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
-              <User className="w-5 h-5" /> Check My Schedule
-            </button>
+            {/* Check My Schedule button: only show if not admin */}
+            {!isAdmin && (
+              <button onClick={onNavigateToCheckSchedule} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
+                <User className="w-5 h-5" /> Check My Schedule
+              </button>
+            )}
             {isAdmin && (
               null
             )}

@@ -17,6 +17,7 @@ interface HomeProps {
   userId: string;
   calendarEvents?: CalendarEvent[];
   onRefreshCalendar?: () => void;
+  isAdmin: boolean;
 }
 
 interface DashboardData {
@@ -53,6 +54,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
   userId,
   calendarEvents = [], // Accept calendarEvents as prop if available
   onRefreshCalendar,
+  isAdmin,
 }) => {
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     monthlyHours: 0,
@@ -265,19 +267,22 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
               </div>
             </Button>
             
-            <Button 
-              onClick={onNavigateToSchedule}
-              className="p-8 w-55 bg-card text-card-foreground border border-border hover:bg-accent hover:text-accent-foreground rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
-              variant="outline"
-            >
-              <div className="text-left w-full">
-                <div className="flex items-center gap-3 mb-2">
-                  <CalendarCheck className="h-6 w-6" />
-                  <span className="font-semibold text-base">View My Schedule</span>
+            {/* View My Schedule button: only show if not admin */}
+            {!isAdmin && (
+              <Button 
+                onClick={onNavigateToSchedule}
+                className="p-8 w-55 bg-card text-card-foreground border border-border hover:bg-accent hover:text-accent-foreground rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+                variant="outline"
+              >
+                <div className="text-left w-full">
+                  <div className="flex items-center gap-3 mb-2">
+                    <CalendarCheck className="h-6 w-6" />
+                    <span className="font-semibold text-base">View My Schedule</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">See your full schedule</p>
                 </div>
-                <p className="text-sm text-muted-foreground mt-2">See your full schedule</p>
-              </div>
-            </Button>
+              </Button>
+            )}
           </div>
         </Card>
 
