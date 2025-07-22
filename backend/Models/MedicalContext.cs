@@ -9,6 +9,7 @@ namespace MedicalDemo.Data.Models
     public class MedicalContext : DbContext
     {
         public DbSet<Admins> admins { get; set; }
+        public DbSet<Announcements> announcements { get; set; }
         public DbSet<Residents> residents { get; set; }
         public DbSet<Rotations> rotations { get; set; }
         public DbSet<Dates> dates { get; set; }
@@ -23,6 +24,11 @@ namespace MedicalDemo.Data.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
+			// Map AnnouncementId as binary(16)
+			modelBuilder.Entity<Announcements>()
+				.Property(s => s.AnnouncementId)
+				.HasColumnType("binary(16)");
+			
 			// Map SwapId as binary(16)
 			modelBuilder.Entity<SwapRequest>()
 				.Property(s => s.SwapId)
