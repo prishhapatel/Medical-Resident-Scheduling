@@ -2,33 +2,35 @@
 {
     public class HospitalRole
     {
+        public string name { get; set; }
         public bool DoesShort { get; }
         public bool DoesLong { get; }
         public bool FlexShort { get; }
         public bool FlexLong { get; }
 
-        private HospitalRole(bool doesShort, bool doesLong, bool flexShort, bool flexLong)
+        private HospitalRole(string name, bool doesShort, bool doesLong, bool flexShort, bool flexLong)
         {
+            name = name;
             DoesShort = doesShort;
             DoesLong = doesLong;
             FlexShort = flexShort;
             FlexLong = flexLong;
         }
 
-        public static HospitalRole Inpatient => new(true, true, false, false);
-        public static HospitalRole Geriatric => new(true, true, false, false);
-        public static HospitalRole PHPandIOP => new(true, true, false, false);
-        public static HospitalRole PsychConsults => new(true, true, false, false);
-        public static HospitalRole CommP => new(false, true, false, false);
-        public static HospitalRole CAP => new(false, true, false, false);
-        public static HospitalRole Addiction => new(false, true, false, false);
-        public static HospitalRole Forensic => new(false, true, false, false);
-        public static HospitalRole Float => new(false, true, false, false);
-        public static HospitalRole Neurology => new(false, true, true, false);
-        public static HospitalRole IMOutpatient => new(false, true, true, false);
-        public static HospitalRole IMInpatient => new(false, false, false, true);
-        public static HospitalRole NightFloat => new(false, false, false, false);
-        public static HospitalRole EmergencyMed => new(false, false, false, true);
+        public static HospitalRole Inpatient => new("Inpatient", true, true, false, false);
+        public static HospitalRole Geriatric => new("Geriatric", true, true, false, false);
+        public static HospitalRole PHPandIOP => new("PHPandIOP", true, true, false, false);
+        public static HospitalRole PsychConsults => new("PsychConsults", true, true, false, false);
+        public static HospitalRole CommP => new("CommP", false, true, false, false);
+        public static HospitalRole CAP => new("CAP", false, true, false, false);
+        public static HospitalRole Addiction => new("Addiction", false, true, false, false);
+        public static HospitalRole Forensic => new("Forensic",false, true, false, false);
+        public static HospitalRole Float => new("Float",false, true, false, false);
+        public static HospitalRole Neurology => new("Neurology",false, true, true, false);
+        public static HospitalRole IMOutpatient => new("IMOutpatient",false, true, true, false);
+        public static HospitalRole IMInpatient => new("IMInpatient",false, false, false, true);
+        public static HospitalRole NightFloat => new("NightFloat",false, false, false, false);
+        public static HospitalRole EmergencyMed => new("EmergencyMed",false, false, false, true);
         
         public static HospitalRole random() // THIS IS PURELY FOR TESTING I NED TO REMOVE IT
         {
