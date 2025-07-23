@@ -131,8 +131,7 @@ namespace MedicalDemo.Services
             var residents = await _context.residents.ToListAsync();
             var rotations = await _context.rotations.ToListAsync();
             var vacations = await _context.vacations.Where(v => v.Status == "Confirmed").ToListAsync();
-            var existingDates = await _context.dates.ToListAsync();
-            var datesDTOs = _mapper.MapToDatesDTOs(existingDates);
+            var datesDTOs = new List<DatesDTO>(); // Empty list
 
             var pgy1s = residents
                 .Where(r => r.graduate_yr == 1)
