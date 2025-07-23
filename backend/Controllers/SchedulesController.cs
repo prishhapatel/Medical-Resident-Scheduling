@@ -44,6 +44,24 @@ namespace MedicalDemo.Controllers
             var schedules = await _context.schedules.ToListAsync();
             return Ok(schedules);
         }
+        
+        // GET: api/schedules/filter?status=
+        [HttpGet("filter")]
+        public async Task<ActionResult<IEnumerable<Schedules>>> FilterSchedules(
+	        [FromQuery] string? status)
+        {
+	        var query = _context.schedules.AsQueryable();
+
+	        if (!string.IsNullOrWhiteSpace(status))
+		        query = query.Where(s => s.Status == status);
+
+	        var results = await query.ToListAsync();
+
+	        if (results.Count == 0)
+		        return NotFound("No matching schedule records found.");
+
+	        return Ok(results);
+        }
 
         // PUT: api/schedules/{id}
 		[HttpPut("{id}")]
