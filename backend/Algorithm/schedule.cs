@@ -535,6 +535,18 @@ class Schedule
         int pgy2 = 8;
         ArrayList AllPgy1s = pgy1s;
         ArrayList AllPgy2s = pgy2s;
+        
+        for (int i = 0; i < pgy1; i++)
+        {
+            ((PGY1)AllPgy1s[i]).inTraining = false;
+
+            // assign the training date of the pgy1s based on their last worked day
+            ((PGY1)AllPgy1s[i]).lastTrainingDate = ((PGY1)AllPgy1s[i]).workDaySet().Max();
+        }
+        for (int i = 0; i < pgy2; i++)
+        {
+            ((PGY2)AllPgy2s[i]).inTraining = false;
+        }
 
         // store days currently worked by anyone
         HashSet<DateTime> workedDays = new HashSet<DateTime>();
