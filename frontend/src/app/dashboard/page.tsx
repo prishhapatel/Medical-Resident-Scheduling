@@ -670,21 +670,74 @@ function Dashboard() {
     });
   };
 
-  const handleApproveRequest = (id: string) => {
-    toast({
-      variant: "success",
-      title: "Request Approved",
-      description: `Time off request ${id} has been approved.`, 
-    });
-  };
+  const handleApproveRequest = async (groupId: string) => {
+    console.log("Approving groupId:", groupId);
+    try {
 
-  const handleDenyRequest = (id: string) => {
-    toast({
-      variant: "destructive",
-      title: "Request Denied",
-      description: `Time off request ${id} has been denied.`, 
-    });
+      const response = await fetch(`${config.apiUrl}/api/vacations/group/${groupId}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "Approved" }),
+      });
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Failed to approve request:", response.status, errorText);
+        throw new Error("Failed to approve request.");
+      }
+  
+      toast({
+        variant: "success",
+        title: "Request Approved",
+        description: `Vacation request group ${groupId} has been approved.`,
+      });
+  
+      fetchMyTimeOffRequests(); //refresh UI
+    } catch (err) {
+      console.error("Error approving vacation request group:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to approve request group. Please try again.",
+      });
+    }
   };
+  
+  const handleDenyRequest = async (groupId: string) => {
+    try {
+      const response = await fetch(`${config.apiUrl}/api/vacations/group/${groupId}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "Denied" }),
+      });
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Failed to deny request:", response.status, errorText);
+        throw new Error("Failed to deny request.");
+      }
+  
+      toast({
+        variant: "destructive",
+        title: "Request Denied",
+        description: `Vacation request group ${groupId} has been denied.`,
+      });
+  
+      fetchMyTimeOffRequests(); //refresh UI
+    } catch (err) {
+      console.error("Error denying vacation request group:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to deny request group. Please try again.",
+      });
+    }
+  };
+  
 
   const handleSubmitSwap = async () => {
     console.log('handleSubmitSwap called');
@@ -861,7 +914,7 @@ function Dashboard() {
       });
       return;
     }
-
+  
     if (new Date(startDate) > new Date(endDate)) {
       toast({
         variant: "destructive",
@@ -870,53 +923,57 @@ function Dashboard() {
       });
       return;
     }
-
+  
     try {
-      // Create vacation requests for each day in the range
       const start = new Date(startDate);
       const end = new Date(endDate);
+      const groupId = crypto.randomUUID(); //group ID
       const requests = [];
-      
+  
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         requests.push({
-          residentId: user.id,
-          date: d.toISOString().split('T')[0],
-          reason: reason,
-          description: description || '',
+          groupId: groupId, //New request
+          ResidentId: user.id,
+          Date: d.toISOString().split('T')[0],
+          Reason: reason,
+          Description: description || '',
+          Status: 'Pending',
         });
       }
-
-      // Send all requests
-      const response = await fetch(`${config.apiUrl}/api/vacations`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requests),
+  
+      for (const request of requests) {
+        const response = await fetch(`${config.apiUrl}/api/vacations`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(request),
+        });
+  
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Failed to submit request:", response.status, errorText);
+          throw new Error("One of the vacation requests failed");
+        }
+      }
+  
+      toast({
+        variant: "success",
+        title: "Request Submitted",
+        description: `Time off request submitted for ${startDate} to ${endDate}.`,
       });
-
-      if (response.ok) {
-        toast({
-          variant: "success",
-          title: "Request Submitted",
-          description: `Time off request submitted for ${startDate} to ${endDate}.`,
-        });
-        
-        // Clear form
-        setStartDate("");
-        setEndDate("");
-        setReason("");
-        setDescription("");
-        
-        // Refresh data
-        fetchMyTimeOffRequests();
-        
-        // Add to recent activity
-      } else {
-        throw new Error('Failed to submit request');
-      }
-    } catch {
-      console.error('Error submitting vacation request');
+  
+      //Clear form
+      setStartDate("");
+      setEndDate("");
+      setReason("");
+      setDescription("");
+  
+      //refresh list
+      fetchMyTimeOffRequests();
+  
+    } catch (err) {
+      console.error('Error submitting vacation request:', err);
       toast({
         variant: "destructive",
         title: "Error",
@@ -924,6 +981,8 @@ function Dashboard() {
       });
     }
   };
+  
+  
 
   const handleLogout = async () => {
     removeAuthToken();
@@ -936,38 +995,6 @@ function Dashboard() {
 
     await new Promise(resolve => setTimeout(resolve, 1500));
     router.push("/");
-  };
-
-  const handleChangeRole = async (user: { id: string; first_name: string; last_name: string; email: string; role: string }, newRole: string) => {
-    try {
-      const response = await fetch(`${config.apiUrl}/api/users/${user.id}/role`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ role: newRole }),
-      });
-
-      if (response.ok) {
-        setUsers(prev => prev.map(u => 
-          u.id === user.id ? { ...u, role: newRole } : u
-        ));
-        toast({
-          variant: 'success',
-          title: 'Role Updated',
-          description: `${user.first_name} ${user.last_name}'s role has been updated to ${newRole}.`
-        });
-      } else {
-        throw new Error('Failed to update role');
-      }
-    } catch {
-      console.error('Error updating user role');
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to update user role.'
-      });
-    }
   };
 
   const handleDeleteUser = async (user: { id: string; role: string }) => {
@@ -1002,29 +1029,62 @@ function Dashboard() {
     setMyTimeOffRequests([]);
   };
 
-  const refreshCalendar = async () => {
-    await fetchCalendarEvents();
-  };
+  // const refreshCalendar = async () => {
+  //   await fetchCalendarEvents();
+  // };
 
   // Render main content based on selected menu item
   const renderMainContent = () => {
     switch (selected) {
-      case "Home":
-        return (
-          <HomePage
-            displayName={displayName}
-            rotation={null}
-            rotationEndDate={null}
-            monthlyHours={null}
-            hasData={false}
-            onNavigateToSwapCalls={() => setSelected("Swap Calls")}
-            onNavigateToRequestOff={() => setSelected("Request Off")}
-            onNavigateToSchedule={() => setSelected("Check My Schedule")}
-            userId={user?.id || ""}
-            calendarEvents={calendarEvents}
-            onRefreshCalendar={refreshCalendar}
-          />
-        );
+case "Home":
+  if (isAdmin) {
+    return (
+      <AdminPage
+        residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }))}
+        myTimeOffRequests={myTimeOffRequests.map(r => ({
+          id: r.id,
+          startDate: r.date || '',
+          endDate: r.date || '',
+          resident: r.residentId || '',
+          reason: r.reason,
+          status: r.status,
+        }))}
+        shifts={shifts.map(s => ({
+          id: s.id,
+          name: s.name
+        }))}
+        handleApproveRequest={handleApproveRequest}
+        handleDenyRequest={handleDenyRequest}
+        userInvitations={userInvitations}
+        inviteEmail={inviteEmail}
+        setInviteEmail={setInviteEmail}
+        handleSendInvite={handleSendInvite}
+        handleResendInvite={handleResendInvite}
+        users={users}
+        handleDeleteUser={handleDeleteUser}
+        inviteRole={inviteRole}
+        setInviteRole={setInviteRole}
+        onClearRequests={handleClearRequests}
+      />
+    );
+  }
+  else{
+    return (
+      <HomePage
+        displayName={displayName}
+        rotation={null}
+        rotationEndDate={null}
+        monthlyHours={null}
+        hasData={false}
+        onNavigateToSwapCalls={() => setSelected("Swap Calls")}
+        onNavigateToRequestOff={() => setSelected("Request Off")}
+        onNavigateToSchedule={() => setSelected("Check My Schedule")}
+        userId={user?.id || ""}
+        calendarEvents={calendarEvents}
+        isAdmin={isAdmin}
+      />
+    );
+  }
 
       case "Calendar":
         return (
@@ -1033,7 +1093,6 @@ function Dashboard() {
             onNavigateToSwapCalls={() => setSelected("Swap Calls")}
             onNavigateToRequestOff={() => setSelected("Request Off")}
             onNavigateToCheckSchedule={() => setSelected("Check My Schedule")}
-            onNavigateToAdmin={() => setSelected("Admin")}
             onNavigateToSettings={() => setSelected("Settings")}
             onNavigateToHome={() => setSelected("Home")}
             isAdmin={isAdmin}
@@ -1137,7 +1196,6 @@ function Dashboard() {
             handleSendInvite={handleSendInvite}
             handleResendInvite={handleResendInvite}
             users={users}
-            handleChangeRole={handleChangeRole}
             handleDeleteUser={handleDeleteUser}
             inviteRole={inviteRole}
             setInviteRole={setInviteRole}
@@ -1212,8 +1270,9 @@ function Dashboard() {
   const displayName = user ? `${user.firstName} ${user.lastName}` : "John Doe";
   const displayEmail = user?.email || "john.doe@email.com";
   const filteredMenuItems = menuItems.filter(item => {
-    if (item.title === "Admin") return isAdmin;
+    if (item.title === "Admin") return false; //hide admin option
     if (item.title === "Request Off") return !isAdmin;
+    if (item.title === "Check My Schedule") return !isAdmin;
     return true;
   });
 
