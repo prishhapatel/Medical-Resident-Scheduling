@@ -116,6 +116,53 @@ namespace MedicalDemo.Server.Controllers
             }
         }
 
+        // POST: api/Residents/demote-admin/{adminId}
+        [HttpPost("demote-admin/{adminId}")]
+        public async Task<IActionResult> DemoteAdminToResident(string adminId)
+        {
+            var admin = await _context.admins.FindAsync(adminId);
+            if (admin == null)
+            {
+                return NotFound("Admin not found.");
+            }
+
+            // Check if resident already exists with this ID
+            var existingResident = await _context.residents.FindAsync(adminId);
+            if (existingResident != null)
+            {
+                return BadRequest("Resident already exists with this ID.");
+            }
+
+            // Create new resident account with default values
+            var newResident = new Residents
+            {
+                resident_id = admin.admin_id,
+                first_name = admin.first_name,
+                last_name = admin.last_name,
+                email = admin.email,
+                password = admin.password,
+                phone_num = admin.phone_num,
+                graduate_yr = 1, // Default PGY level
+                weekly_hours = 0,
+                total_hours = 0,
+                bi_yearly_hours = 0
+            };
+
+            // Add resident and remove admin
+            _context.residents.Add(newResident);
+            _context.admins.Remove(admin);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(newResident);
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500, $"An error occurred while demoting admin: {ex.Message}");
+            }
+        }
+
         // POST: api/Residents
         [HttpPost]
         public async Task<ActionResult<Residents>> PostResident(Residents resident)

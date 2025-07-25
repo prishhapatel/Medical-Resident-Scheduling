@@ -77,6 +77,49 @@ namespace MedicalDemo.Server.Controllers
             return NoContent();
         }
 
+        // POST: api/Admins/promote-resident/{residentId}
+        [HttpPost("promote-resident/{residentId}")]
+        public async Task<IActionResult> PromoteResidentToAdmin(string residentId)
+        {
+            var resident = await _context.residents.FindAsync(residentId);
+            if (resident == null)
+            {
+                return NotFound("Resident not found.");
+            }
+
+            // Check if admin already exists with this ID
+            var existingAdmin = await _context.admins.FindAsync(residentId);
+            if (existingAdmin != null)
+            {
+                return BadRequest("Admin already exists with this ID.");
+            }
+
+            // Create new admin account
+            var newAdmin = new Admins
+            {
+                admin_id = resident.resident_id,
+                first_name = resident.first_name,
+                last_name = resident.last_name,
+                email = resident.email,
+                password = resident.password,
+                phone_num = resident.phone_num
+            };
+
+            // Add admin and remove resident
+            _context.admins.Add(newAdmin);
+            _context.residents.Remove(resident);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(newAdmin);
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500, $"An error occurred while promoting resident: {ex.Message}");
+            }
+        }
+
         // DELETE: api/Admins/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAdmin(string id)

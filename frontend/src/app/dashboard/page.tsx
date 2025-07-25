@@ -394,34 +394,47 @@ function Dashboard() {
   }, [residents]);
 
   const fetchUsers = async () => {
+    console.log('Fetching users...');
     try {
-      const [residentsRes, adminsRes] = await Promise.all([
+      const [residentsResponse, adminsResponse] = await Promise.all([
         fetch(`${config.apiUrl}/api/Residents`),
         fetch(`${config.apiUrl}/api/Admins`)
       ]);
-      const residents = residentsRes.ok ? await residentsRes.json() : [];
-      const admins = adminsRes.ok ? await adminsRes.json() : [];
-      const residentUsers = residents.map((r: { resident_id: string; first_name: string; last_name: string; email: string }) => ({
-        id: r.resident_id,
-        first_name: r.first_name,
-        last_name: r.last_name,
-        email: r.email,
-        role: 'resident',
-      }));
-      const adminUsers = admins.map((a: { admin_id: string; first_name: string; last_name: string; email: string }) => ({
-        id: a.admin_id,
-        first_name: a.first_name,
-        last_name: a.last_name,
-        email: a.email,
-        role: 'admin',
-      }));
-      setUsers([...residentUsers, ...adminUsers]);
-    } catch {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to fetch users.'
-      });
+
+      console.log('Residents response status:', residentsResponse.status);
+      console.log('Admins response status:', adminsResponse.status);
+
+      if (residentsResponse.ok && adminsResponse.ok) {
+        const residents = await residentsResponse.json();
+        const admins = await adminsResponse.json();
+
+        console.log('Residents data:', residents);
+        console.log('Admins data:', admins);
+
+        const combinedUsers = [
+          ...residents.map((r: any) => ({
+            id: r.resident_id,
+            first_name: r.first_name,
+            last_name: r.last_name,
+            email: r.email,
+            role: 'resident'
+          })),
+          ...admins.map((a: any) => ({
+            id: a.admin_id,
+            first_name: a.first_name,
+            last_name: a.last_name,
+            email: a.email,
+            role: 'admin'
+          }))
+        ];
+
+        console.log('Combined users:', combinedUsers);
+        setUsers(combinedUsers);
+      } else {
+        console.error('Failed to fetch users');
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
     }
   };
 
@@ -1038,6 +1051,8 @@ function Dashboard() {
     switch (selected) {
 case "Home":
   if (isAdmin) {
+    console.log('Rendering AdminPage with users:', users);
+    console.log('Rendering AdminPage with users length:', users.length);
     return (
       <AdminPage
         residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }))}
@@ -1065,6 +1080,7 @@ case "Home":
         inviteRole={inviteRole}
         setInviteRole={setInviteRole}
         onClearRequests={handleClearRequests}
+        userId={user?.id || ""}
       />
     );
   }
@@ -1200,6 +1216,7 @@ case "Home":
             inviteRole={inviteRole}
             setInviteRole={setInviteRole}
             onClearRequests={handleClearRequests}
+            userId={user?.id || ""}
           />
         );
 
@@ -1255,7 +1272,13 @@ case "Home":
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, []); // Run on mount
+
+  useEffect(() => {
+    if (user) {
+      fetchUsers();
+    }
+  }, [user]); // Also run when user is loaded
 
   // Fetch data when Admin page is selected
   useEffect(() => {
@@ -1287,6 +1310,7 @@ case "Home":
       <SidebarProvider defaultOpen={true}>
         <div className={`flex min-h-screen w-full`}>
           <Toaster />
+          
           {/* Left Sidebar Trigger (moves with sidebar, only on calendar page) */}
           {selected === "Calendar" && <SidebarFloatingTrigger />}
           {/* Sidebar Navigation */}

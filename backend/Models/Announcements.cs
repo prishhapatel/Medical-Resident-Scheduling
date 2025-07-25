@@ -11,9 +11,8 @@ namespace MedicalDemo.Data.Models
         [Column("announcement_id")]
         public Guid AnnouncementId { get; set; }
 
-        [Required]
         [Column("author_id")]
-        public string AuthorId { get; set; }
+        public string? AuthorId { get; set; }
 
         [Required]
         [Column("message")]

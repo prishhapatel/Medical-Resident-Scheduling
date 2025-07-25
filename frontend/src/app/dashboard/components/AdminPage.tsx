@@ -28,6 +28,7 @@ interface AdminPageProps {
   onClearRequests?: () => void;
   latestVersion?: string;
   onNavigateToCalendar?: () => void;
+  userId: string;
 }
 
 interface Request {
@@ -58,7 +59,7 @@ interface SwapRequest {
 }
 
 interface Announcement {
-  id: string;
+  announcementId: string;
   message: string;
   createdAt?: string;
 }
@@ -94,7 +95,11 @@ const AdminPage: React.FC<AdminPageProps> = ({
   handleDeleteUser,
   onClearRequests,
   onNavigateToCalendar,
+  userId,
 }) => {
+  console.log('AdminPage props - users:', users);
+  console.log('AdminPage props - users length:', users.length);
+  
   const [generating, setGenerating] = useState(false);
   const [message, setMessage] = useState("");
   const [showRequestsModal, setShowRequestsModal] = useState(false);
@@ -109,6 +114,9 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const [posting, setPosting] = useState(false);
   const [announcementError, setAnnouncementError] = useState<string | null>(null);
   const [showAnnouncementConfirm, setShowAnnouncementConfirm] = useState(false);
+  const [deletingAnnouncement, setDeletingAnnouncement] = useState<string | null>(null);
+  const [switchingRole, setSwitchingRole] = useState<string | null>(null);
+
 
 
   const handleGenerateSchedule = async () => {
@@ -179,16 +187,45 @@ const AdminPage: React.FC<AdminPageProps> = ({
 
   useEffect(() => {
     fetch(`${config.apiUrl}/api/swaprequests`)
-      .then(res => res.json())
-      .then((data) => setSwapHistory(data));
+      .then(res => {
+        console.log('Swap requests API response status:', res.status);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        console.log('Swap history data:', data);
+        console.log('Swap history data length:', data.length);
+        setSwapHistory(data);
+      })
+      .catch(error => {
+        console.error('Error fetching swap history:', error);
+        setSwapHistory([]);
+      });
   }, []);
   
   // Refetch swapHistory when switching to the swaps tab
   useEffect(() => {
     if (activeTab === 'swaps') {
+      console.log('Switching to swaps tab, fetching data...');
       fetch(`${config.apiUrl}/api/swaprequests`)
-        .then(res => res.json())
-        .then((data) => setSwapHistory(data));
+        .then(res => {
+          console.log('Swap requests API response status (tab switch):', res.status);
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          }
+          return res.json();
+        })
+        .then((data) => {
+          console.log('Swap history data (tab switch):', data);
+          console.log('Swap history data length (tab switch):', data.length);
+          setSwapHistory(data);
+        })
+        .catch(error => {
+          console.error('Error fetching swap history (tab switch):', error);
+          setSwapHistory([]);
+        });
     }
   }, [activeTab]);
 
@@ -267,15 +304,40 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const groupedRequests = groupRequests(myTimeOffRequests);
   console.log("Grouped requests:", groupedRequests);
 
+  // Create a mapping from resident ID to name
   const idToName = useMemo(() => {
-    const map: Record<string, string> = {};
-    users.forEach(u => {
-      map[u.id] = `${u.first_name} ${u.last_name}`;
+    console.log('Creating idToName mapping with users:', users);
+    console.log('Users array length:', users.length);
+    console.log('First few users:', users.slice(0, 3));
+    
+    const mapping: { [key: string]: string } = {};
+    users.forEach(user => {
+      console.log('Processing user:', user);
+      mapping[user.id] = `${user.first_name} ${user.last_name}`;
     });
-    return map;
+    console.log('Final idToName mapping:', mapping);
+    return mapping;
   }, [users]);
 
+  // Fallback mapping using residents data if users is empty
+  const fallbackIdToName = useMemo(() => {
+    console.log('Creating fallback mapping, users length:', users.length);
+    if (users.length === 0) {
+      // This is a temporary fallback - we'll need to pass residents data to AdminPage
+      return {
+        'LLU6249': 'Felix Hernandez Perez',
+        'FVO3464': 'Alexis Shahidi'
+      };
+    }
+    return {};
+  }, [users]);
+
+  const finalIdToName = users.length > 0 ? idToName : fallbackIdToName;
+  console.log('Final mapping being used:', finalIdToName);
+
   const pendingSwapsCount = swapHistory.filter(s => s.Status === 'Pending').length;
+  console.log('swapHistory array:', swapHistory);
+  console.log('pendingSwapsCount:', pendingSwapsCount);
   const pendingRequestsCount = groupedRequests.filter(r => r.status === 'Pending').length;
 
 
@@ -331,7 +393,10 @@ const AdminPage: React.FC<AdminPageProps> = ({
       const res = await fetch(`${config.apiUrl}/api/announcements`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: announcementText }),
+        body: JSON.stringify({ 
+          message: announcementText,
+          authorId: userId 
+        }),
       });
       if (!res.ok) throw new Error('Failed to post');
       setAnnouncementText('');
@@ -344,6 +409,70 @@ const AdminPage: React.FC<AdminPageProps> = ({
       setPosting(false);
     }
   };
+
+  const handleDeleteAnnouncement = async (announcementId: string) => {
+    setDeletingAnnouncement(announcementId);
+    setAnnouncementError(null);
+    try {
+      const res = await fetch(`${config.apiUrl}/api/announcements/${announcementId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Failed to delete: ${res.status} ${errorText}`);
+      }
+      // Refetch announcements
+      const data = await fetch(`${config.apiUrl}/api/announcements`).then(r => r.json());
+      setAnnouncements(data);
+    } catch (error) {
+      console.error('Delete announcement error:', error);
+      setAnnouncementError(`Could not delete announcement: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setDeletingAnnouncement(null);
+    }
+  };
+
+  const handleSwitchRole = async (user: { id: string; first_name: string; last_name: string; email: string; role: string }, newRole: string) => {
+    // Don't do anything if the role hasn't actually changed
+    if (user.role === newRole) return;
+    
+    setSwitchingRole(user.id);
+    try {
+      const endpoint = user.role === 'admin' ? 'Residents/demote-admin' : 'Admins/promote-resident';
+      const response = await fetch(`${config.apiUrl}/api/${endpoint}/${user.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Role Updated",
+          description: `${user.first_name} ${user.last_name} has been switched to ${newRole}.`,
+          variant: "success"
+        });
+        // Refresh the page to update the user list
+        window.location.reload();
+      } else {
+        const error = await response.text();
+        toast({
+          title: "Error",
+          description: error || "Failed to switch user role.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error switching user role:', error);
+      toast({
+        title: "Error",
+        description: "Failed to switch user role. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSwitchingRole(null);
+    }
+  };
+
+
 
   return (
     <div className="w-full pt-4 h-[calc(100vh-4rem)] flex flex-col items-center pl-8">
@@ -436,19 +565,34 @@ const AdminPage: React.FC<AdminPageProps> = ({
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
                   {swapHistory.length > 0 ? (
-                    swapHistory.map((swap, idx) => (
-                      <tr key={swap.SwapId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{idToName[swap.RequesterId] || swap.RequesterId}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{idToName[swap.RequesteeId] || swap.RequesteeId}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesterDate ? new Date(swap.RequesterDate).toLocaleDateString() : ''}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesteeDate ? new Date(swap.RequesteeDate).toLocaleDateString() : ''}</td>
-                        <td className={
-                          `px-6 py-4 whitespace-nowrap text-sm font-semibold ` +
-                          (swap.Status === 'Approved' ? 'text-green-600' : swap.Status === 'Denied' ? 'text-red-600' : 'text-yellow-600')
-                        }>{swap.Status}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.Details || ''}</td>
+                    swapHistory.map((swap, idx) => {
+                      console.log('Rendering swap:', swap);
+                      console.log('swap.requesterId:', swap.requesterId);
+                      console.log('swap.requesteeId:', swap.requesteeId);
+                      console.log('finalIdToName[swap.requesterId]:', finalIdToName[swap.requesterId]);
+                      console.log('finalIdToName[swap.requesteeId]:', finalIdToName[swap.requesteeId]);
+                      
+                      return (
+                      <tr key={swap.swapId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                          {finalIdToName[swap.requesterId] || `Resident ${swap.requesterId}`}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                          {finalIdToName[swap.requesteeId] || `Resident ${swap.requesteeId}`}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesterDate ? new Date(swap.requesterDate).toLocaleDateString() : ''}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesteeDate ? new Date(swap.requesteeDate).toLocaleDateString() : ''}</td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${
+                          swap.status === 'Approved' ? 'text-green-600' : 
+                          swap.status === 'Denied' ? 'text-red-600' : 
+                          'text-yellow-600'
+                        }`}>
+                          {swap.status}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.details || '-'}</td>
                       </tr>
-                    ))
+                      );
+                    })
                   ) : (
                     <tr>
                       <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No swap call history found.</td>
@@ -596,7 +740,15 @@ const AdminPage: React.FC<AdminPageProps> = ({
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{user.first_name} {user.last_name}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                            <select
+                              value={user.role}
+                              onChange={(e) => handleSwitchRole(user, e.target.value)}
+                              disabled={switchingRole === user.id}
+                              className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="resident">{switchingRole === user.id ? 'Switching...' : 'Resident'}</option>
+                              <option value="admin">{switchingRole === user.id ? 'Switching...' : 'Admin'}</option>
+                            </select>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDeleteUserWithConfirm(user)}>
@@ -644,14 +796,32 @@ const AdminPage: React.FC<AdminPageProps> = ({
                 </div>
               </div>
             </Dialog>
+            {announcementError && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {announcementError}
+              </div>
+            )}
             <div className="flex flex-col gap-4">
               {announcements.length === 0 && !announcementError && (
                 <div className="text-gray-500">No announcements yet.</div>
               )}
               {announcements.map((a, idx) => (
-                <div key={a.id || idx} className="p-4 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-sm">
-                  <div className="text-gray-900 dark:text-gray-100 mb-1">{a.message}</div>
-                  <div className="text-xs text-gray-500">{a.createdAt ? new Date(a.createdAt).toLocaleString() : ''}</div>
+                <div key={a.announcementId || idx} className="p-4 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-sm">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="text-gray-900 dark:text-gray-100 mb-1">{a.message}</div>
+                      <div className="text-xs text-gray-500">{a.createdAt ? new Date(a.createdAt).toLocaleString() : ''}</div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white ml-4"
+                      onClick={() => handleDeleteAnnouncement(a.announcementId)}
+                      disabled={deletingAnnouncement === a.announcementId}
+                    >
+                      {deletingAnnouncement === a.announcementId ? 'Deleting...' : 'Delete'}
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -767,6 +937,8 @@ const AdminPage: React.FC<AdminPageProps> = ({
           </div>
         </div>
       </Modal>
+
+      
     </div>
   )
 }
