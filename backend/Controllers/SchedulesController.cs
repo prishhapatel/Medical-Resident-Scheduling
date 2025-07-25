@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using MedicalDemo.Data.Models;  // Adjust namespace based on your project
+using MedicalDemo.Data.Models;
+using MedicalDemo.Data.Models.DTOs; // Adjust namespace based on your project
 
 namespace MedicalDemo.Controllers
 {
@@ -62,6 +63,49 @@ namespace MedicalDemo.Controllers
 
 	        return Ok(results);
         }
+        
+        // GET: api/schedules/published-dates
+        [HttpGet("published-dates")]
+        public async Task<ActionResult<IEnumerable<ScheduleDatesDTO>>> GetPublishedDates()
+        {
+	        var publishedDates = await (
+		        from d in _context.dates
+		        join s in _context.schedules on d.ScheduleId equals s.ScheduleId
+		        where s.Status.ToLower() == "published"
+		        select new ScheduleDatesDTO
+		        {
+			        Date = d.Date,
+			        ResidentId = d.ResidentId,
+			        CallType = d.CallType
+		        }).ToListAsync();
+
+	        if (!publishedDates.Any())
+		        return NotFound("No dates found for published schedules.");
+
+	        return Ok(publishedDates);
+        }
+        
+        // GET: api/schedules/under-review-dates
+        [HttpGet("under-review-dates")]
+        public async Task<ActionResult<IEnumerable<ScheduleDatesDTO>>> GetUnderReviewDates()
+        {
+	        var underReviewDates = await (
+		        from d in _context.dates
+		        join s in _context.schedules on d.ScheduleId equals s.ScheduleId
+		        where s.Status.ToLower() == "under review"
+		        select new ScheduleDatesDTO
+		        {
+			        Date = d.Date,
+			        ResidentId = d.ResidentId,
+			        CallType = d.CallType
+		        }).ToListAsync();
+
+	        if (!underReviewDates.Any())
+		        return NotFound("No dates found for schedules under review.");
+
+	        return Ok(underReviewDates);
+        }
+
 
         // PUT: api/schedules/{id}
 		[HttpPut("{id}")]
