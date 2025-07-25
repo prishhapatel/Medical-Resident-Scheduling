@@ -79,6 +79,14 @@ interface Resident {
   phone_number?: string;
 }
 
+interface Admin {
+  admin_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone_num?: string;
+}
+
 interface ScheduleItem {
   id: string;
   date: string;
@@ -405,21 +413,21 @@ function Dashboard() {
       console.log('Admins response status:', adminsResponse.status);
 
       if (residentsResponse.ok && adminsResponse.ok) {
-        const residents = await residentsResponse.json();
-        const admins = await adminsResponse.json();
+        const residents = await residentsResponse.json() as Resident[];
+        const admins = await adminsResponse.json() as Admin[];
 
         console.log('Residents data:', residents);
         console.log('Admins data:', admins);
 
         const combinedUsers = [
-          ...residents.map((r: any) => ({
+          ...residents.map((r: Resident) => ({
             id: r.resident_id,
             first_name: r.first_name,
             last_name: r.last_name,
             email: r.email,
             role: 'resident'
           })),
-          ...admins.map((a: any) => ({
+          ...admins.map((a: Admin) => ({
             id: a.admin_id,
             first_name: a.first_name,
             last_name: a.last_name,

@@ -567,29 +567,29 @@ const AdminPage: React.FC<AdminPageProps> = ({
                   {swapHistory.length > 0 ? (
                     swapHistory.map((swap, idx) => {
                       console.log('Rendering swap:', swap);
-                      console.log('swap.requesterId:', swap.requesterId);
-                      console.log('swap.requesteeId:', swap.requesteeId);
-                      console.log('finalIdToName[swap.requesterId]:', finalIdToName[swap.requesterId]);
-                      console.log('finalIdToName[swap.requesteeId]:', finalIdToName[swap.requesteeId]);
+                      console.log('swap.RequesterId:', swap.RequesterId);
+                      console.log('swap.RequesteeId:', swap.RequesteeId);
+                      console.log('finalIdToName[swap.RequesterId]:', finalIdToName[swap.RequesterId]);
+                      console.log('finalIdToName[swap.RequesteeId]:', finalIdToName[swap.RequesteeId]);
                       
                       return (
-                      <tr key={swap.swapId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                      <tr key={swap.SwapId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                          {finalIdToName[swap.requesterId] || `Resident ${swap.requesterId}`}
+                          {finalIdToName[swap.RequesterId] || `Resident ${swap.RequesterId}`}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                          {finalIdToName[swap.requesteeId] || `Resident ${swap.requesteeId}`}
+                          {finalIdToName[swap.RequesteeId] || `Resident ${swap.RequesteeId}`}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesterDate ? new Date(swap.requesterDate).toLocaleDateString() : ''}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesteeDate ? new Date(swap.requesteeDate).toLocaleDateString() : ''}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesterDate ? new Date(swap.RequesterDate).toLocaleDateString() : ''}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesteeDate ? new Date(swap.RequesteeDate).toLocaleDateString() : ''}</td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${
-                          swap.status === 'Approved' ? 'text-green-600' : 
-                          swap.status === 'Denied' ? 'text-red-600' : 
+                          swap.Status === 'Approved' ? 'text-green-600' : 
+                          swap.Status === 'Denied' ? 'text-red-600' : 
                           'text-yellow-600'
                         }`}>
-                          {swap.status}
+                          {swap.Status}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.details || '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.Details || '-'}</td>
                       </tr>
                       );
                     })

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "../../components/ui/button";
 import { LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 import { config } from "../../config";
@@ -55,7 +55,6 @@ const FacultyCalendarView: React.FC<{ events: CalendarEvent[] }> = ({ events }) 
     "July", "August", "September", "October", "November", "December"
   ];
 
-  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const shortDayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   // Helper function to safely convert to Date object
@@ -114,7 +113,6 @@ const FacultyCalendarView: React.FC<{ events: CalendarEvent[] }> = ({ events }) 
   const generateCalendarDays = () => {
     const days = [];
     const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
     const startDate = new Date(firstDayOfMonth);
     startDate.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay());
 
@@ -507,13 +505,35 @@ export default function FacultyPage() {
   };
 
   // Fetch calendar events
-  const fetchCalendarEvents = async () => {
+  const fetchCalendarEvents = useCallback(async () => {
+    setLoading(true);
     try {
       const response = await fetch(`${config.apiUrl}/api/dates`);
       if (response.ok) {
-        const data: DateResponse[] = await response.json();
+        const dates: DateResponse[] = await response.json();
         
-        const events: CalendarEvent[] = data.map((date) => {
+        // Find the scheduleId with the most recent date
+        let latestScheduleId = null;
+        if (dates.length > 0) {
+          const scheduleIdToLatestDate: Record<string, number> = {};
+          dates.forEach((date: DateResponse) => {
+            if (!date.scheduleId) return;
+            const current = scheduleIdToLatestDate[date.scheduleId];
+            const thisDate = new Date(date.date).getTime();
+            if (!current || thisDate > current) {
+              scheduleIdToLatestDate[date.scheduleId] = thisDate;
+            }
+          });
+          latestScheduleId = Object.entries(scheduleIdToLatestDate)
+            .sort((a, b) => (Number(b[1]) - Number(a[1])))[0]?.[0];
+        }
+
+        // Only include events from the latest schedule
+        const filteredDates = latestScheduleId
+          ? dates.filter((date: DateResponse) => date.scheduleId === latestScheduleId)
+          : dates;
+
+        const events: CalendarEvent[] = filteredDates.map((date: DateResponse) => {
           const resident = residents.find(r => r.resident_id === date.residentId);
           const graduateYear = resident?.graduate_yr || 1;
           
@@ -545,7 +565,7 @@ export default function FacultyPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [residents]);
 
   // Get event color based on PGY level (like the original calendar)
   const getEventColor = (callType: string, graduateYear?: number): string => {
@@ -574,7 +594,7 @@ export default function FacultyPage() {
     if (residents.length > 0) {
       fetchCalendarEvents();
     }
-  }, [residents]);
+  }, [residents, fetchCalendarEvents]);
 
   if (loading) {
     return (
