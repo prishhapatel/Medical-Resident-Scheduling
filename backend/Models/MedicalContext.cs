@@ -11,7 +11,6 @@ namespace MedicalDemo.Data.Models
         public DbSet<Admins> admins { get; set; }
         public DbSet<Announcements> announcements { get; set; }
         public DbSet<Residents> residents { get; set; }
-        public DbSet<Faculty> faculty { get; set; }
         public DbSet<Rotations> rotations { get; set; }
         public DbSet<Dates> dates { get; set; }
         public DbSet<Schedules> schedules { get; set; }
