@@ -15,6 +15,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<SchedulingMapperService>();
 builder.Services.AddScoped<SchedulerService>();
 builder.Services.AddScoped<PostmarkService>();
+builder.Services.AddScoped<MiscService>();
 
 // Add CORS configuration
 builder.Services.AddCors(options =>
@@ -54,6 +55,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+
 
 // 1) Redirect HTTP → HTTPS
 app.UseHttpsRedirection();
