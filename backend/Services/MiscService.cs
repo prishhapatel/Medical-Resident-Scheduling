@@ -108,6 +108,7 @@ namespace MedicalDemo.Services
 
         }
 
+        // call types to total hours by call types
         private int HoursByCallType(string callType)
         {
             return callType switch
