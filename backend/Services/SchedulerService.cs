@@ -64,6 +64,7 @@ namespace MedicalDemo.Services
                 await _context.dates.AddRangeAsync(dateEntities);
                 await _context.SaveChangesAsync();
 
+                //add the total and bi-yearly hours for us after the fact lmao
                 await _misc.FindTotalHours();
                 await _misc.FindBiYearlyHours(year);
 

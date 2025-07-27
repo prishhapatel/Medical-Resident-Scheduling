@@ -46,20 +46,7 @@ namespace MedicalDemo.Services
 
             }
 
-            foreach(var residentDates in residentsWithDates)
-            {
-
-                int totalHours = 0;
-
-                foreach (var date in residentDates.Dates)
-                {
-                    totalHours += HoursByCallType(date.CallType);
-                }
-
-                residentDates.Resident.total_hours = totalHours;
-
-            }
-
+          
 
             // saves to db
             await _context.SaveChangesAsync();
