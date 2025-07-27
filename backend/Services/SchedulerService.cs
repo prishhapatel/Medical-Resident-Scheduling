@@ -129,15 +129,6 @@ namespace MedicalDemo.Services
         private async Task<ResidentData> LoadResidentData(int year)
         {
             var residents = await _context.residents.ToListAsync();
-            
-            // Set all hour fields to 0 for each resident to ensure the schedule is accurately tracked.
-            foreach (var resident in residents)
-            {
-                resident.weekly_hours = 0;
-                resident.total_hours = 0;
-                resident.bi_yearly_hours = 0;
-            }
-            
             var rotations = await _context.rotations.ToListAsync();
             var vacations = await _context.vacations.Where(v => v.Status == "Approved").ToListAsync();
             var datesDTOs = new List<DatesDTO>(); // Empty list
