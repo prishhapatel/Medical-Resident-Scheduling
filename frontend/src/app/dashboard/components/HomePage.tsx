@@ -4,6 +4,7 @@ import { Button } from "../../../components/ui/button";
 import { Calendar, Clock, RotateCcw, CalendarCheck, Bell, Users } from "lucide-react";
 import { config } from "../../../config";
 import { Dialog } from "../../../components/ui/dialog";
+import { toast } from "../../../lib/use-toast";
 
 interface HomeProps {
   displayName: string;
@@ -90,9 +91,35 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
   const handleApprove = async (swapId: string) => {
     setActionLoading(true);
     try {
-      await fetch(`${config.apiUrl}/api/swaprequests/${swapId}/approve`, { method: "POST" });
+      const response = await fetch(`${config.apiUrl}/api/swaprequests/${swapId}/approve`, { method: "POST" });
+      const result = await response.json();
+      
+      if (response.ok) {
+        // Check if a resident was promoted to admin
+        if (result.wasPromoted && result.promotedResidentName) {
+          toast({
+            title: "Swap Approved & Resident Promoted",
+            description: `Swap approved! ${result.promotedResidentName} has been promoted to admin and removed from the residents list.`,
+            variant: "success"
+          });
+        } else {
+          toast({
+            title: "Swap Approved",
+            description: "The swap request has been approved successfully.",
+            variant: "success"
+          });
+        }
+      }
+      
       await refreshDashboard();
       if (onRefreshCalendar) onRefreshCalendar();
+    } catch (error) {
+      console.error('Error approving swap:', error);
+      toast({
+        title: "Error",
+        description: "Failed to approve swap request.",
+        variant: "destructive"
+      });
     } finally {
       setActionLoading(false);
     }

@@ -30,6 +30,10 @@ namespace MedicalDemo.Controllers
             if (announcement.AnnouncementId == Guid.Empty)
                 announcement.AnnouncementId = Guid.NewGuid();
 
+            // Set default author if not provided
+            if (string.IsNullOrEmpty(announcement.AuthorId))
+                announcement.AuthorId = "Admin";
+
             announcement.CreatedAt = DateTime.UtcNow;
 
             _context.announcements.Add(announcement);

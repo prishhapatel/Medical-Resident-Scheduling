@@ -157,30 +157,333 @@ td.fc-daygrid-day.fc-day.fc-day-today {
   [class*="sidebar"],
   [class*="agenda"],
   [class*="header"],
-  [class*="footer"] {
+  [class*="footer"],
+  .dropdown-menu,
+  .dropdown-content,
+  .dropdown-trigger,
+  .toaster,
+  .toast,
+  .button,
+  .btn,
+  [role="button"],
+  [class*="button"],
+  [class*="btn"] {
     display: none !important;
   }
-  /* Make calendar take full width */
-  .calendar, .fc, .fc-view {
+
+  /* Force the main content area to be visible and take full space */
+  main,
+  .main-content,
+  .content,
+  [role="main"],
+  .dashboard-content {
+    display: block !important;
     width: 100vw !important;
-    max-width: 100vw !important;
+    height: 100vh !important;
     margin: 0 !important;
     padding: 0 !important;
+    position: static !important;
+    overflow: visible !important;
   }
-  /* Hide call type, year, and time in calendar cells */
-  .calendar .call-type,
-  .calendar .resident-year,
-  .calendar .event-time,
+
+  /* Make calendar take full width and be visible */
+  .calendar, 
+  .fc, 
+  .fc-view,
+  .fc-view-harness,
+  .fc-scroller,
+  .fc-scroller-liquid,
+  .fc-scroller-liquid-absolute,
+  .fc-daygrid,
+  .fc-daygrid-view,
+  .fc-daygrid-body,
+  .fc-daygrid-day-frame,
+  .fc-daygrid-day-events,
+  .fc-daygrid-event-harness,
+  .fc-event,
+  .fc-event-main,
+  .fc-event-main-frame,
+  .fc-event-title,
   .fc-event-time,
-  .fc-list-event-time,
-  .fc-agendaTime,
-  .fc-time {
-    display: none !important;
-  }
-  /* Only show event title (resident name) */
-  .calendar .fc-event-title {
-    font-size: 1.1em !important;
-    font-weight: bold !important;
+  .fc-daygrid-day,
+  .fc-daygrid-day-number,
+  .fc-daygrid-day-frame,
+  .fc-daygrid-day-events,
+  .fc-daygrid-event-harness,
+  .fc-daygrid-event,
+  .fc-daygrid-event-dot,
+  .fc-daygrid-event-main,
+  .fc-daygrid-event-main-frame,
+  .fc-daygrid-event-title,
+  .fc-daygrid-event-time {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: static !important;
+    overflow: visible !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 50px !important;
     color: #000 !important;
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+  }
+
+  /* Ensure calendar header is visible */
+  .fc-header-toolbar,
+  .fc-toolbar,
+  .fc-toolbar-chunk,
+  .fc-toolbar-title,
+  .fc-toolbar-chunk:first-child,
+  .fc-toolbar-chunk:nth-child(2),
+  .fc-toolbar-chunk:last-child {
+    display: block !important;
+    visibility: visible !important;
+    color: #000 !important;
+    background: #fff !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
+    margin-bottom: 10px !important;
+  }
+
+  /* Force calendar table to be visible */
+  .fc table,
+  .fc table.fc-scrollgrid,
+  .fc table.fc-scrollgrid-sync-table,
+  .fc table.fc-daygrid,
+  .fc table.fc-daygrid-day-table,
+  .fc table.fc-daygrid-day-frame,
+  .fc table.fc-daygrid-day-events,
+  .fc table.fc-daygrid-event-harness,
+  .fc table.fc-daygrid-event,
+  .fc table.fc-daygrid-event-main,
+  .fc table.fc-daygrid-event-main-frame,
+  .fc table.fc-daygrid-event-title,
+  .fc table.fc-daygrid-event-time {
+    display: table !important;
+    visibility: visible !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    border: 1px solid #ccc !important;
+  }
+
+  /* Force table cells to be visible */
+  .fc td,
+  .fc th,
+  .fc-daygrid-day,
+  .fc-daygrid-day-frame,
+  .fc-daygrid-day-events,
+  .fc-daygrid-event-harness,
+  .fc-daygrid-event,
+  .fc-daygrid-event-main,
+  .fc-daygrid-event-main-frame,
+  .fc-daygrid-event-title,
+  .fc-daygrid-event-time {
+    display: table-cell !important;
+    visibility: visible !important;
+    border: 1px solid #ccc !important;
+    padding: 5px !important;
+    min-height: 80px !important;
+    vertical-align: top !important;
+  }
+
+  /* Ensure event text is readable */
+  .fc-event-title,
+  .fc-event-time,
+  .fc-daygrid-event-title,
+  .fc-daygrid-event-time {
+    font-size: 10px !important;
+    font-weight: normal !important;
+    color: #000 !important;
+    background: transparent !important;
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Make sure day numbers are visible */
+  .fc-daygrid-day-number {
+    display: block !important;
+    visibility: visible !important;
+    color: #000 !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+    margin-bottom: 5px !important;
+  }
+
+  /* Ensure month/year view is properly displayed */
+  .fc-daygrid-body,
+  .fc-daygrid-day-frame,
+  .fc-daygrid-day-events {
+    min-height: 100px !important;
+    height: auto !important;
+  }
+
+  /* Hide unnecessary elements but keep essential calendar content */
+  .fc-daygrid-day.fc-day-other {
+    background: #f9f9f9 !important;
+  }
+
+  /* Ensure today's date is highlighted */
+  .fc-day-today {
+    background: #e0f2f7 !important;
+  }
+
+  /* Make sure all text is black for better printing */
+  .fc *,
+  .calendar * {
+    color: #000 !important;
+  }
+
+  /* Ensure proper page breaks */
+  .fc-view {
+    page-break-inside: avoid !important;
+  }
+
+  /* Set print background */
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Force any hidden elements to be visible */
+  [style*="display: none"],
+  [style*="visibility: hidden"],
+  [style*="opacity: 0"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* Specific styles for calendar print area */
+  .calendar-print-area {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    background: #fff !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  /* Ensure all calendar content inside print area is visible */
+  .calendar-print-area * {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  /* Force calendar grid to be visible */
+  .calendar-print-area .calendar-grid,
+  .calendar-print-area .calendar-day,
+  .calendar-print-area .calendar-event {
+    display: block !important;
+    visibility: visible !important;
+    border: 1px solid #ccc !important;
+    margin: 2px !important;
+    padding: 5px !important;
+    min-height: 60px !important;
+  }
+
+  /* Specific styles for custom calendar implementation */
+  .calendar-print-area .grid,
+  .calendar-print-area .grid-cols-7,
+  .calendar-print-area .grid-cols-12,
+  .calendar-print-area .grid-cols-4,
+  .calendar-print-area .grid-cols-3 {
+    display: grid !important;
+    visibility: visible !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    gap: 2px !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Calendar day cells */
+  .calendar-print-area .border,
+  .calendar-print-area .border-r,
+  .calendar-print-area .border-b,
+  .calendar-print-area .border-gray-100,
+  .calendar-print-area .border-gray-200,
+  .calendar-print-area .border-gray-600 {
+    display: block !important;
+    visibility: visible !important;
+    border: 1px solid #ccc !important;
+    min-height: 120px !important;
+    padding: 8px !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Calendar day numbers */
+  .calendar-print-area .text-lg,
+  .calendar-print-area .text-xl,
+  .calendar-print-area .font-semibold,
+  .calendar-print-area .font-bold {
+    display: block !important;
+    visibility: visible !important;
+    color: #000 !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+    margin-bottom: 5px !important;
+  }
+
+  /* Calendar events */
+  .calendar-print-area .text-xs,
+  .calendar-print-area .px-2,
+  .calendar-print-area .py-1,
+  .calendar-print-area .rounded,
+  .calendar-print-area .truncate,
+  .calendar-print-area .font-medium {
+    display: block !important;
+    visibility: visible !important;
+    color: #000 !important;
+    background: #f0f0f0 !important;
+    border: 1px solid #ccc !important;
+    padding: 3px 6px !important;
+    margin: 2px 0 !important;
+    font-size: 10px !important;
+    font-weight: normal !important;
+  }
+
+  /* Month view specific */
+  .calendar-print-area .grid-cols-7 > div {
+    display: block !important;
+    visibility: visible !important;
+    border: 1px solid #ccc !important;
+    min-height: 100px !important;
+    padding: 5px !important;
+    background: #fff !important;
+  }
+
+  /* Year view specific */
+  .calendar-print-area .grid-cols-4 > div,
+  .calendar-print-area .grid-cols-3 > div {
+    display: block !important;
+    visibility: visible !important;
+    border: 1px solid #ccc !important;
+    min-height: 150px !important;
+    padding: 10px !important;
+    background: #fff !important;
+  }
+
+  /* Header and navigation */
+  .calendar-print-area .p-6,
+  .calendar-print-area .border-b,
+  .calendar-print-area .text-center {
+    display: block !important;
+    visibility: visible !important;
+    color: #000 !important;
+    background: #fff !important;
+    border-bottom: 2px solid #000 !important;
+    padding: 10px !important;
+    margin-bottom: 10px !important;
   }
 }

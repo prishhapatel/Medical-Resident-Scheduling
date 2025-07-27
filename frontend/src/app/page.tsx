@@ -66,17 +66,33 @@ export default function Home() {
         // console.log("Login successful, user data:", user);
         // console.log("Is admin?", user?.isAdmin);
       
-        toast({
-          variant: "success",
-          title: "Success",
-          description: "Login successful! Redirecting to dashboard...",
-        });
-      
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        try {
-          await router.push("/dashboard");
-        } catch {
-          window.location.href = "/dashboard";
+        // Check if user is faculty
+        if (baseUser.email === "faculty@hcahealthcare.com") {
+          toast({
+            variant: "success",
+            title: "Success",
+            description: "Login successful! Redirecting to faculty calendar...",
+          });
+        
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          try {
+            await router.push("/faculty");
+          } catch {
+            window.location.href = "/faculty";
+          }
+        } else {
+          toast({
+            variant: "success",
+            title: "Success",
+            description: "Login successful! Redirecting to dashboard...",
+          });
+        
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          try {
+            await router.push("/dashboard");
+          } catch {
+            window.location.href = "/dashboard";
+          }
         }
       }
       else {
@@ -182,6 +198,8 @@ export default function Home() {
             >
               {isLoading ? "Logging in..." : "Login"}
             </Button>
+            
+
           </form>
         </Card>
       </div>
