@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MedicalDemo.Algorithm;
 using MedicalDemo.Data;
+
 using MedicalDemo.Data.Models;
 using MedicalDemo.Models.DTO.Scheduling;
 using Microsoft.EntityFrameworkCore;
@@ -14,11 +15,13 @@ namespace MedicalDemo.Services
     {
         private readonly MedicalContext _context;
         private readonly SchedulingMapperService _mapper;
+        private readonly MiscService _misc;
 
-        public SchedulerService(MedicalContext context, SchedulingMapperService mapper)
+        public SchedulerService(MedicalContext context, SchedulingMapperService mapper, MiscService misc)
         {
             _context = context;
             _mapper = mapper;
+            _misc = misc;
         }
 
         public async Task<(bool Success, string Error)> GenerateFullSchedule(int year)
@@ -57,8 +60,12 @@ namespace MedicalDemo.Services
                     CallType = dto.CallType
                 }).ToList();
 
+                
                 await _context.dates.AddRangeAsync(dateEntities);
                 await _context.SaveChangesAsync();
+
+                await _misc.FindTotalHours();
+                await _misc.FindBiYearlyHours(year);
 
                 return (true, null);
             }
