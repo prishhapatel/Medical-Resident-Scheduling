@@ -1,0 +1,48 @@
+@media print {
+  /* Hide navigation and UI elements */
+  .Sidebar,
+  .MobileNavigation,
+  .MobileHeader,
+  .MobileUserMenu,
+  nav,
+  header,
+  footer,
+  button,
+  .fixed,
+  .sticky,
+  .bg-card,
+  .shadow-xl,
+  .rounded-2xl {
+    display: none !important;
+  }
+  
+  /* Show the calendar container */
+  .calendar-print-area {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    color: black !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  
+  /* Show all calendar content */
+  .calendar-print-area * {
+    display: block !important;
+    visibility: visible !important;
+    color: black !important;
+    background: white !important;
+  }
+  
+  /* Set page size */
+  @page {
+    size: A4;
+    margin: 0.5in;
+  }
+} 

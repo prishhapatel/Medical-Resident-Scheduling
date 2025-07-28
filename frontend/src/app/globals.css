@@ -157,30 +157,978 @@ td.fc-daygrid-day.fc-day.fc-day-today {
   [class*="sidebar"],
   [class*="agenda"],
   [class*="header"],
-  [class*="footer"] {
+  [class*="footer"],
+  .dropdown-menu,
+  .dropdown-content,
+  .dropdown-trigger,
+  .toaster,
+  .toast,
+  .button,
+  .btn,
+  [role="button"],
+  [class*="button"],
+  [class*="btn"],
+  /* Additional specific selectors for your calendar page */
+  nav,
+  header,
+  footer,
+  .fixed,
+  .sticky,
+  .top-0,
+  .bottom-0,
+  .left-0,
+  .right-0,
+  .z-10,
+  .z-20,
+  .z-30,
+  .z-40,
+  .z-50,
+  [class*="fixed"],
+  [class*="sticky"],
+  [class*="top-"],
+  [class*="bottom-"],
+  [class*="left-"],
+  [class*="right-"],
+  [class*="z-"],
+  /* Hide mobile navigation and headers */
+  .md\\:hidden,
+  .md\\:block,
+  .hidden,
+  .block,
+  /* Hide specific calendar page elements */
+  .bg-card.border.pt-6,
+  .bg-card.border-b.border-border,
+  .py-4.border.bg-card,
+  .flex.flex-col.w-full.min-h-screen,
+  .flex.flex-1.w-full.relative,
+  .w-full.md\\:flex-1,
+  .pl-0.pr-6,
+  .md\\:px-8,
+  .py-4,
+  .md\\:py-8,
+  .transition-all,
+  .duration-300,
+  .mr-0,
+  .md\\:mr-\\[24rem\\],
+  .flex.justify-center,
+  .md\\:justify-start,
+  .max-w-2xl,
+  .md\\:max-w-none,
+  /* Hide upcoming events sidebar */
+  .w-80,
+  .md\\:w-80,
+  .border-l,
+  .border-border,
+  .bg-card,
+  .p-6,
+  .space-y-4,
+  /* Hide event modals and popovers */
+  .fixed.inset-0,
+  .z-50,
+  .flex.items-center.justify-center,
+  .bg-black\\/50,
+  .backdrop-blur-sm,
+  .bg-white,
+  .dark\\:bg-gray-900,
+  .rounded-2xl,
+  .shadow-2xl,
+  .p-6,
+  .md\\:p-8,
+  .min-w-\\[320px\\],
+  .max-w-\\[340px\\],
+  .border,
+  .border-gray-300,
+  .dark\\:border-gray-700,
+  .mx-4,
+  /* Hide mobile elements */
+  .md\\:hidden,
+  .hidden.md\\:block,
+  /* Hide specific buttons and controls */
+  button,
+  .button,
+  .btn,
+  [role="button"],
+  [type="button"],
+  [type="submit"],
+  /* Hide specific calendar controls */
+  .flex.items-center.space-x-2,
+  .flex.items-center.space-x-3,
+  .flex.items-center.space-x-6,
+  .flex.items-center.justify-between,
+  .text-5xl,
+  .font-bold,
+  .text-foreground,
+  .p-3,
+  .hover\\:bg-muted,
+  .rounded-full,
+  .transition-colors,
+  .duration-200,
+  .w-6,
+  .h-6,
+  .text-muted-foreground,
+  .px-6,
+  .py-3,
+  .text-sm,
+  .font-semibold,
+  .text-primary,
+  .hover\\:bg-primary\\/10,
+  .rounded-xl,
+  .ChevronLeft,
+  .ChevronRight,
+  /* Hide mobile header */
+  .bg-card.border-b.border-border.fixed.left-0.right-0.top-0.z-10.px-4.py-3.md\\:hidden,
+  /* Hide PGY color legend */
+  .py-4.border.bg-card.fixed.left-0.right-0.z-10.px-8.mt-2.hidden.md\\:block,
+  /* Hide view mode buttons */
+  .flex.items-center.space-x-2.mb-4,
+  .px-4,
+  .py-2,
+  .text-sm,
+  .font-medium,
+  .rounded-lg,
+  .bg-primary,
+  .text-primary-foreground,
+  .hover\\:bg-primary\\/90,
+  .bg-muted,
+  .text-muted-foreground,
+  .hover\\:bg-muted\\/80,
+  /* Hide bottom navigation bar */
+  .bottom-0,
+  .fixed.bottom-0,
+  .bg-white,
+  .border-t,
+  .border-gray-200,
+  .dark\\:bg-gray-900,
+  .dark\\:border-gray-700,
+  .flex,
+  .justify-around,
+  .items-center,
+  .py-2,
+  .px-4,
+  .space-x-4,
+  .text-xs,
+  .text-gray-600,
+  .dark\\:text-gray-400,
+  .text-center,
+  .flex-col,
+  .items-center,
+  .space-y-1,
+  /* Hide top header elements */
+  .top-0,
+  .fixed.top-0,
+  .bg-white,
+  .border-b,
+  .border-gray-200,
+  .dark\\:bg-gray-900,
+  .dark\\:border-gray-700,
+  .flex,
+  .justify-between,
+  .items-center,
+  .px-4,
+  .py-3,
+  .text-sm,
+  .text-gray-600,
+  .dark\\:text-gray-400,
+  /* Hide specific navigation icons and text */
+  .Home,
+  .Calendar,
+  .Swap,
+  .Request,
+  .Schedule,
+  .Settings,
+  .house,
+  .calendar,
+  .swap,
+  .request,
+  .schedule,
+  .settings,
+  /* Hide URL and page indicators */
+  .text-xs,
+  .text-gray-500,
+  .dark\\:text-gray-400,
+  .absolute,
+  .bottom-2,
+  .left-2,
+  .right-2,
+  .text-center,
+  /* Hide additional specific elements from your interface */
+  .bg-card,
+  .border,
+  .pt-6,
+  .pb-8,
+  .px-8,
+  .hidden,
+  .md\\:block,
+  .flex,
+  .items-center,
+  .space-x-2,
+  .space-x-3,
+  .space-x-6,
+  .justify-between,
+  .text-5xl,
+  .font-bold,
+  .text-foreground,
+  .p-3,
+  .hover\\:bg-muted,
+  .rounded-full,
+  .transition-colors,
+  .duration-200,
+  .w-6,
+  .h-6,
+  .text-muted-foreground,
+  .px-6,
+  .py-3,
+  .text-sm,
+  .font-semibold,
+  .text-primary,
+  .hover\\:bg-primary\\/10,
+  .rounded-xl,
+  /* Hide PGY Colors section specifically */
+  .py-4,
+  .border,
+  .bg-card,
+  .fixed,
+  .left-0,
+  .right-0,
+  .z-10,
+  .px-8,
+  .mt-2,
+  .hidden,
+  .md\\:block,
+  .flex,
+  .items-center,
+  .space-x-6,
+  .text-sm,
+  .font-medium,
+  .text-muted-foreground,
+  .flex,
+  .items-center,
+  .space-x-4,
+  .flex,
+  .items-center,
+  .space-x-2,
+  .w-4,
+  .h-4,
+  .rounded,
+  .text-sm,
+  .text-foreground,
+  /* Hide Calendar title and PGY Colors section completely */
+  .text-2xl,
+  .font-bold,
+  .text-foreground,
+  .mb-4,
+  .text-lg,
+  .font-semibold,
+  .text-gray-900,
+  .dark\\:text-gray-100,
+  .mb-2,
+  .text-sm,
+  .font-medium,
+  .text-gray-500,
+  .dark\\:text-gray-400,
+  .uppercase,
+  .tracking-wide,
+  /* Hide specific text elements */
+  .Calendar,
+  .PGY,
+  .Colors,
+  /* Hide any remaining header elements */
+  .bg-card,
+  .border,
+  .pt-6,
+  .pb-8,
+  .px-8,
+  .hidden,
+  .md\\:block,
+  .flex,
+  .items-center,
+  .space-x-2,
+  .space-x-3,
+  .space-x-6,
+  .justify-between,
+  .text-5xl,
+  .font-bold,
+  .text-foreground,
+  .p-3,
+  .hover\\:bg-muted,
+  .rounded-full,
+  .transition-colors,
+  .duration-200,
+  .w-6,
+  .h-6,
+  .text-muted-foreground,
+  .px-6,
+  .py-3,
+  .text-sm,
+  .font-semibold,
+  .text-primary,
+  .hover\\:bg-primary\\/10,
+  .rounded-xl,
+  /* Hide specific text elements that should not appear in print */
+  .text-2xl,
+  .font-bold,
+  .text-foreground,
+  .mb-4,
+  .text-lg,
+  .font-semibold,
+  .text-gray-900,
+  .dark\\:text-gray-100,
+  .mb-2,
+  .text-sm,
+  .font-medium,
+  .text-gray-500,
+  .dark\\:text-gray-400,
+  .uppercase,
+  .tracking-wide,
+  /* Hide mobile navigation bar */
+  .fixed.bottom-0.left-0.right-0.z-50.bg-background.border-t.border-border.md\\:hidden,
+  .flex.items-center.justify-around.px-2.py-2,
+  .flex.flex-col.items-center.justify-center.w-full.py-2.px-1.rounded-lg,
+  .h-5.w-5.mb-1,
+  .text-xs.font-medium,
+  /* Additional mobile navigation selectors */
+  [class*="fixed bottom-0"],
+  [class*="z-50"],
+  [class*="bg-background"],
+  [class*="border-t"],
+  [class*="border-border"],
+  [class*="md:hidden"],
+  [class*="justify-around"],
+  [class*="px-2 py-2"],
+  [class*="flex flex-col"],
+  [class*="items-center"],
+  [class*="justify-center"],
+  [class*="w-full"],
+  [class*="py-2 px-1"],
+  [class*="rounded-lg"],
+  [class*="h-5 w-5"],
+  [class*="mb-1"],
+  [class*="text-xs"],
+  [class*="font-medium"],
+  /* Target the specific MobileNavigation component */
+  .MobileNavigation,
+  [data-slot="mobile-navigation"],
+  /* Hide any element with bottom-0 positioning */
+  [style*="bottom: 0"],
+  [style*="bottom:0"],
+  /* Hide any fixed positioned element at bottom */
+  .fixed[class*="bottom"],
+  /* Hide navigation buttons specifically */
+  button[class*="flex flex-col"],
+  button[class*="items-center"],
+  button[class*="justify-center"],
+  /* More aggressive mobile navigation hiding */
+  div[class*="fixed"][class*="bottom-0"],
+  div[class*="z-50"][class*="bg-background"],
+  /* Hide all fixed bottom elements */
+  .fixed.bottom-0,
+  .fixed.bottom-0 *,
+  /* Hide specific mobile navigation patterns */
+  [class*="Home"][class*="Calendar"][class*="Swap"],
+  [class*="Request"][class*="Schedule"][class*="Settings"],
+  /* Hide top right corner icons (logout and user profile) */
+  .fixed.top-0.right-0,
+  .absolute.top-0.right-0,
+  .top-0.right-0,
+  [class*="top-0"][class*="right-0"],
+  [class*="fixed"][class*="top-0"][class*="right-0"],
+  [class*="absolute"][class*="top-0"][class*="right-0"],
+  /* Hide specific icon buttons */
+  button[class*="w-10"][class*="h-10"],
+  button[class*="rounded-full"],
+  [class*="bg-red-100"],
+  [class*="bg-red-200"],
+  [class*="border-red-300"],
+  [class*="text-red-600"],
+  [class*="bg-muted"],
+  [class*="border-border"],
+  /* Hide logout and user icons specifically */
+  [class*="LogOut"],
+  [class*="User"],
+  [class*="logout"],
+  [class*="user"],
+  /* Hide any circular buttons in top right */
+  .top-0.right-0 button,
+  .fixed.top-0.right-0 button,
+  .absolute.top-0.right-0 button,
+  /* Hide the specific button containers */
+  button[class*="flex items-center justify-center w-10 h-10 rounded-full"],
+  button[class*="bg-red-100 hover:bg-red-200"],
+  button[class*="bg-muted hover:bg-muted/80"],
+  button[class*="border-red-300 text-red-600"],
+  button[class*="border border-border"],
+  /* Hide the icons themselves */
+  .h-4.w-4,
+  .h-5.w-5,
+  /* Hide any element with logout or user functionality */
+  [title*="Log out"],
+  [title*="logout"],
+  [title*="Logout"],
+  /* Hide mobile navigation bar */
+  .fixed.bottom-0.left-0.right-0.z-50.bg-background.border-t.border-border.md\\:hidden,
+  .flex.items-center.justify-around.px-2.py-2,
+  .flex.flex-col.items-center.justify-center.w-full.py-2.px-1.rounded-lg,
+  .h-5.w-5.mb-1,
+  .text-xs.font-medium,
+  /* Additional mobile navigation selectors */
+  [class*="fixed bottom-0"],
+  [class*="z-50"],
+  [class*="bg-background"],
+  [class*="border-t"],
+  [class*="border-border"],
+  [class*="md:hidden"],
+  [class*="justify-around"],
+  [class*="px-2 py-2"],
+  [class*="flex flex-col"],
+  [class*="items-center"],
+  [class*="justify-center"],
+  [class*="w-full"],
+  [class*="py-2 px-1"],
+  [class*="rounded-lg"],
+  [class*="h-5 w-5"],
+  [class*="mb-1"],
+  [class*="text-xs"],
+  [class*="font-medium"],
+  /* Target the specific MobileNavigation component */
+  .MobileNavigation,
+  [data-slot="mobile-navigation"],
+  /* Hide any element with bottom-0 positioning */
+  [style*="bottom: 0"],
+  [style*="bottom:0"],
+  /* Hide any fixed positioned element at bottom */
+  .fixed[class*="bottom"],
+  /* Hide navigation buttons specifically */
+  button[class*="flex flex-col"],
+  button[class*="items-center"],
+  button[class*="justify-center"],
+  /* Hide the entire mobile navigation container */
+  div[class*="fixed"][class*="bottom-0"][class*="left-0"][class*="right-0"],
+  /* Hide any fixed bottom element */
+  .fixed.bottom-0,
+  .fixed.bottom-0 *,
+  /* Hide any element with bottom positioning */
+  [style*="bottom: 0"],
+  [style*="bottom:0"],
+  /* Hide any element with z-50 and bottom positioning */
+  [class*="z-50"][class*="bottom"] {
     display: none !important;
   }
-  /* Make calendar take full width */
-  .calendar, .fc, .fc-view {
+
+  /* Force the main content area to be visible and take full space */
+  main,
+  .main-content,
+  .content,
+  [role="main"],
+  .dashboard-content,
+  .flex.flex-col.w-full.min-h-screen.bg-background.text-foreground.relative {
+    display: block !important;
     width: 100vw !important;
-    max-width: 100vw !important;
+    height: 100vh !important;
     margin: 0 !important;
     padding: 0 !important;
+    position: static !important;
+    overflow: visible !important;
+    background: white !important;
+    color: black !important;
   }
-  /* Hide call type, year, and time in calendar cells */
-  .calendar .call-type,
-  .calendar .resident-year,
-  .calendar .event-time,
+
+  /* Only show the calendar grid itself */
+  .calendar-print-area,
+  .calendar-print-area .grid,
+  .calendar-print-area .grid-cols-7,
+  .calendar-print-area .grid-cols-7 > div,
+  .calendar-print-area .min-h-32,
+  .calendar-print-area .md\\:min-h-40,
+  .calendar-print-area .border,
+  .calendar-print-area .border-r,
+  .calendar-print-area .border-b,
+  .calendar-print-area .border-gray-100,
+  .calendar-print-area .border-gray-200,
+  .calendar-print-area .border-gray-600,
+  .calendar-print-area .text-sm,
+  .calendar-print-area .md\\:text-lg,
+  .calendar-print-area .font-medium,
+  .calendar-print-area .text-gray-900,
+  .calendar-print-area .dark\\:text-gray-100,
+  .calendar-print-area .text-gray-400,
+  .calendar-print-area .dark\\:text-gray-500,
+  .calendar-print-area .bg-white,
+  .calendar-print-area .dark\\:bg-gray-800,
+  .calendar-print-area .bg-gray-50,
+  .calendar-print-area .dark\\:bg-gray-800\\/50,
+  .calendar-print-area .w-8,
+  .calendar-print-area .h-8,
+  .calendar-print-area .md\\:w-10,
+  .calendar-print-area .md\\:h-10,
+  .calendar-print-area .bg-blue-600,
+  .calendar-print-area .dark\\:bg-blue-500,
+  .calendar-print-area .text-white,
+  .calendar-print-area .rounded-full,
+  .calendar-print-area .flex,
+  .calendar-print-area .items-center,
+  .calendar-print-area .justify-center,
+  .calendar-print-area .text-xs,
+  .calendar-print-area .md\\:text-sm,
+  .calendar-print-area .font-bold,
+  .calendar-print-area .shadow-lg,
+  .calendar-print-area .p-2,
+  .calendar-print-area .md\\:p-4,
+  .calendar-print-area .relative,
+  .calendar-print-area .hover\\:bg-gray-50,
+  .calendar-print-area .dark\\:hover\\:bg-gray-700,
+  .calendar-print-area .transition-colors,
+  .calendar-print-area .duration-200,
+  .calendar-print-area .cursor-pointer,
+  .calendar-print-area .mb-2,
+  .calendar-print-area .md\\:mb-3,
+  .calendar-print-area .pb-16,
+  .calendar-print-area .text-xs,
+  .calendar-print-area .px-2,
+  .calendar-print-area .md\\:px-3,
+  .calendar-print-area .py-1,
+  .calendar-print-area .md\\:py-2,
+  .calendar-print-area .rounded-lg,
+  .calendar-print-area .cursor-pointer,
+  .calendar-print-area .hover\\:shadow-md,
+  .calendar-print-area .transition-all,
+  .calendar-print-area .duration-200,
+  .calendar-print-area .truncate,
+  .calendar-print-area .font-medium,
+  .calendar-print-area .text-muted-foreground,
+  .calendar-print-area .bg-muted\\/50,
+  .calendar-print-area .rounded,
+  .calendar-print-area .text-center,
+  .calendar-print-area .cursor-pointer,
+  .calendar-print-area .hover\\:bg-muted\\/70,
+  .calendar-print-area .transition-colors {
+    display: block !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: static !important;
+    overflow: visible !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Make calendar take full width and be visible */
+  .calendar, 
+  .fc, 
+  .fc-view,
+  .fc-view-harness,
+  .fc-scroller,
+  .fc-scroller-liquid,
+  .fc-scroller-liquid-absolute,
+  .fc-daygrid,
+  .fc-daygrid-view,
+  .fc-daygrid-body,
+  .fc-daygrid-day-frame,
+  .fc-daygrid-day-events,
+  .fc-daygrid-event-harness,
+  .fc-event,
+  .fc-event-main,
+  .fc-event-main-frame,
+  .fc-event-title,
   .fc-event-time,
-  .fc-list-event-time,
-  .fc-agendaTime,
-  .fc-time {
-    display: none !important;
+  .fc-daygrid-day,
+  .fc-daygrid-day-number,
+  .fc-daygrid-day-frame,
+  .fc-daygrid-day-events,
+  .fc-daygrid-event-harness,
+  .fc-daygrid-event,
+  .fc-daygrid-event-dot,
+  .fc-daygrid-event-main,
+  .fc-daygrid-event-main-frame,
+  .fc-daygrid-event-title,
+  .fc-daygrid-event-time,
+  .calendar-print-area {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: static !important;
+    overflow: visible !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 50px !important;
+    color: #000 !important;
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
   }
-  /* Only show event title (resident name) */
-  .calendar .fc-event-title {
-    font-size: 1.1em !important;
+
+  /* Ensure calendar header is visible */
+  .fc-header-toolbar,
+  .fc-toolbar,
+  .fc-toolbar-chunk,
+  .fc-toolbar-title,
+  .fc-toolbar-chunk:first-child,
+  .fc-toolbar-chunk:nth-child(2),
+  .fc-toolbar-chunk:last-child {
+    display: block !important;
+    visibility: visible !important;
+    color: #000 !important;
+    background: #fff !important;
+    font-size: 16px !important;
     font-weight: bold !important;
+    margin-bottom: 10px !important;
+  }
+
+  /* Force calendar table to be visible */
+  .fc table,
+  .fc table.fc-scrollgrid,
+  .fc table.fc-scrollgrid-sync-table,
+  .fc table.fc-daygrid,
+  .fc table.fc-daygrid-day-table,
+  .fc table.fc-daygrid-day-frame,
+  .fc table.fc-daygrid-day-events,
+  .fc table.fc-daygrid-event-harness,
+  .fc table.fc-daygrid-event,
+  .fc table.fc-daygrid-event-main,
+  .fc table.fc-daygrid-event-main-frame,
+  .fc table.fc-daygrid-event-title,
+  .fc table.fc-daygrid-event-time {
+    display: table !important;
+    visibility: visible !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    border: 1px solid #ccc !important;
+  }
+
+  /* Force table cells to be visible */
+  .fc td,
+  .fc th,
+  .fc-daygrid-day,
+  .fc-daygrid-day-frame,
+  .fc-daygrid-day-events,
+  .fc-daygrid-event-harness,
+  .fc-daygrid-event,
+  .fc-daygrid-event-main,
+  .fc-daygrid-event-main-frame,
+  .fc-daygrid-event-title,
+  .fc-daygrid-event-time {
+    display: table-cell !important;
+    visibility: visible !important;
+    border: 1px solid #ccc !important;
+    padding: 5px !important;
+    min-height: 80px !important;
+    vertical-align: top !important;
+  }
+
+  /* Ensure event text is readable */
+  .fc-event-title,
+  .fc-event-time,
+  .fc-daygrid-event-title,
+  .fc-daygrid-event-time {
+    font-size: 10px !important;
+    font-weight: normal !important;
+    color: #000 !important;
+    background: transparent !important;
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Make sure day numbers are visible */
+  .fc-daygrid-day-number {
+    display: block !important;
+    visibility: visible !important;
+    color: #000 !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+    margin-bottom: 5px !important;
+  }
+
+  /* Ensure month/year view is properly displayed */
+  .fc-daygrid-body,
+  .fc-daygrid-day-frame,
+  .fc-daygrid-day-events {
+    min-height: 100px !important;
+    height: auto !important;
+  }
+
+  /* Hide unnecessary elements but keep essential calendar content */
+  .fc-daygrid-day.fc-day-other {
+    background: #f9f9f9 !important;
+  }
+
+  /* Ensure today's date is highlighted */
+  .fc-day-today {
+    background: #e0f2f7 !important;
+  }
+
+  /* Make sure all text is black for better printing */
+  .fc *,
+  .calendar *,
+  .calendar-print-area * {
     color: #000 !important;
   }
+
+  /* Ensure proper page breaks and single page printing */
+  .fc-view,
+  .calendar-print-area,
+  .calendar-print-area .grid,
+  .calendar-print-area .grid-cols-7 {
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+  }
+
+  /* Force single page printing */
+  @page {
+    size: A4 landscape;
+    margin: 0.2in;
+  }
+
+  /* Ensure calendar fits on one page */
+  .calendar-print-area {
+    max-height: 100vh !important;
+    height: auto !important;
+    overflow: hidden !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Reduce calendar cell sizes for better fit */
+  .calendar-print-area .min-h-32,
+  .calendar-print-area .md\\:min-h-40 {
+    min-height: 80px !important;
+    height: auto !important;
+    padding: 4px !important;
+  }
+
+  /* Reduce font sizes for better fit */
+  .calendar-print-area .text-sm,
+  .calendar-print-area .md\\:text-lg {
+    font-size: 12px !important;
+  }
+
+  .calendar-print-area .text-xs {
+    font-size: 10px !important;
+  }
+
+  /* Set print background */
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Force any hidden elements to be visible */
+  [style*="display: none"],
+  [style*="visibility: hidden"],
+  [style*="opacity: 0"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* Specific styles for calendar print area */
+  .calendar-print-area {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 10px !important;
+    background: #fff !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    position: static !important;
+    transform-origin: top left !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+  }
+
+  /* Ensure all calendar content inside print area is visible */
+  .calendar-print-area * {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  /* Force calendar grid to be visible */
+  .calendar-print-area .calendar-grid,
+  .calendar-print-area .calendar-day,
+  .calendar-print-area .calendar-event {
+    display: block !important;
+    visibility: visible !important;
+    border: 1px solid #ccc !important;
+    margin: 2px !important;
+    padding: 5px !important;
+    min-height: 60px !important;
+  }
+
+  /* Specific styles for custom calendar implementation */
+  .calendar-print-area .grid,
+  .calendar-print-area .grid-cols-7,
+  .calendar-print-area .grid-cols-12,
+  .calendar-print-area .grid-cols-4,
+  .calendar-print-area .grid-cols-3 {
+    display: grid !important;
+    visibility: visible !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    gap: 2px !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Calendar day cells */
+  .calendar-print-area .border,
+  .calendar-print-area .border-r,
+  .calendar-print-area .border-b,
+  .calendar-print-area .border-gray-100,
+  .calendar-print-area .border-gray-200,
+  .calendar-print-area .border-gray-600 {
+    display: block !important;
+    visibility: visible !important;
+    border: 1px solid #ccc !important;
+    min-height: 120px !important;
+    padding: 8px !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Calendar day numbers */
+  .calendar-print-area .text-lg,
+  .calendar-print-area .text-xl,
+  .calendar-print-area .font-semibold,
+  .calendar-print-area .font-bold {
+    display: block !important;
+    visibility: visible !important;
+    color: #000 !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+    margin-bottom: 5px !important;
+  }
+
+  /* Calendar events */
+  .calendar-print-area .text-xs,
+  .calendar-print-area .px-2,
+  .calendar-print-area .py-1,
+  .calendar-print-area .rounded,
+  .calendar-print-area .truncate,
+  .calendar-print-area .font-medium {
+    display: block !important;
+    visibility: visible !important;
+    color: #000 !important;
+    background: #f0f0f0 !important;
+    border: 1px solid #ccc !important;
+    padding: 3px 6px !important;
+    margin: 2px 0 !important;
+    font-size: 10px !important;
+    font-weight: normal !important;
+  }
+
+  /* Month view specific */
+  .calendar-print-area .grid-cols-7 > div {
+    display: block !important;
+    visibility: visible !important;
+    border: 1px solid #ccc !important;
+    min-height: 100px !important;
+    padding: 5px !important;
+    background: #fff !important;
+  }
+
+  /* Year view specific */
+  .calendar-print-area .grid-cols-4 > div,
+  .calendar-print-area .grid-cols-3 > div {
+    display: block !important;
+    visibility: visible !important;
+    border: 1px solid #ccc !important;
+    min-height: 150px !important;
+    padding: 10px !important;
+    background: #fff !important;
+  }
+
+  /* Header and navigation */
+  .calendar-print-area .p-6,
+  .calendar-print-area .border-b,
+  .calendar-print-area .text-center {
+    display: block !important;
+    visibility: visible !important;
+    color: #000 !important;
+    background: #fff !important;
+    border-bottom: 2px solid #000 !important;
+    padding: 10px !important;
+    margin-bottom: 10px !important;
+  }
+
+  /* Additional specific styles for your calendar implementation */
+  .calendar-print-area .bg-card,
+  .calendar-print-area .rounded-2xl,
+  .calendar-print-area .shadow-xl,
+  .calendar-print-area .border,
+  .calendar-print-area .border-border,
+  .calendar-print-area .overflow-hidden {
+    display: block !important;
+    visibility: visible !important;
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  /* Ensure grid layout works in print */
+  .calendar-print-area .grid {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    gap: 1px !important;
+    width: 100% !important;
+  }
+
+  /* Ensure day cells are properly sized */
+  .calendar-print-area .min-h-32,
+  .calendar-print-area .md\\:min-h-40 {
+    min-height: 120px !important;
+    height: auto !important;
+  }
+
+  /* Ensure day numbers are visible */
+  .calendar-print-area .text-sm,
+  .calendar-print-area .md\\:text-lg {
+    font-size: 14px !important;
+    font-weight: bold !important;
+    color: #000 !important;
+    display: block !important;
+  }
+
+  /* Ensure events are visible */
+  .calendar-print-area .text-xs.px-2.md\\:px-3.py-1.md\\:py-2.rounded-lg {
+    display: block !important;
+    background: #f0f0f0 !important;
+    color: #000 !important;
+    border: 1px solid #ccc !important;
+    padding: 3px 6px !important;
+    margin: 2px 0 !important;
+    font-size: 10px !important;
+  }
+
+  /* Force single page printing - prevent any second page */
+  * {
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+  }
+
+  /* Ensure calendar fits on exactly one page */
+  .calendar-print-area {
+    max-height: 100vh !important;
+    transform-origin: top left !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 10px !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+  }
+
 }

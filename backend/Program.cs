@@ -15,6 +15,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<SchedulingMapperService>();
 builder.Services.AddScoped<SchedulerService>();
 builder.Services.AddScoped<PostmarkService>();
+builder.Services.AddScoped<MiscService>();
 
 // Add CORS configuration
 builder.Services.AddCors(options =>
@@ -55,6 +56,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
+
 // 1) Redirect HTTP → HTTPS
 app.UseHttpsRedirection();
 
@@ -70,5 +73,6 @@ app.MapControllers();
 // 5) Configure host port (from env or default)
 var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
 app.Urls.Add($"http://0.0.0.0:{port}");
+
 
 app.Run();

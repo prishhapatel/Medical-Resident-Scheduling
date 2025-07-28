@@ -4,6 +4,7 @@ import { Button } from "../../../components/ui/button";
 import { Calendar, Clock, RotateCcw, CalendarCheck, Bell, Users } from "lucide-react";
 import { config } from "../../../config";
 import { Dialog } from "../../../components/ui/dialog";
+import { toast } from "../../../lib/use-toast";
 
 interface HomeProps {
   displayName: string;
@@ -90,9 +91,35 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
   const handleApprove = async (swapId: string) => {
     setActionLoading(true);
     try {
-      await fetch(`${config.apiUrl}/api/swaprequests/${swapId}/approve`, { method: "POST" });
+      const response = await fetch(`${config.apiUrl}/api/swaprequests/${swapId}/approve`, { method: "POST" });
+      const result = await response.json();
+      
+      if (response.ok) {
+        // Check if a resident was promoted to admin
+        if (result.wasPromoted && result.promotedResidentName) {
+          toast({
+            title: "Swap Approved & Resident Promoted",
+            description: `Swap approved! ${result.promotedResidentName} has been promoted to admin and removed from the residents list.`,
+            variant: "success"
+          });
+        } else {
+          toast({
+            title: "Swap Approved",
+            description: "The swap request has been approved successfully.",
+            variant: "success"
+          });
+        }
+      }
+      
       await refreshDashboard();
       if (onRefreshCalendar) onRefreshCalendar();
+    } catch (error) {
+      console.error('Error approving swap:', error);
+      toast({
+        title: "Error",
+        description: "Failed to approve swap request.",
+        variant: "destructive"
+      });
     } finally {
       setActionLoading(false);
     }
@@ -160,6 +187,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
       const now = new Date();
       const currentMonth = now.getMonth();
       const currentYear = now.getFullYear();
+      
       const userEvents = calendarEvents.filter(event => {
         const eventDate = new Date(event.start);
         return (
@@ -168,7 +196,10 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
           event.extendedProps && event.extendedProps.residentId === userId
         );
       });
+      
       setHoursThisMonth(userEvents.length * 8); // 8 hours per event
+    } else {
+      setHoursThisMonth(0);
     }
   }, [calendarEvents, userId]);
 
@@ -238,10 +269,10 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col md:flex-row md:justify-center md:items-center gap-4 mt-2">
+          <div className="flex flex-col items-center md:flex-row md:justify-center md:items-center gap-4 mt-2">
             <Button 
               onClick={onNavigateToSwapCalls}
-              className="p-8 w-55 bg-card text-card-foreground border border-border hover:bg-accent hover:text-accent-foreground rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+              className="p-8 w-full max-w-55 bg-card text-card-foreground border border-border hover:bg-accent hover:text-accent-foreground rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
               variant="outline"
             >
               <div className="text-left w-full">
@@ -255,13 +286,13 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
             
             <Button 
               onClick={onNavigateToRequestOff}
-              className="p-8 w-55 bg-card text-card-foreground border border-border hover:bg-accent hover:text-accent-foreground rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+              className="p-8 w-full max-w-55 bg-card text-card-foreground border border-border hover:bg-accent hover:text-accent-foreground rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
               variant="outline"
             >
               <div className="text-left w-full">
                 <div className="flex items-center gap-3 mb-2">
                   <Calendar className="h-6 w-6" />
-                  <span className="font-semibold text-base">Request Day Off</span>
+                  <span className="font-semibold text-base">Request Time Off</span>
                 </div>
                 <p className="text-sm text-muted-foreground ">Plan your time off</p>
               </div>
@@ -271,7 +302,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
             {!isAdmin && (
               <Button 
                 onClick={onNavigateToSchedule}
-                className="p-8 w-55 bg-card text-card-foreground border border-border hover:bg-accent hover:text-accent-foreground rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+                className="p-8 w-full max-w-55 bg-card text-card-foreground border border-border hover:bg-accent hover:text-accent-foreground rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
                 variant="outline"
               >
                 <div className="text-left w-full">
@@ -289,12 +320,12 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
         {/* Activity and Updates */}
         <div className="w-full max-w-5xl mx-auto flex flex-col md:flex-row gap-6">
           {/* Recent Activity Card */}
-          <Card className="p-6 bg-card shadow-lg rounded-2xl">
+          <Card className="p-6 bg-card shadow-lg rounded-2xl min-h-[300px] flex flex-col flex-1">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <Bell className="h-5 w-5" />
               Recent Activity
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-3 flex-1">
               {filteredRecentActivity.length > 0 ? (
                 filteredRecentActivity.map((activity) => (
                   <div key={activity.id} className={`flex items-start gap-3 p-3 rounded-lg ${activity.type === 'swap_approved' ? 'bg-green-100' : activity.type === 'swap_denied' ? 'bg-red-100' : 'bg-muted/50'}`}>
@@ -318,18 +349,20 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
                   </div>
                 ))
               ) : (
-                <p className="text-muted-foreground text-center py-4">No recent activity</p>
+                <div className="flex-1 flex items-center justify-center">
+                  <p className="text-muted-foreground text-center">No recent activity</p>
+                </div>
               )}
             </div>
           </Card>
 
           {/* Team Updates Card */}
-          <Card className="p-6 bg-card shadow-lg rounded-2xl">
+          <Card className="p-6 bg-card shadow-lg rounded-2xl min-h-[300px] flex flex-col flex-1">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <Users className="h-5 w-5" />
               Team Updates
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-3 flex-1">
               {dashboardData.teamUpdates.length > 0 ? (
                 dashboardData.teamUpdates.map((update) => (
                   <div key={update.id} className="p-3 bg-muted/50 rounded-lg">
@@ -338,7 +371,9 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
                   </div>
                 ))
               ) : (
-                <p className="text-muted-foreground text-center py-4">No team updates</p>
+                <div className="flex-1 flex items-center justify-center">
+                  <p className="text-muted-foreground text-center">No team updates</p>
+                </div>
               )}
             </div>
           </Card>

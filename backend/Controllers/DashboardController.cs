@@ -197,13 +197,21 @@ namespace MedicalDemo.Server.Controllers
                     });
                 }
 
-                // Add team updates (placeholder)
-                dashboardData.TeamUpdates.Add(new TeamUpdate
+                // Add team updates from announcements
+                var announcements = await _context.announcements
+                    .OrderByDescending(a => a.CreatedAt)
+                    .Take(5) // Show the 5 most recent announcements
+                    .ToListAsync();
+
+                foreach (var announcement in announcements)
                 {
-                    Id = "1",
-                    Message = "Welcome to the Medical Resident Scheduling System!",
-                    Date = "Today"
-                });
+                    dashboardData.TeamUpdates.Add(new TeamUpdate
+                    {
+                        Id = announcement.AnnouncementId.ToString(),
+                        Message = announcement.Message ?? "",
+                        Date = announcement.CreatedAt.ToString("MM/dd/yyyy")
+                    });
+                }
 
                 return Ok(dashboardData);
             }

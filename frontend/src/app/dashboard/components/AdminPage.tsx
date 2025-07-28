@@ -28,6 +28,7 @@ interface AdminPageProps {
   onClearRequests?: () => void;
   latestVersion?: string;
   onNavigateToCalendar?: () => void;
+  userId: string;
 }
 
 interface Request {
@@ -58,7 +59,7 @@ interface SwapRequest {
 }
 
 interface Announcement {
-  id: string;
+  announcementId: string;
   message: string;
   createdAt?: string;
 }
@@ -94,7 +95,11 @@ const AdminPage: React.FC<AdminPageProps> = ({
   handleDeleteUser,
   onClearRequests,
   onNavigateToCalendar,
+  userId,
 }) => {
+  console.log('AdminPage props - users:', users);
+  console.log('AdminPage props - users length:', users.length);
+  
   const [generating, setGenerating] = useState(false);
   const [message, setMessage] = useState("");
   const [showRequestsModal, setShowRequestsModal] = useState(false);
@@ -109,6 +114,9 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const [posting, setPosting] = useState(false);
   const [announcementError, setAnnouncementError] = useState<string | null>(null);
   const [showAnnouncementConfirm, setShowAnnouncementConfirm] = useState(false);
+  const [deletingAnnouncement, setDeletingAnnouncement] = useState<string | null>(null);
+  const [switchingRole, setSwitchingRole] = useState<string | null>(null);
+
 
 
   const handleGenerateSchedule = async () => {
@@ -179,16 +187,45 @@ const AdminPage: React.FC<AdminPageProps> = ({
 
   useEffect(() => {
     fetch(`${config.apiUrl}/api/swaprequests`)
-      .then(res => res.json())
-      .then((data) => setSwapHistory(data));
+      .then(res => {
+        console.log('Swap requests API response status:', res.status);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        console.log('Swap history data:', data);
+        console.log('Swap history data length:', data.length);
+        setSwapHistory(data);
+      })
+      .catch(error => {
+        console.error('Error fetching swap history:', error);
+        setSwapHistory([]);
+      });
   }, []);
   
   // Refetch swapHistory when switching to the swaps tab
   useEffect(() => {
     if (activeTab === 'swaps') {
+      console.log('Switching to swaps tab, fetching data...');
       fetch(`${config.apiUrl}/api/swaprequests`)
-        .then(res => res.json())
-        .then((data) => setSwapHistory(data));
+        .then(res => {
+          console.log('Swap requests API response status (tab switch):', res.status);
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          }
+          return res.json();
+        })
+        .then((data) => {
+          console.log('Swap history data (tab switch):', data);
+          console.log('Swap history data length (tab switch):', data.length);
+          setSwapHistory(data);
+        })
+        .catch(error => {
+          console.error('Error fetching swap history (tab switch):', error);
+          setSwapHistory([]);
+        });
     }
   }, [activeTab]);
 
@@ -267,15 +304,40 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const groupedRequests = groupRequests(myTimeOffRequests);
   console.log("Grouped requests:", groupedRequests);
 
+  // Create a mapping from resident ID to name
   const idToName = useMemo(() => {
-    const map: Record<string, string> = {};
-    users.forEach(u => {
-      map[u.id] = `${u.first_name} ${u.last_name}`;
+    console.log('Creating idToName mapping with users:', users);
+    console.log('Users array length:', users.length);
+    console.log('First few users:', users.slice(0, 3));
+    
+    const mapping: { [key: string]: string } = {};
+    users.forEach(user => {
+      console.log('Processing user:', user);
+      mapping[user.id] = `${user.first_name} ${user.last_name}`;
     });
-    return map;
+    console.log('Final idToName mapping:', mapping);
+    return mapping;
   }, [users]);
 
+  // Fallback mapping using residents data if users is empty
+  const fallbackIdToName = useMemo(() => {
+    console.log('Creating fallback mapping, users length:', users.length);
+    if (users.length === 0) {
+      // This is a temporary fallback - we'll need to pass residents data to AdminPage
+      return {
+        'LLU6249': 'Felix Hernandez Perez',
+        'FVO3464': 'Alexis Shahidi'
+      };
+    }
+    return {};
+  }, [users]);
+
+  const finalIdToName = users.length > 0 ? idToName : fallbackIdToName;
+  console.log('Final mapping being used:', finalIdToName);
+
   const pendingSwapsCount = swapHistory.filter(s => s.Status === 'Pending').length;
+  console.log('swapHistory array:', swapHistory);
+  console.log('pendingSwapsCount:', pendingSwapsCount);
   const pendingRequestsCount = groupedRequests.filter(r => r.status === 'Pending').length;
 
 
@@ -331,7 +393,10 @@ const AdminPage: React.FC<AdminPageProps> = ({
       const res = await fetch(`${config.apiUrl}/api/announcements`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: announcementText }),
+        body: JSON.stringify({ 
+          message: announcementText,
+          authorId: userId 
+        }),
       });
       if (!res.ok) throw new Error('Failed to post');
       setAnnouncementText('');
@@ -345,17 +410,81 @@ const AdminPage: React.FC<AdminPageProps> = ({
     }
   };
 
+  const handleDeleteAnnouncement = async (announcementId: string) => {
+    setDeletingAnnouncement(announcementId);
+    setAnnouncementError(null);
+    try {
+      const res = await fetch(`${config.apiUrl}/api/announcements/${announcementId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Failed to delete: ${res.status} ${errorText}`);
+      }
+      // Refetch announcements
+      const data = await fetch(`${config.apiUrl}/api/announcements`).then(r => r.json());
+      setAnnouncements(data);
+    } catch (error) {
+      console.error('Delete announcement error:', error);
+      setAnnouncementError(`Could not delete announcement: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setDeletingAnnouncement(null);
+    }
+  };
+
+  const handleSwitchRole = async (user: { id: string; first_name: string; last_name: string; email: string; role: string }, newRole: string) => {
+    // Don't do anything if the role hasn't actually changed
+    if (user.role === newRole) return;
+    
+    setSwitchingRole(user.id);
+    try {
+      const endpoint = user.role === 'admin' ? 'Residents/demote-admin' : 'Admins/promote-resident';
+      const response = await fetch(`${config.apiUrl}/api/${endpoint}/${user.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Role Updated",
+          description: `${user.first_name} ${user.last_name} has been switched to ${newRole}.`,
+          variant: "success"
+        });
+        // Refresh the page to update the user list
+        window.location.reload();
+      } else {
+        const error = await response.text();
+        toast({
+          title: "Error",
+          description: error || "Failed to switch user role.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error switching user role:', error);
+      toast({
+        title: "Error",
+        description: "Failed to switch user role. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSwitchingRole(null);
+    }
+  };
+
+
+
   return (
-    <div className="w-full pt-4 h-[calc(100vh-4rem)] flex flex-col items-center pl-8">
+    <div className="w-full pt-4 h-[calc(100vh-4rem)] flex flex-col items-center px-4 md:pl-8">
       {/* Dashboard Overview Card */}
-      <Card className="mb-8 p-6 flex flex-col gap-4 items-center justify-between bg-white dark:bg-neutral-900 shadow-lg rounded-2xl border border-gray-200 dark:border-gray-800">
+              <Card className="mb-8 p-6 flex flex-col gap-4 items-center justify-between bg-white dark:bg-neutral-900 shadow-lg rounded-2xl border border-gray-200 dark:border-gray-800">
         <h2 className="text-2xl font-bold flex items-center gap-2 justify-center w-full mb-2">
           <Shield className="w-6 h-6 text-blue-600" />
           Admin Dashboard
         </h2>
-        <div className="flex flex-row items-center w-full justify-between">
+        <div className="flex flex-col md:flex-row items-center w-full justify-between gap-4">
           <div />
-          <div className="flex gap-8 items-center">
+          <div className="flex flex-col sm:flex-row gap-4 md:gap-8 items-center">
             <div className="flex flex-col items-center">
               <div className="flex items-center gap-2 mb-1">
                 <Users className="w-5 h-5 text-blue-500" />
@@ -363,22 +492,22 @@ const AdminPage: React.FC<AdminPageProps> = ({
               </div>
               <span className="text-xs text-gray-500">Residents</span>
             </div>
-            <div className="flex flex-col items-center border-l border-gray-200 dark:border-gray-700 pl-8">
-              <div className="flex items-center gap-2 mb-1">
-                <Repeat2 className="w-5 h-5 text-yellow-500" />
-                <span className="text-2xl font-bold text-gray-900 dark:text-white">{pendingSwapsCount}</span>
+                          <div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
+                <div className="flex items-center gap-2 mb-1">
+                  <Repeat2 className="w-5 h-5 text-yellow-500" />
+                  <span className="text-2xl font-bold text-gray-900 dark:text-white">{pendingSwapsCount}</span>
+                </div>
+                <span className="text-xs text-gray-500">Pending Swaps</span>
               </div>
-              <span className="text-xs text-gray-500">Pending Swaps</span>
-            </div>
-            <div className="flex flex-col items-center border-l border-gray-200 dark:border-gray-700 pl-8">
-              <div className="flex items-center gap-2 mb-1">
-                <CalendarDays className="w-5 h-5 text-green-500" />
-                <span className="text-2xl font-bold text-gray-900 dark:text-white">{pendingRequestsCount}</span>
+                          <div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
+                <div className="flex items-center gap-2 mb-1">
+                  <CalendarDays className="w-5 h-5 text-green-500" />
+                  <span className="text-2xl font-bold text-gray-900 dark:text-white">{pendingRequestsCount}</span>
+                </div>
+                <span className="text-xs text-gray-500">Pending Time Off</span>
               </div>
-              <span className="text-xs text-gray-500">Pending Time Off</span>
-            </div>
-            <div className="h-10 border-l border-gray-200 dark:border-gray-700 mx-6" />
-            <Button onClick={handleGenerateSchedule} disabled={generating} className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl shadow hover:bg-blue-700 transition whitespace-nowrap">
+            <div className="h-6 sm:h-10 border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 mx-0 sm:mx-4 lg:mx-6 hidden sm:block" />
+            <Button onClick={handleGenerateSchedule} disabled={generating} className="px-1 sm:px-6 py-1 sm:py-3 bg-blue-600 text-white font-semibold rounded-xl shadow hover:bg-blue-700 transition whitespace-nowrap w-full sm:w-auto text-xs sm:text-sm lg:text-base">
               {generating ? "Generating..." : "Generate New Schedule"}
             </Button>
           </div>
@@ -387,68 +516,83 @@ const AdminPage: React.FC<AdminPageProps> = ({
       {message && <div className="mb-4 text-center text-sm font-medium text-green-600 dark:text-green-400">{message}</div>}
 
       {/* Tab Navigation */}
-      <div className="w-full max-w-6xl flex gap-2 mb-6">
+      <div className="w-full max-w-6xl flex flex-col sm:flex-row gap-1 sm:gap-2 mb-4 sm:mb-6">
         <Button
           variant={activeTab === 'swaps' ? 'default' : 'outline'}
-          className={`flex-1 rounded-b-none ${activeTab === 'swaps' ? 'shadow-md' : ''}`}
+          className={`flex-1 rounded-b-none sm:rounded-br-none text-xs sm:text-sm py-1 sm:py-2 ${activeTab === 'swaps' ? 'shadow-md' : ''}`}
           onClick={() => setActiveTab('swaps')}
         >
           Swap Call History
         </Button>
         <Button
           variant={activeTab === 'requests' ? 'default' : 'outline'}
-          className={`flex-1 rounded-b-none ${activeTab === 'requests' ? 'shadow-md' : ''}`}
+          className={`flex-1 rounded-b-none text-xs sm:text-sm py-1 sm:py-2 ${activeTab === 'requests' ? 'shadow-md' : ''}`}
           onClick={() => setActiveTab('requests')}
         >
           Time Off Requests
         </Button>
         <Button
           variant={activeTab === 'users' ? 'default' : 'outline'}
-          className={`flex-1 rounded-b-none ${activeTab === 'users' ? 'shadow-md' : ''}`}
+          className={`flex-1 rounded-b-none text-xs sm:text-sm py-1 sm:py-2 ${activeTab === 'users' ? 'shadow-md' : ''}`}
           onClick={() => setActiveTab('users')}
         >
           User Management
         </Button>
         <Button
           variant={activeTab === 'announcements' ? 'default' : 'outline'}
-          className={`flex-1 rounded-b-none ${activeTab === 'announcements' ? 'shadow-md' : ''}`}
+          className={`flex-1 rounded-b-none text-xs sm:text-sm py-1 sm:py-2 ${activeTab === 'announcements' ? 'shadow-md' : ''}`}
           onClick={() => setActiveTab('announcements')}
         >
           Announcements
         </Button>
       </div>
       {/* Tab Content */}
-      <div className="w-full max-w-6xl">
+      <div className="w-full">
         {activeTab === 'swaps' && (
-          <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-8 border border-gray-200 dark:border-gray-800">
-            <h2 className="text-xl font-bold mb-4">Swap Call History</h2>
-            <div className="overflow-x-auto max-h-96 overflow-y-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
+            <h2 className="text-lg sm:text-xl font-bold mb-4">Swap Call History</h2>
+            <div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
+              <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-100 dark:bg-neutral-800">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requester</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requestee</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Partner Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                    <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requester</th>
+                    <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requestee</th>
+                    <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Partner</th>
+                    <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
                   {swapHistory.length > 0 ? (
-                    swapHistory.map((swap, idx) => (
+                    swapHistory.map((swap, idx) => {
+                      console.log('Rendering swap:', swap);
+                      console.log('swap.RequesterId:', swap.RequesterId);
+                      console.log('swap.RequesteeId:', swap.RequesteeId);
+                      console.log('finalIdToName[swap.RequesterId]:', finalIdToName[swap.RequesterId]);
+                      console.log('finalIdToName[swap.RequesteeId]:', finalIdToName[swap.RequesteeId]);
+                      
+                      return (
                       <tr key={swap.SwapId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{idToName[swap.RequesterId] || swap.RequesterId}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{idToName[swap.RequesteeId] || swap.RequesteeId}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesterDate ? new Date(swap.RequesterDate).toLocaleDateString() : ''}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesteeDate ? new Date(swap.RequesteeDate).toLocaleDateString() : ''}</td>
-                        <td className={
-                          `px-6 py-4 whitespace-nowrap text-sm font-semibold ` +
-                          (swap.Status === 'Approved' ? 'text-green-600' : swap.Status === 'Denied' ? 'text-red-600' : 'text-yellow-600')
-                        }>{swap.Status}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.Details || ''}</td>
+                        <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                          {finalIdToName[swap.RequesterId] || `Resident ${swap.RequesterId}`}
+                        </td>
+                        <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                          {finalIdToName[swap.RequesteeId] || `Resident ${swap.RequesteeId}`}
+                        </td>
+                        <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesterDate ? new Date(swap.RequesterDate).toLocaleDateString() : ''}</td>
+                        <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesteeDate ? new Date(swap.RequesteeDate).toLocaleDateString() : ''}</td>
+                        <td className={`px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${
+                          swap.Status === 'Approved' ? 'text-green-600' : 
+                          swap.Status === 'Denied' ? 'text-red-600' : 
+                          'text-yellow-600'
+                        }`}>
+                          {swap.Status}
+                        </td>
+                        <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.Details || '-'}</td>
                       </tr>
-                    ))
+                      );
+                    })
                   ) : (
                     <tr>
                       <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No swap call history found.</td>
@@ -460,9 +604,9 @@ const AdminPage: React.FC<AdminPageProps> = ({
           </Card>
         )}
         {activeTab === 'requests' && (
-          <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-8 border border-gray-200 dark:border-gray-800">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Time Off Requests</h2>
+          <Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                <h2 className="text-lg sm:text-xl font-bold">Time Off Requests</h2>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" className="flex items-center gap-2"
                   onClick={() => setShowRequestsModal(true)}>
@@ -477,15 +621,15 @@ const AdminPage: React.FC<AdminPageProps> = ({
                 )}
               </div>
             </div>
-            <div className="overflow-x-auto max-h-96 overflow-y-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
+              <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-100 dark:bg-neutral-800">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Range</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Range</th>
+                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
+                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
@@ -493,17 +637,17 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     groupedRequests.map((request: Request, idx: number) => (
                       <tr key={request.id || `${request.startDate || request.date || ''}-${getResidentName(request)}-${idx}`}
                           className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{getResidentName(request)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.reason}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.status}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{getResidentName(request)}</td>
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.reason}</td>
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.status}</td>
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           {request.status === "Pending" && (
-                            <div className="flex items-center space-x-2">
-                              <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-500 hover:text-white" onClick={() => handleApproveRequest(request.groupId || '')}>
+                            <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                              <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-500 hover:text-white w-full sm:w-auto" onClick={() => handleApproveRequest(request.groupId || '')}>
                                 <Check className="h-4 w-4 mr-2" /> Approve
                               </Button>
-                              <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDenyRequest(request.groupId || '')}>
+                              <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white w-full sm:w-auto" onClick={() => handleDenyRequest(request.groupId || '')}>
                                 <X className="h-4 w-4 mr-2" /> Deny
                               </Button>
                             </div>
@@ -596,7 +740,15 @@ const AdminPage: React.FC<AdminPageProps> = ({
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{user.first_name} {user.last_name}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                            <select
+                              value={user.role}
+                              onChange={(e) => handleSwitchRole(user, e.target.value)}
+                              disabled={switchingRole === user.id}
+                              className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="resident">{switchingRole === user.id ? 'Switching...' : 'Resident'}</option>
+                              <option value="admin">{switchingRole === user.id ? 'Switching...' : 'Admin'}</option>
+                            </select>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDeleteUserWithConfirm(user)}>
@@ -644,14 +796,32 @@ const AdminPage: React.FC<AdminPageProps> = ({
                 </div>
               </div>
             </Dialog>
+            {announcementError && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {announcementError}
+              </div>
+            )}
             <div className="flex flex-col gap-4">
               {announcements.length === 0 && !announcementError && (
                 <div className="text-gray-500">No announcements yet.</div>
               )}
               {announcements.map((a, idx) => (
-                <div key={a.id || idx} className="p-4 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-sm">
-                  <div className="text-gray-900 dark:text-gray-100 mb-1">{a.message}</div>
-                  <div className="text-xs text-gray-500">{a.createdAt ? new Date(a.createdAt).toLocaleString() : ''}</div>
+                <div key={a.announcementId || idx} className="p-4 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-sm">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="text-gray-900 dark:text-gray-100 mb-1">{a.message}</div>
+                      <div className="text-xs text-gray-500">{a.createdAt ? new Date(a.createdAt).toLocaleString() : ''}</div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white ml-4"
+                      onClick={() => handleDeleteAnnouncement(a.announcementId)}
+                      disabled={deletingAnnouncement === a.announcementId}
+                    >
+                      {deletingAnnouncement === a.announcementId ? 'Deleting...' : 'Delete'}
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -767,6 +937,8 @@ const AdminPage: React.FC<AdminPageProps> = ({
           </div>
         </div>
       </Modal>
+
+      
     </div>
   )
 }

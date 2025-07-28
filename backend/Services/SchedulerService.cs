@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MedicalDemo.Algorithm;
 using MedicalDemo.Data;
+
 using MedicalDemo.Data.Models;
 using MedicalDemo.Models.DTO.Scheduling;
 using Microsoft.EntityFrameworkCore;
@@ -14,58 +15,87 @@ namespace MedicalDemo.Services
     {
         private readonly MedicalContext _context;
         private readonly SchedulingMapperService _mapper;
+        private readonly MiscService _misc;
 
-        public SchedulerService(MedicalContext context, SchedulingMapperService mapper)
+        public SchedulerService(MedicalContext context, SchedulingMapperService mapper, MiscService misc)
         {
             _context = context;
             _mapper = mapper;
+            _misc = misc;
         }
 
         public async Task<(bool Success, string Error)> GenerateFullSchedule(int year)
         {
-            try
+            const int maxRetries = 100;
+            int attempt = 0;
+            string error = null;
+
+            while (attempt < maxRetries)
             {
-                var residentData = await LoadResidentData(year);
-                
-                // Map DTOs to original algorithm classes
-                var pgy1Models = residentData.PGY1s.Select(dto => MapToPGY1(dto)).ToList();
-                var pgy2Models = residentData.PGY2s.Select(dto => MapToPGY2(dto)).ToList();
-                var pgy3Models = residentData.PGY3s.Select(dto => MapToPGY3(dto)).ToList();
-
-                // Phase 1: Training Schedule (July–August)
-                Schedule.Training(year, pgy1Models, pgy2Models, pgy3Models);
-
-                // Phase 2: Normal Schedule (Sept–Dec and Jan–June)
-                Schedule.Part1(year, pgy1Models, pgy2Models);
-                Schedule.Part2(year, pgy1Models, pgy2Models);
-
-                // Save schedule record
-                var schedule = new Schedules { ScheduleId = Guid.NewGuid(), Status = "Under Review" };
-                _context.schedules.Add(schedule);
-                await _context.SaveChangesAsync();
-
-                // Generate DatesDTOs from PGY models
-                var dateDTOs = Schedule.GenerateDateRecords(schedule.ScheduleId, pgy1Models, pgy2Models, pgy3Models);
-
-                // Convert DTOs to Entities
-                var dateEntities = dateDTOs.Select(dto => new Dates
+                attempt++;
+                try
                 {
-                    DateId = dto.DateId,
-                    ScheduleId = dto.ScheduleId,
-                    ResidentId = dto.ResidentId,
-                    Date = dto.Date,
-                    CallType = dto.CallType
-                }).ToList();
+                    var residentData = await LoadResidentData(year);
 
-                await _context.dates.AddRangeAsync(dateEntities);
-                await _context.SaveChangesAsync();
+                    // Map DTOs to original algorithm classes
+                    var pgy1Models = residentData.PGY1s.Select(dto => MapToPGY1(dto)).ToList();
+                    var pgy2Models = residentData.PGY2s.Select(dto => MapToPGY2(dto)).ToList();
+                    var pgy3Models = residentData.PGY3s.Select(dto => MapToPGY3(dto)).ToList();
 
-                return (true, null);
+                    var success =
+                        Schedule.Training(year, pgy1Models, pgy2Models, pgy3Models) &&
+                        Schedule.Part1(year, pgy1Models, pgy2Models) &&
+                        Schedule.Part2(year, pgy1Models, pgy2Models);
+                    
+                    if (!success)
+                    {
+                        Console.WriteLine($"Attempt #{attempt}: Schedule generation failed logically.");
+                        continue;
+                    }
+
+                    // Delete existing schedules to ensure only one schedule is in the database at all times
+                    var existingSchedules = await _context.schedules.ToListAsync();
+                    _context.schedules.RemoveRange(existingSchedules);
+                    await _context.SaveChangesAsync();
+
+                    // Save schedule record
+                    var schedule = new Schedules { ScheduleId = Guid.NewGuid(), Status = "Under Review" };
+                    _context.schedules.Add(schedule);
+                    await _context.SaveChangesAsync();
+
+                    // Generate DatesDTOs from PGY models
+                    var dateDTOs =
+                        Schedule.GenerateDateRecords(schedule.ScheduleId, pgy1Models, pgy2Models, pgy3Models);
+
+                    // Convert DTOs to Entities
+                    var dateEntities = dateDTOs.Select(dto => new Dates
+                    {
+                        DateId = dto.DateId,
+                        ScheduleId = dto.ScheduleId,
+                        ResidentId = dto.ResidentId,
+                        Date = dto.Date,
+                        CallType = dto.CallType
+                    }).ToList();
+
+                    // Then load the new schedule into the database
+                    await _context.dates.AddRangeAsync(dateEntities);
+                    await _context.SaveChangesAsync();
+
+                    //add the total and bi-yearly hours for us after the fact lmao
+                    await _misc.FindTotalHours();
+                    await _misc.FindBiYearlyHours(year);
+                    
+                    Console.WriteLine($"Attempt #{attempt}");
+                    return (true, null);
+                }
+                catch (Exception ex)
+                {
+                    error = ex.Message;
+                    Console.WriteLine($"Attempt #{attempt}: Exception encountered - {error}");
+                }
+                await Task.Delay(500); // short delay between retries
             }
-            catch (Exception ex)
-            {
-                return (false, ex.Message);
-            }
+            return (false, $"Failed after to generate a viable schedule. Try again.");
         }
 
         private PGY1 MapToPGY1(PGY1DTO dto)
@@ -130,9 +160,8 @@ namespace MedicalDemo.Services
         {
             var residents = await _context.residents.ToListAsync();
             var rotations = await _context.rotations.ToListAsync();
-            var vacations = await _context.vacations.Where(v => v.Status == "Confirmed").ToListAsync();
-            var existingDates = await _context.dates.ToListAsync();
-            var datesDTOs = _mapper.MapToDatesDTOs(existingDates);
+            var vacations = await _context.vacations.Where(v => v.Status == "Approved").ToListAsync();
+            var datesDTOs = new List<DatesDTO>(); // Empty list
 
             var pgy1s = residents
                 .Where(r => r.graduate_yr == 1)

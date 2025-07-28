@@ -13,11 +13,16 @@ using MedicalDemo.Models.DTO.Scheduling; //for array min/max
 class Schedule
 {
     // === NEW OVERLOAD METHODS FOR BACKEND INTEGRATION ===
+<<<<<<< HEAD
     public static void Training(int year, List<PGY1> pgy1s, List<PGY2> pgy2s, List<PGY3> pgy3s)
+=======
+    public static bool Training(int year, List<PGY1> pgy1s, List<PGY2> pgy2s, List<PGY3> pgy3s)
+>>>>>>> testing
     {
         ArrayList pgys1 = new ArrayList(pgy1s);
         ArrayList pgys2 = new ArrayList(pgy2s);
         ArrayList pgys3 = new ArrayList(pgy3s);
+<<<<<<< HEAD
         Training(year, pgys1, pgys2, pgys3);
     }
 
@@ -36,6 +41,26 @@ class Schedule
     }
     
     public static void Training(int year, ArrayList pgy1s, ArrayList pgy2s, ArrayList pgy3s)
+=======
+        return Training(year, pgys1, pgys2, pgys3);
+    }
+
+    public static bool Part1(int year, List<PGY1> pgy1s, List<PGY2> pgy2s)
+    {
+        ArrayList pgys1 = new ArrayList(pgy1s);
+        ArrayList pgys2 = new ArrayList(pgy2s);
+        return Part1(year, pgys1, pgys2);
+    }
+
+    public static bool Part2(int year, List<PGY1> pgy1s, List<PGY2> pgy2s)
+    {
+        ArrayList pgys1 = new ArrayList(pgy1s);
+        ArrayList pgys2 = new ArrayList(pgy2s);
+        return Part2(year, pgys1, pgys2);
+    }
+    
+    public static bool Training(int year, ArrayList pgy1s, ArrayList pgy2s, ArrayList pgy3s)
+>>>>>>> testing
     {
         int pgy1 = 8;
         int pgy2 = 8;
@@ -110,6 +135,7 @@ class Schedule
         if (shortCallGraph.getFlow(sourceIndex, sinkIndex) != 3 * pgy1)
         {
             Console.WriteLine("[ERROR] Not able to make valid assignment based on parameters");
+            return false;
         }
         else
         {
@@ -231,6 +257,7 @@ class Schedule
         if (flow != 1 * pgy1)
         {
             Console.WriteLine("[ERROR] Not able to make valid assignment based on parameters");
+            return false;
         }
         else
         {
@@ -352,6 +379,7 @@ class Schedule
         if (sundaysCallGraph.getFlow(sourceIndex, sinkIndex) != 1 * pgy1)
         {
             Console.WriteLine("[ERROR] Not able to make valid assignment based on parameters");
+            return false;
         }
         else
         {
@@ -394,6 +422,7 @@ class Schedule
 
         // save content
         save(AllPgy1s, AllPgy2s, AllPgy3s);
+        return true;
     }
 
     public static void save(ArrayList pgy1s, ArrayList pgy2s, ArrayList pgy3s)
@@ -471,7 +500,11 @@ class Schedule
         }
     }
 
+<<<<<<< HEAD
     public static void Part2(int year, ArrayList pgy1s, ArrayList pgy2s)
+=======
+    public static bool Part2(int year, ArrayList pgy1s, ArrayList pgy2s)
+>>>>>>> testing
     {
         Console.WriteLine("part 2: normal schedule (january through june)");
         int pgy1 = 8;
@@ -518,7 +551,18 @@ class Schedule
         }
 
         // randomly assign shifts until one works
-        while (!randomAssignment(AllPgy1s, AllPgy2s, startDay, endDay, shiftTypeCount, workedDays)) ;
+        int maxTries = 10;
+        bool assigned = false;
+        for (int attempt = 0; attempt < maxTries && !assigned; attempt++)
+        {
+            assigned = randomAssignment(AllPgy1s, AllPgy2s, startDay, endDay, shiftTypeCount, workedDays);
+        }
+
+        if (!assigned)
+        {
+            Console.WriteLine("[ERROR] Could not assign random shifts after retries");
+            return false;
+        }
 
         // save (and commit)
         save(AllPgy1s, AllPgy2s, new ArrayList()); // PGY3s are not used in part 1
@@ -526,15 +570,37 @@ class Schedule
 
         // Print
         print(AllPgy1s, AllPgy2s, new ArrayList()); // PGY3s are not used in part 1
+<<<<<<< HEAD
     }
 
     public static void Part1(int year, ArrayList pgy1s, ArrayList pgy2s)
+=======
+        return true;
+    }
+
+    public static bool Part1(int year, ArrayList pgy1s, ArrayList pgy2s)
+>>>>>>> testing
     {
         Console.WriteLine("part 1: normal schedule (july through december)");
         int pgy1 = 8;
         int pgy2 = 8;
         ArrayList AllPgy1s = pgy1s;
         ArrayList AllPgy2s = pgy2s;
+<<<<<<< HEAD
+=======
+        
+        for (int i = 0; i < pgy1; i++)
+        {
+            ((PGY1)AllPgy1s[i]).inTraining = false;
+
+            // assign the training date of the pgy1s based on their last worked day
+            ((PGY1)AllPgy1s[i]).lastTrainingDate = ((PGY1)AllPgy1s[i]).workDaySet().Max();
+        }
+        for (int i = 0; i < pgy2; i++)
+        {
+            ((PGY2)AllPgy2s[i]).inTraining = false;
+        }
+>>>>>>> testing
 
         // store days currently worked by anyone
         HashSet<DateTime> workedDays = new HashSet<DateTime>();
@@ -575,7 +641,18 @@ class Schedule
         }
 
         // randomly assign shifts until one works
-        while (!randomAssignment(AllPgy1s, AllPgy2s, startDay, endDay, shiftTypeCount, workedDays)) ;
+        int maxTries = 10;
+        bool assigned = false;
+        for (int attempt = 0; attempt < maxTries && !assigned; attempt++)
+        {
+            assigned = randomAssignment(AllPgy1s, AllPgy2s, startDay, endDay, shiftTypeCount, workedDays);
+        }
+
+        if (!assigned)
+        {
+            Console.WriteLine("[ERROR] Could not assign random shifts after retries");
+            return false;
+        }
 
         // save (and commit)
         save(AllPgy1s, AllPgy2s, new ArrayList()); // PGY3s are not used in part 1
@@ -583,6 +660,10 @@ class Schedule
 
         // Print
         print(AllPgy1s, AllPgy2s, new ArrayList()); // PGY3s are not used in part 1
+<<<<<<< HEAD
+=======
+        return true;
+>>>>>>> testing
     }
     
     
@@ -822,6 +903,10 @@ class Schedule
  
  
      
+<<<<<<< HEAD
+=======
+     
+>>>>>>> testing
     public static bool randomAssignment(ArrayList pgy1s, ArrayList pgy2s, DateTime startDay, DateTime endDay, Dictionary<int, int> shiftTypeCount, HashSet<DateTime> workedDays)
     {
         //Console.WriteLine("[DEBUG] Attempting random assignment of shifts...");
@@ -1026,6 +1111,10 @@ class Schedule
  
                         // print the resident who did not handle their shifts
                         Console.WriteLine($"[DEBUG] Resident {residentName} did not handle their shifts properly. Assigned: {edge.flow()}, Expected: {edge.originalCap}");
+<<<<<<< HEAD
+=======
+                        return false;
+>>>>>>> testing
                     }
  
                     // give a different resdient the shifts that were not assigned

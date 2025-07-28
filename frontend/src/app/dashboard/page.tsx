@@ -36,6 +36,9 @@ import RequestOffPage from "./components/RequestOffPage";
 import CheckSchedulePage from "./components/CheckSchedulePage";
 import AdminPage from "./components/AdminPage";
 
+import MobileHeader from "./components/MobileHeader";
+import MobileUserMenu from "./components/MobileUserMenu";
+
 type MenuItem = {
   title: string;
   icon: ReactElement;
@@ -77,6 +80,14 @@ interface Resident {
   graduate_yr: number;
   email: string;
   phone_number?: string;
+}
+
+interface Admin {
+  admin_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone_num?: string;
 }
 
 interface ScheduleItem {
@@ -134,6 +145,9 @@ function Dashboard() {
   const [phoneNumber, setPhoneNumber] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  
+  // Mobile state
+  const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState<boolean>(false);
 
   // Calendar state
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
@@ -394,34 +408,47 @@ function Dashboard() {
   }, [residents]);
 
   const fetchUsers = async () => {
+    console.log('Fetching users...');
     try {
-      const [residentsRes, adminsRes] = await Promise.all([
+      const [residentsResponse, adminsResponse] = await Promise.all([
         fetch(`${config.apiUrl}/api/Residents`),
         fetch(`${config.apiUrl}/api/Admins`)
       ]);
-      const residents = residentsRes.ok ? await residentsRes.json() : [];
-      const admins = adminsRes.ok ? await adminsRes.json() : [];
-      const residentUsers = residents.map((r: { resident_id: string; first_name: string; last_name: string; email: string }) => ({
-        id: r.resident_id,
-        first_name: r.first_name,
-        last_name: r.last_name,
-        email: r.email,
-        role: 'resident',
-      }));
-      const adminUsers = admins.map((a: { admin_id: string; first_name: string; last_name: string; email: string }) => ({
-        id: a.admin_id,
-        first_name: a.first_name,
-        last_name: a.last_name,
-        email: a.email,
-        role: 'admin',
-      }));
-      setUsers([...residentUsers, ...adminUsers]);
-    } catch {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to fetch users.'
-      });
+
+      console.log('Residents response status:', residentsResponse.status);
+      console.log('Admins response status:', adminsResponse.status);
+
+      if (residentsResponse.ok && adminsResponse.ok) {
+        const residents = await residentsResponse.json() as Resident[];
+        const admins = await adminsResponse.json() as Admin[];
+
+        console.log('Residents data:', residents);
+        console.log('Admins data:', admins);
+
+        const combinedUsers = [
+          ...residents.map((r: Resident) => ({
+            id: r.resident_id,
+            first_name: r.first_name,
+            last_name: r.last_name,
+            email: r.email,
+            role: 'resident'
+          })),
+          ...admins.map((a: Admin) => ({
+            id: a.admin_id,
+            first_name: a.first_name,
+            last_name: a.last_name,
+            email: a.email,
+            role: 'admin'
+          }))
+        ];
+
+        console.log('Combined users:', combinedUsers);
+        setUsers(combinedUsers);
+      } else {
+        console.error('Failed to fetch users');
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
     }
   };
 
@@ -997,6 +1024,17 @@ function Dashboard() {
     router.push("/");
   };
 
+  // Mobile navigation handlers
+  const handleOpenMobileUserMenu = () => {
+    setMobileUserMenuOpen(true);
+  };
+
+  const handleCloseMobileUserMenu = () => {
+    setMobileUserMenuOpen(false);
+  };
+
+
+
   const handleDeleteUser = async (user: { id: string; role: string }) => {
     try {
       const endpoint = user.role === 'admin' ? 'Admins' : 'Residents';
@@ -1038,6 +1076,8 @@ function Dashboard() {
     switch (selected) {
 case "Home":
   if (isAdmin) {
+    console.log('Rendering AdminPage with users:', users);
+    console.log('Rendering AdminPage with users length:', users.length);
     return (
       <AdminPage
         residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }))}
@@ -1065,6 +1105,7 @@ case "Home":
         inviteRole={inviteRole}
         setInviteRole={setInviteRole}
         onClearRequests={handleClearRequests}
+        userId={user?.id || ""}
       />
     );
   }
@@ -1082,6 +1123,9 @@ case "Home":
         userId={user?.id || ""}
         calendarEvents={calendarEvents}
         isAdmin={isAdmin}
+        onRefreshCalendar={() => {
+          fetchCalendarEvents();
+        }}
       />
     );
   }
@@ -1110,6 +1154,7 @@ case "Home":
             phoneNumber={phoneNumber}
             setPhoneNumber={setPhoneNumber}
             handleUpdatePhoneNumber={handleUpdatePhoneNumber}
+            isAdmin={isAdmin}
           />
         );
 
@@ -1200,6 +1245,7 @@ case "Home":
             inviteRole={inviteRole}
             setInviteRole={setInviteRole}
             onClearRequests={handleClearRequests}
+            userId={user?.id || ""}
           />
         );
 
@@ -1255,7 +1301,13 @@ case "Home":
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, []); // Run on mount
+
+  useEffect(() => {
+    if (user) {
+      fetchUsers();
+    }
+  }, [user]); // Also run when user is loaded
 
   // Fetch data when Admin page is selected
   useEffect(() => {
@@ -1287,90 +1339,120 @@ case "Home":
       <SidebarProvider defaultOpen={true}>
         <div className={`flex min-h-screen w-full`}>
           <Toaster />
+          
+          {/* Mobile Header */}
+          <MobileHeader
+            selected={selected}
+            onOpenUserMenu={handleOpenMobileUserMenu}
+            onLogout={handleLogout}
+          />
+          
           {/* Left Sidebar Trigger (moves with sidebar, only on calendar page) */}
           {selected === "Calendar" && <SidebarFloatingTrigger />}
-          {/* Sidebar Navigation */}
-          {selected !== "Calendar" && (
-            <Sidebar>
-              <SidebarHeader>
-                <div className="flex items-center justify-center py-2">
-                  <span className="text-3xl font-bold tracking-wide">PSYCALL</span>
-                </div>
-              </SidebarHeader>
-              <SidebarContent>
-                <SidebarGroup>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      {filteredMenuItems.map((item) => (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton asChild>
-                            <span
-                              className={`flex items-center text-xl cursor-pointer rounded-lg px-2 py-1 transition-colors ${
-                                selected === item.title
-                                  ? "font-bold text-gray-800 dark:text-gray-200 bg-gray-300 dark:bg-gray-700"
-                                  : "hover:bg-gray-900 dark:hover:bg-gray-700"
-                              }`}
-                              onClick={() => setSelected(item.title)}
-                            >
-                              {item.icon}
-                              {item.title}
-                            </span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </SidebarGroup>
-              </SidebarContent>
-              <SidebarFooter>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <div className="cursor-pointer flex items-center gap-2 group relative" title="Account options">
-                      <SidebarUserCard
-                        name={displayName}
-                        email={displayEmail}
-                      />
-                      <ChevronDown className="h-5 w-5 text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors" />
-                    </div>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem
-                      className="flex items-center gap-2"
-                      onClick={() => setSelected("Settings")}
-                    >
-                      <UserIcon className="h-4 w-4" />
-                      <span>Profile</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("light")} className="flex items-center gap-2">
-                      <Sun className="h-4 w-4" />
-                      <span>Light</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("dark")} className="flex items-center gap-2">
-                      <Moon className="h-4 w-4" />
-                      <span>Dark</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="flex items-center gap-2 text-red-600 focus:text-red-600"
-                      onClick={handleLogout}
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>Log out</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </SidebarFooter>
-            </Sidebar>
-          )}
+          
+          {/* Sidebar Navigation - Desktop only */}
+          <div className="hidden md:block">
+            {selected !== "Calendar" && (
+              <Sidebar>
+                <SidebarHeader>
+                  <div className="flex items-center justify-center py-2">
+                    <span className="text-3xl font-bold tracking-wide">PSYCALL</span>
+                  </div>
+                </SidebarHeader>
+                <SidebarContent>
+                  <SidebarGroup>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {filteredMenuItems.map((item) => (
+                          <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton asChild>
+                              <span
+                                className={`flex items-center text-xl cursor-pointer rounded-lg px-2 py-1 transition-colors ${
+                                  selected === item.title
+                                    ? "font-bold text-gray-800 dark:text-gray-200 bg-gray-300 dark:bg-gray-700"
+                                    : "hover:bg-gray-900 dark:hover:bg-gray-700"
+                                }`}
+                                onClick={() => setSelected(item.title)}
+                              >
+                                {item.icon}
+                                {item.title}
+                              </span>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                </SidebarContent>
+                <SidebarFooter>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <div className="cursor-pointer flex items-center gap-2 group relative" title="Account options">
+                        <SidebarUserCard
+                          name={displayName}
+                          email={displayEmail}
+                        />
+                        <ChevronDown className="h-5 w-5 text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors" />
+                      </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuItem
+                        className="flex items-center gap-2"
+                        onClick={() => setSelected("Settings")}
+                      >
+                        <UserIcon className="h-4 w-4" />
+                        <span>Profile</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setTheme("light")} className="flex items-center gap-2">
+                        <Sun className="h-4 w-4" />
+                        <span>Light</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setTheme("dark")} className="flex items-center gap-2">
+                        <Moon className="h-4 w-4" />
+                        <span>Dark</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="flex items-center gap-2 text-red-600 focus:text-red-600"
+                        onClick={handleLogout}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Log out</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </SidebarFooter>
+              </Sidebar>
+            )}
+          </div>
+          
           {/* Main Content Area */}
           <div className={`flex-1 flex flex-col`}>
             <main
               className={`w-full ${
-                selected === "Calendar" ? "h-screen" : "p-8"
+                selected === "Calendar" 
+                  ? "h-screen" 
+                  : "p-4 md:p-8 pb-24 md:pb-8 pt-16 md:pt-8" // Add top padding for mobile header, bottom padding for mobile navigation
               }`}
             >
               {renderMainContent()}
             </main>
           </div>
+          
+          {/* Mobile Navigation - Hidden */}
+          {/* <MobileNavigation
+            selected={selected}
+            setSelected={setSelected}
+            isAdmin={isAdmin}
+          /> */}
+          
+          {/* Mobile User Menu */}
+          <MobileUserMenu
+            isOpen={mobileUserMenuOpen}
+            onClose={handleCloseMobileUserMenu}
+            displayName={displayName}
+            displayEmail={displayEmail}
+            onLogout={handleLogout}
+          />
         </div>
       </SidebarProvider>
     </ProtectedRoute>
