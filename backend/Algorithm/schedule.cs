@@ -2,46 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using MedicalDemo.Algorithm;
 using MedicalDemo.Data.Models;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling; //for array min/max
 
-
 class Schedule
 {
     // === NEW OVERLOAD METHODS FOR BACKEND INTEGRATION ===
-<<<<<<< HEAD
-    public static void Training(int year, List<PGY1> pgy1s, List<PGY2> pgy2s, List<PGY3> pgy3s)
-=======
     public static bool Training(int year, List<PGY1> pgy1s, List<PGY2> pgy2s, List<PGY3> pgy3s)
->>>>>>> testing
     {
         ArrayList pgys1 = new ArrayList(pgy1s);
         ArrayList pgys2 = new ArrayList(pgy2s);
         ArrayList pgys3 = new ArrayList(pgy3s);
-<<<<<<< HEAD
-        Training(year, pgys1, pgys2, pgys3);
-    }
-
-    public static void Part1(int year, List<PGY1> pgy1s, List<PGY2> pgy2s)
-    {
-        ArrayList pgys1 = new ArrayList(pgy1s);
-        ArrayList pgys2 = new ArrayList(pgy2s);
-        Part1(year, pgys1, pgys2);
-    }
-
-    public static void Part2(int year, List<PGY1> pgy1s, List<PGY2> pgy2s)
-    {
-        ArrayList pgys1 = new ArrayList(pgy1s);
-        ArrayList pgys2 = new ArrayList(pgy2s);
-        Part2(year, pgys1, pgys2);
-    }
-    
-    public static void Training(int year, ArrayList pgy1s, ArrayList pgy2s, ArrayList pgy3s)
-=======
         return Training(year, pgys1, pgys2, pgys3);
     }
 
@@ -60,7 +34,6 @@ class Schedule
     }
     
     public static bool Training(int year, ArrayList pgy1s, ArrayList pgy2s, ArrayList pgy3s)
->>>>>>> testing
     {
         int pgy1 = 8;
         int pgy2 = 8;
@@ -500,11 +473,7 @@ class Schedule
         }
     }
 
-<<<<<<< HEAD
-    public static void Part2(int year, ArrayList pgy1s, ArrayList pgy2s)
-=======
     public static bool Part2(int year, ArrayList pgy1s, ArrayList pgy2s)
->>>>>>> testing
     {
         Console.WriteLine("part 2: normal schedule (january through june)");
         int pgy1 = 8;
@@ -563,31 +532,21 @@ class Schedule
             Console.WriteLine("[ERROR] Could not assign random shifts after retries");
             return false;
         }
-
         // save (and commit)
         save(AllPgy1s, AllPgy2s, new ArrayList()); // PGY3s are not used in part 1
         Console.WriteLine("Part 2 completed successfully.");
-
         // Print
         print(AllPgy1s, AllPgy2s, new ArrayList()); // PGY3s are not used in part 1
-<<<<<<< HEAD
-    }
-
-    public static void Part1(int year, ArrayList pgy1s, ArrayList pgy2s)
-=======
         return true;
     }
 
     public static bool Part1(int year, ArrayList pgy1s, ArrayList pgy2s)
->>>>>>> testing
     {
         Console.WriteLine("part 1: normal schedule (july through december)");
         int pgy1 = 8;
         int pgy2 = 8;
         ArrayList AllPgy1s = pgy1s;
         ArrayList AllPgy2s = pgy2s;
-<<<<<<< HEAD
-=======
         
         for (int i = 0; i < pgy1; i++)
         {
@@ -600,7 +559,6 @@ class Schedule
         {
             ((PGY2)AllPgy2s[i]).inTraining = false;
         }
->>>>>>> testing
 
         // store days currently worked by anyone
         HashSet<DateTime> workedDays = new HashSet<DateTime>();
@@ -653,17 +611,12 @@ class Schedule
             Console.WriteLine("[ERROR] Could not assign random shifts after retries");
             return false;
         }
-
         // save (and commit)
         save(AllPgy1s, AllPgy2s, new ArrayList()); // PGY3s are not used in part 1
         Console.WriteLine("Part 1 completed successfully.");
-
         // Print
         print(AllPgy1s, AllPgy2s, new ArrayList()); // PGY3s are not used in part 1
-<<<<<<< HEAD
-=======
         return true;
->>>>>>> testing
     }
     
     
@@ -903,10 +856,6 @@ class Schedule
  
  
      
-<<<<<<< HEAD
-=======
-     
->>>>>>> testing
     public static bool randomAssignment(ArrayList pgy1s, ArrayList pgy2s, DateTime startDay, DateTime endDay, Dictionary<int, int> shiftTypeCount, HashSet<DateTime> workedDays)
     {
         //Console.WriteLine("[DEBUG] Attempting random assignment of shifts...");
@@ -1102,7 +1051,6 @@ class Schedule
                 {
                     Edge edge = (Edge)edgesFromSource[I];
                     int residentIndex = edge.destination / 3;
- 
                     // Check if the flow is not equal to the assigned shifts
                     if (edge.flow() < edge.originalCap)
                     {
@@ -1111,10 +1059,7 @@ class Schedule
  
                         // print the resident who did not handle their shifts
                         Console.WriteLine($"[DEBUG] Resident {residentName} did not handle their shifts properly. Assigned: {edge.flow()}, Expected: {edge.originalCap}");
-<<<<<<< HEAD
-=======
                         return false;
->>>>>>> testing
                     }
  
                     // give a different resdient the shifts that were not assigned
