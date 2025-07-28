@@ -50,6 +50,9 @@ const FacultyCalendarView: React.FC<{ events: CalendarEvent[] }> = ({ events }) 
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month' | 'year'>('month');
   const calendarGridRef = useRef<HTMLDivElement>(null);
 
+  // Force month view on mobile
+  const effectiveViewMode = typeof window !== 'undefined' && window.innerWidth < 768 ? 'month' : viewMode;
+
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
@@ -68,7 +71,7 @@ const FacultyCalendarView: React.FC<{ events: CalendarEvent[] }> = ({ events }) 
   // Navigation functions for different views
   const navigatePeriod = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
-    switch (viewMode) {
+    switch (effectiveViewMode) {
       case 'day':
         newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
         break;
@@ -87,7 +90,7 @@ const FacultyCalendarView: React.FC<{ events: CalendarEvent[] }> = ({ events }) 
 
   // Get period title based on view mode
   const getPeriodTitle = () => {
-    switch (viewMode) {
+    switch (effectiveViewMode) {
       case 'day':
         return currentDate.toLocaleDateString('en-US', { 
           weekday: 'long', 
@@ -172,11 +175,11 @@ const FacultyCalendarView: React.FC<{ events: CalendarEvent[] }> = ({ events }) 
               </button>
             </div>
           </div>
-          <div className="flex space-x-3 items-center">
+          <div className="hidden md:flex space-x-3 items-center">
             <button
               onClick={() => setViewMode('day')}
               className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${
-                viewMode === 'day'
+                effectiveViewMode === 'day'
                   ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
                   : 'text-muted-foreground bg-card border border-border hover:bg-muted'
               }`}
@@ -186,7 +189,7 @@ const FacultyCalendarView: React.FC<{ events: CalendarEvent[] }> = ({ events }) 
             <button
               onClick={() => setViewMode('week')}
               className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${
-                viewMode === 'week'
+                effectiveViewMode === 'week'
                   ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
                   : 'text-muted-foreground bg-card border border-border hover:bg-muted'
               }`}
@@ -196,7 +199,7 @@ const FacultyCalendarView: React.FC<{ events: CalendarEvent[] }> = ({ events }) 
             <button
               onClick={() => setViewMode('month')}
               className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${
-                viewMode === 'month'
+                effectiveViewMode === 'month'
                   ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
                   : 'text-muted-foreground bg-card border border-border hover:bg-muted'
               }`}
@@ -206,7 +209,7 @@ const FacultyCalendarView: React.FC<{ events: CalendarEvent[] }> = ({ events }) 
             <button
               onClick={() => setViewMode('year')}
               className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${
-                viewMode === 'year'
+                effectiveViewMode === 'year'
                   ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
                   : 'text-muted-foreground bg-card border border-border hover:bg-muted'
               }`}
@@ -217,8 +220,8 @@ const FacultyCalendarView: React.FC<{ events: CalendarEvent[] }> = ({ events }) 
         </div>
       </div>
 
-      {/* PGY Color Legend */}
-      <div className="bg-card border-b px-8 py-3">
+      {/* PGY Color Legend - Desktop */}
+      <div className="hidden md:block bg-card border-b px-8 py-3">
         <div className="flex items-center space-x-6">
           <span className="text-sm font-medium text-muted-foreground">PGY Color Coding:</span>
           <div className="flex items-center space-x-4">
@@ -242,10 +245,35 @@ const FacultyCalendarView: React.FC<{ events: CalendarEvent[] }> = ({ events }) 
         </div>
       </div>
 
+      {/* PGY Color Legend - Mobile */}
+      <div className="md:hidden bg-card border-b px-4 py-3">
+        <div className="flex flex-col space-y-2">
+          <span className="text-sm font-medium text-muted-foreground">PGY Color Coding:</span>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded" style={{ backgroundColor: '#ef4444' }}></div>
+              <span className="text-xs text-foreground">PGY 1</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded" style={{ backgroundColor: '#f97316' }}></div>
+              <span className="text-xs text-foreground">PGY 2</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded" style={{ backgroundColor: '#8b5cf6' }}></div>
+              <span className="text-xs text-foreground">PGY 3</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded" style={{ backgroundColor: '#6b7280' }}></div>
+              <span className="text-xs text-foreground">No PGY Info</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Calendar Grid */}
-      <div className="flex-1 p-8" ref={calendarGridRef}>
-        <div className="calendar-print-area bg-card rounded-2xl shadow-xl border border-border overflow-hidden h-full">
-          {viewMode === 'month' && (
+      <div className="flex-1 p-4 md:p-8" ref={calendarGridRef}>
+        <div className="calendar-print-area faculty-calendar bg-card rounded-2xl shadow-xl border border-border h-full w-full min-w-full max-w-none">
+          {effectiveViewMode === 'month' && (
             <>
               {/* Calendar Header */}
               <div className="grid grid-cols-7 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
@@ -257,7 +285,7 @@ const FacultyCalendarView: React.FC<{ events: CalendarEvent[] }> = ({ events }) 
               </div>
               
               {/* Calendar Days */}
-              <div className="grid grid-cols-7 h-full">
+              <div className="grid grid-cols-7 h-full w-full min-w-full">
                 {calendarDays.map((date, index) => {
                   const dayEvents = getEventsForDate(date);
                   const isCurrentMonth = date.getMonth() === currentDate.getMonth();
@@ -301,7 +329,7 @@ const FacultyCalendarView: React.FC<{ events: CalendarEvent[] }> = ({ events }) 
             </>
           )}
 
-          {viewMode === 'day' && (
+          {effectiveViewMode === 'day' && (
             <div className="p-6">
               {/* Day Header with Circle Highlight */}
               <div className="flex items-center justify-center mb-6">
@@ -350,7 +378,7 @@ const FacultyCalendarView: React.FC<{ events: CalendarEvent[] }> = ({ events }) 
             </div>
           )}
 
-          {viewMode === 'week' && (
+                      {effectiveViewMode === 'week' && (
             <div className="h-full flex flex-col">
               {/* Week Header */}
               <div className="grid grid-cols-7 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
@@ -406,7 +434,7 @@ const FacultyCalendarView: React.FC<{ events: CalendarEvent[] }> = ({ events }) 
             </div>
           )}
 
-          {viewMode === 'year' && (
+                      {effectiveViewMode === 'year' && (
             <div className="h-full p-6">
               <div className="grid grid-cols-4 gap-6 h-full">
                 {Array.from({ length: 12 }, (_, monthIndex) => {
@@ -605,9 +633,9 @@ export default function FacultyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative">
+    <div className="min-h-screen bg-background text-foreground relative w-full">
       {/* Faculty Header */}
-      <div className="bg-card border-b fixed left-0 right-0 top-0 z-20 px-8 py-4">
+      <div className="bg-card border-b fixed left-0 right-0 top-0 z-20 px-8 py-4 hidden md:block">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div>
@@ -626,7 +654,7 @@ export default function FacultyPage() {
       </div>
 
       {/* Calendar Component */}
-      <div className="pt-20">
+      <div className="pt-4 md:pt-20 w-full">
         <FacultyCalendarView 
           events={calendarEvents}
         />

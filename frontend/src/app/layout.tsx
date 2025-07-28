@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./clean-print.css";
 import { ThemeProvider } from "src/components/ui/theme-provider";
 import { Toaster } from "../components/ui/toaster"
 import { AuthProvider } from "@/context/AuthContext";
@@ -25,7 +26,19 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <>
       <html lang="en" suppressHydrationWarning>
-        <head />
+        <head>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                // Clear any existing theme preferences to force system preference
+                if (typeof window !== 'undefined') {
+                  localStorage.removeItem('theme');
+                  localStorage.removeItem('next-themes');
+                }
+              `,
+            }}
+          />
+        </head>
         <body>
           <AuthProvider>
             <ThemeProvider
@@ -33,6 +46,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
               defaultTheme="system"
               enableSystem
               disableTransitionOnChange
+              storageKey="theme"
+              forcedTheme={undefined}
             >
               {children}
             </ThemeProvider>

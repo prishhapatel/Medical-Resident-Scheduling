@@ -247,8 +247,8 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-background text-foreground relative">
-      {/* Header */}
-      <div className="bg-card border pt-6 pb-8 fixed left-0 right-0 top-0 z-10 px-8">
+      {/* Header - Hidden on mobile */}
+      <div className="bg-card border pt-6 pb-8 fixed left-0 right-0 top-0 z-10 px-8 hidden md:block">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <h1 className="text-5xl font-bold text-foreground">
@@ -332,30 +332,40 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
         </div>
       </div>
 
-      {/* PGY Color Legend + Navigation Buttons */}
-      <div className="py-4 border bg-card fixed left-0 right-0 z-10 px-8 mt-2" style={{ top: 'calc(4.5rem + 1px)' }}>
+      {/* Mobile Header - Simple navigation */}
+      <div className="bg-card border-b border-border fixed left-0 right-0 top-0 z-10 px-4 py-3 md:hidden">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-6">
-            <span className="text-sm font-medium text-muted-foreground">PGY Color Coding:</span>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: '#ef4444' }}></div>
-                <span className="text-sm text-foreground">PGY 1</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: '#f97316' }}></div>
-                <span className="text-sm text-foreground">PGY 2</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: '#8b5cf6' }}></div>
-                <span className="text-sm text-foreground">PGY 3</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: '#6b7280' }}></div>
-                <span className="text-sm text-foreground">No PGY Info</span>
-              </div>
-            </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => navigatePeriod('prev')}
+              className="p-2 hover:bg-muted rounded-full transition-colors duration-200"
+            >
+              <ChevronLeft className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <h1 className="text-lg font-semibold text-foreground">
+              {getPeriodTitle()}
+            </h1>
+            <button
+              onClick={() => navigatePeriod('next')}
+              className="p-2 hover:bg-muted rounded-full transition-colors duration-200"
+            >
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
           </div>
+          <button
+            onClick={goToToday}
+            className="px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors duration-200"
+          >
+            Today
+          </button>
+        </div>
+        
+
+      </div>
+
+      {/* Navigation Buttons - Hidden on mobile */}
+      <div className="py-4 border bg-card fixed left-0 right-0 z-10 px-8 mt-2 hidden md:block" style={{ top: 'calc(4.5rem + 1px)' }}>
+        <div className="flex items-center justify-end">
           <div className="flex space-x-2">
             <button onClick={onNavigateToHome} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
               <Home className="w-5 h-5" /> Home
@@ -386,10 +396,11 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
       </div>
 
       {/* Main Content: Calendar + Upcoming */}
-      <div className="flex flex-1 w-full relative pt-[9rem]">
+      <div className="flex flex-1 w-full relative pt-24 md:pt-[9rem] md:justify-start">
         {/* Calendar Grid */}
-        <div className={`flex-1 p-8 transition-all duration-300 ${isUpcomingOpen ? 'mr-[24rem]' : ''}`} ref={calendarGridRef}>
-          <div className="calendar-print-area bg-card rounded-2xl shadow-xl border border-border overflow-hidden h-full">
+        <div className={`w-full md:flex-1 pl-0 pr-6 md:px-8 py-4 md:py-8 transition-all duration-300 ${isUpcomingOpen ? 'mr-0 md:mr-[24rem]' : ''}`} ref={calendarGridRef}>
+          <div className="flex justify-center md:justify-start">
+            <div className="calendar-print-area bg-card rounded-2xl shadow-xl border border-border overflow-hidden h-full w-full max-w-2xl md:max-w-none">
             {viewMode === 'day' ? (
               // Day View
               <div className="h-full flex flex-col">
@@ -562,14 +573,14 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
               <>
                 <div className="grid grid-cols-7 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
                   {dayNames.map((day) => (
-                    <div key={day} className="px-6 py-5 text-sm font-semibold text-gray-700 dark:text-gray-200 text-center uppercase tracking-wide">
-                      {day}
+                    <div key={day} className="px-2 md:px-6 py-3 md:py-5 text-xs md:text-sm font-semibold text-gray-700 dark:text-gray-200 text-center uppercase tracking-wide">
+                      {day.substring(0, 3)}
                     </div>
                   ))}
                 </div>
                 <div className="grid grid-cols-7 h-full">
                   {calendarDays.map((dayInfo, index) => {
-                    if (!dayInfo) return <div key={index} className="min-h-40 border-r border-b border-gray-100 dark:border-gray-600" />;
+                    if (!dayInfo) return <div key={index} className="min-h-32 md:min-h-40 border-r border-b border-gray-100 dark:border-gray-600" />;
                     const dayEvents = getEventsForDate(dayInfo.date);
                     const isCurrentDay = isToday(dayInfo.date);
                     // There are 6 rows of 7 days = 42 cells
@@ -577,23 +588,23 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                     return (
                       <div
                         key={index}
-                        className={`min-h-40 border-r border-b border-gray-100 dark:border-gray-600 p-4 relative hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 cursor-pointer ${
+                        className={`min-h-32 md:min-h-40 border-r border-b border-gray-100 dark:border-gray-600 p-2 md:p-4 relative hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 cursor-pointer ${
                           !dayInfo.isCurrentMonth ? 'text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'
                         } ${isLastRow ? 'pb-16' : ''}`}
                         onClick={() => handleDateClick(dayInfo.date)}
                       >
-                        <div className={`text-lg font-medium mb-3 ${
+                        <div className={`text-sm md:text-lg font-medium mb-2 md:mb-3 ${
                           isCurrentDay 
-                            ? 'w-10 h-10 bg-blue-600 dark:bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg' 
+                            ? 'w-8 h-8 md:w-10 md:h-10 bg-blue-600 dark:bg-blue-500 text-white rounded-full flex items-center justify-center text-xs md:text-sm font-bold shadow-lg' 
                             : dayInfo.isCurrentMonth ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'
                         }`}>
                           {dayInfo.day}
                         </div>
-                        <div className="space-y-2">
-                          {dayEvents.slice(0, 4).map((event, eventIndex) => (
+                        <div className="space-y-1 md:space-y-2">
+                          {dayEvents.slice(0, 3).map((event, eventIndex) => (
                             <div
                               key={eventIndex}
-                              className={`text-xs px-3 py-2 rounded-lg cursor-pointer hover:shadow-md transition-all duration-200 truncate font-medium`}
+                              className={`text-xs px-2 md:px-3 py-1 md:py-2 rounded-lg cursor-pointer hover:shadow-md transition-all duration-200 truncate font-medium`}
                               style={{ backgroundColor: getPGYColor(event), color: 'white' }}
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -604,7 +615,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                               {event.title}
                             </div>
                           ))}
-                          {dayEvents.length > 4 && (
+                          {dayEvents.length > 3 && (
                             <div 
                               className="text-xs text-muted-foreground px-2 py-1 bg-muted/50 rounded text-center cursor-pointer hover:bg-muted/70 transition-colors"
                               onClick={(e) => {
@@ -618,7 +629,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                                 });
                               }}
                             >
-                              +{dayEvents.length - 4} more
+                              +{dayEvents.length - 3} more
                             </div>
                           )}
                         </div>
@@ -629,10 +640,11 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
               </>
             )}
           </div>
+            </div>
         </div>
-        {/* Upcoming Section to the right (animated slide in/out) */}
+        {/* Upcoming Section to the right (animated slide in/out) - Hidden on mobile */}
         <div
-          className={`max-w-xs w-[24rem] h-[50rem] fixed right-0 z-10 border-l border-border bg-card p-6 flex flex-col transition-transform duration-300 ease-in-out ${isUpcomingOpen ? 'translate-x-0' : 'translate-x-full'} pointer-events-auto`}
+          className={`max-w-xs w-[24rem] h-[50rem] fixed right-0 z-10 border-l border-border bg-card p-6 flex flex-col transition-transform duration-300 ease-in-out ${isUpcomingOpen ? 'translate-x-0' : 'translate-x-full'} pointer-events-auto hidden md:flex`}
           style={{ top: 'calc(4.5rem + 4.5rem + 0.7rem)', boxShadow: isUpcomingOpen ? '0 0 24px 0 rgba(0,0,0,0.08)' : 'none' }}
         >
           <div id="upcoming-panel-content" className="flex-1 overflow-y-auto pb-32">
@@ -681,8 +693,8 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
 
       {/* Event Detail Modal */}
       {selectedEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent" onClick={() => { setSelectedEvent(null); }}>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 min-w-[320px] max-w-[340px] border border-gray-300 dark:border-gray-700" style={{ borderRadius: '18px' }} onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => { setSelectedEvent(null); }}>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 md:p-8 min-w-[320px] max-w-[340px] border border-gray-300 dark:border-gray-700 mx-4" style={{ borderRadius: '18px' }} onClick={e => e.stopPropagation()}>
             <h2 className="text-xl font-bold mb-2">{selectedEvent.title}</h2>
             <div className="mb-2">
               <span className="font-semibold">Date: </span>
@@ -702,7 +714,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                 {selectedEvent.extendedProps.pgyLevel}
               </div>
             )}
-            <button className="mt-4 px-4 py-2 bg-primary text-white rounded" onClick={() => { setSelectedEvent(null); }}>
+            <button className="mt-4 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-sm" onClick={() => { setSelectedEvent(null); }}>
               Close
             </button>
           </div>
@@ -714,7 +726,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
           style={{ position: 'fixed', left: eventPopover.x, top: eventPopover.y, background: 'none', boxShadow: 'none' }}
           tabIndex={-1}
         >
-          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl p-6 min-w-[260px] max-w-[90vw] border border-gray-300 dark:border-gray-700" tabIndex={0}>
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl p-6 min-w-[260px] max-w-[90vw] border border-gray-300 dark:border-gray-700 mx-4" tabIndex={0}>
             <h2 className="text-lg font-bold mb-2">{eventPopover.event.title}</h2>
             <div className="mb-2">
               <span className="font-semibold">Date: </span>
@@ -734,7 +746,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                 {eventPopover.event.extendedProps.pgyLevel}
               </div>
             )}
-            <button className="mt-4 px-4 py-2 bg-primary text-white rounded" onClick={() => setEventPopover(null)}>
+            <button className="mt-4 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-sm" onClick={() => setEventPopover(null)}>
               Close
             </button>
           </div>
