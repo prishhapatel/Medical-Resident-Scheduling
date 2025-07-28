@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card } from "../../../components/ui/card";
-import { Calendar, Clock, MapPin, CalendarDays } from "lucide-react";
+import { Calendar, CalendarDays } from "lucide-react";
 
 interface ScheduleEntry {
   id: string;
@@ -50,15 +50,9 @@ const CheckSchedulePage: React.FC<CheckSchedulePageProps> = ({ mySchedule }) => 
     });
   };
 
-  const getShiftTypeColor = (shift: string) => {
-    const lowerShift = shift.toLowerCase();
-    if (lowerShift.includes('call')) {
-      return "bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800";
-    }
-    if (lowerShift.includes('night')) {
-      return "bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-200 border-purple-200 dark:border-purple-800";
-    }
-    return "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800";
+  const getShiftTypeColor = () => {
+    // Use black color for all shift types
+    return "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-200";
   };
 
   const ScheduleSection = ({ title, entries, icon }: { title: string; entries: ScheduleEntry[]; icon: React.ReactNode }) => (
@@ -73,26 +67,14 @@ const CheckSchedulePage: React.FC<CheckSchedulePageProps> = ({ mySchedule }) => 
           {entries.map((entry) => (
             <Card key={entry.id} className="p-3 border border-border hover:shadow-md transition-shadow duration-200">
               <div className="flex items-center justify-between">
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-3.5 w-3.5 text-primary" />
-                    <span className="text-sm font-medium text-foreground">
-                      {formatDate(entry.date)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">{entry.time}</span>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium text-foreground">
+                    {formatDate(entry.date)}
+                  </span>
                 </div>
-                <div className="text-right">
-                  <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getShiftTypeColor(entry.shift)}`}>
-                    {entry.shift}
-                  </div>
-                  <div className="flex items-center gap-1 mt-1 justify-end">
-                    <MapPin className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">{entry.location}</span>
-                  </div>
+                <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getShiftTypeColor()}`}>
+                  {entry.shift}
                 </div>
               </div>
             </Card>
@@ -122,8 +104,8 @@ const CheckSchedulePage: React.FC<CheckSchedulePageProps> = ({ mySchedule }) => 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="p-4 border border-border">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                    <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                    <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Total Shifts</p>
@@ -133,8 +115,8 @@ const CheckSchedulePage: React.FC<CheckSchedulePageProps> = ({ mySchedule }) => 
               </Card>
               <Card className="p-4 border border-border">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                    <Clock className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                    <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">This Week</p>
@@ -144,8 +126,8 @@ const CheckSchedulePage: React.FC<CheckSchedulePageProps> = ({ mySchedule }) => 
               </Card>
               <Card className="p-4 border border-border">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                    <CalendarDays className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                    <CalendarDays className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Upcoming</p>
@@ -160,7 +142,7 @@ const CheckSchedulePage: React.FC<CheckSchedulePageProps> = ({ mySchedule }) => 
               <ScheduleSection 
                 title="Today" 
                 entries={scheduleCategories.today} 
-                icon={<Clock className="h-4 w-4 text-primary" />}
+                icon={<Calendar className="h-4 w-4 text-primary" />}
               />
               <ScheduleSection 
                 title="This Week" 

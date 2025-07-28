@@ -36,6 +36,9 @@ import RequestOffPage from "./components/RequestOffPage";
 import CheckSchedulePage from "./components/CheckSchedulePage";
 import AdminPage from "./components/AdminPage";
 
+import MobileHeader from "./components/MobileHeader";
+import MobileUserMenu from "./components/MobileUserMenu";
+
 type MenuItem = {
   title: string;
   icon: ReactElement;
@@ -142,6 +145,9 @@ function Dashboard() {
   const [phoneNumber, setPhoneNumber] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  
+  // Mobile state
+  const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState<boolean>(false);
 
   // Calendar state
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
@@ -1018,6 +1024,17 @@ function Dashboard() {
     router.push("/");
   };
 
+  // Mobile navigation handlers
+  const handleOpenMobileUserMenu = () => {
+    setMobileUserMenuOpen(true);
+  };
+
+  const handleCloseMobileUserMenu = () => {
+    setMobileUserMenuOpen(false);
+  };
+
+
+
   const handleDeleteUser = async (user: { id: string; role: string }) => {
     try {
       const endpoint = user.role === 'admin' ? 'Admins' : 'Residents';
@@ -1106,6 +1123,9 @@ case "Home":
         userId={user?.id || ""}
         calendarEvents={calendarEvents}
         isAdmin={isAdmin}
+        onRefreshCalendar={() => {
+          fetchCalendarEvents();
+        }}
       />
     );
   }
@@ -1134,6 +1154,7 @@ case "Home":
             phoneNumber={phoneNumber}
             setPhoneNumber={setPhoneNumber}
             handleUpdatePhoneNumber={handleUpdatePhoneNumber}
+            isAdmin={isAdmin}
           />
         );
 
@@ -1319,90 +1340,119 @@ case "Home":
         <div className={`flex min-h-screen w-full`}>
           <Toaster />
           
+          {/* Mobile Header */}
+          <MobileHeader
+            selected={selected}
+            onOpenUserMenu={handleOpenMobileUserMenu}
+            onLogout={handleLogout}
+          />
+          
           {/* Left Sidebar Trigger (moves with sidebar, only on calendar page) */}
           {selected === "Calendar" && <SidebarFloatingTrigger />}
-          {/* Sidebar Navigation */}
-          {selected !== "Calendar" && (
-            <Sidebar>
-              <SidebarHeader>
-                <div className="flex items-center justify-center py-2">
-                  <span className="text-3xl font-bold tracking-wide">PSYCALL</span>
-                </div>
-              </SidebarHeader>
-              <SidebarContent>
-                <SidebarGroup>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      {filteredMenuItems.map((item) => (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton asChild>
-                            <span
-                              className={`flex items-center text-xl cursor-pointer rounded-lg px-2 py-1 transition-colors ${
-                                selected === item.title
-                                  ? "font-bold text-gray-800 dark:text-gray-200 bg-gray-300 dark:bg-gray-700"
-                                  : "hover:bg-gray-900 dark:hover:bg-gray-700"
-                              }`}
-                              onClick={() => setSelected(item.title)}
-                            >
-                              {item.icon}
-                              {item.title}
-                            </span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </SidebarGroup>
-              </SidebarContent>
-              <SidebarFooter>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <div className="cursor-pointer flex items-center gap-2 group relative" title="Account options">
-                      <SidebarUserCard
-                        name={displayName}
-                        email={displayEmail}
-                      />
-                      <ChevronDown className="h-5 w-5 text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors" />
-                    </div>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem
-                      className="flex items-center gap-2"
-                      onClick={() => setSelected("Settings")}
-                    >
-                      <UserIcon className="h-4 w-4" />
-                      <span>Profile</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("light")} className="flex items-center gap-2">
-                      <Sun className="h-4 w-4" />
-                      <span>Light</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("dark")} className="flex items-center gap-2">
-                      <Moon className="h-4 w-4" />
-                      <span>Dark</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="flex items-center gap-2 text-red-600 focus:text-red-600"
-                      onClick={handleLogout}
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>Log out</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </SidebarFooter>
-            </Sidebar>
-          )}
+          
+          {/* Sidebar Navigation - Desktop only */}
+          <div className="hidden md:block">
+            {selected !== "Calendar" && (
+              <Sidebar>
+                <SidebarHeader>
+                  <div className="flex items-center justify-center py-2">
+                    <span className="text-3xl font-bold tracking-wide">PSYCALL</span>
+                  </div>
+                </SidebarHeader>
+                <SidebarContent>
+                  <SidebarGroup>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {filteredMenuItems.map((item) => (
+                          <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton asChild>
+                              <span
+                                className={`flex items-center text-xl cursor-pointer rounded-lg px-2 py-1 transition-colors ${
+                                  selected === item.title
+                                    ? "font-bold text-gray-800 dark:text-gray-200 bg-gray-300 dark:bg-gray-700"
+                                    : "hover:bg-gray-900 dark:hover:bg-gray-700"
+                                }`}
+                                onClick={() => setSelected(item.title)}
+                              >
+                                {item.icon}
+                                {item.title}
+                              </span>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                </SidebarContent>
+                <SidebarFooter>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <div className="cursor-pointer flex items-center gap-2 group relative" title="Account options">
+                        <SidebarUserCard
+                          name={displayName}
+                          email={displayEmail}
+                        />
+                        <ChevronDown className="h-5 w-5 text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors" />
+                      </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuItem
+                        className="flex items-center gap-2"
+                        onClick={() => setSelected("Settings")}
+                      >
+                        <UserIcon className="h-4 w-4" />
+                        <span>Profile</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setTheme("light")} className="flex items-center gap-2">
+                        <Sun className="h-4 w-4" />
+                        <span>Light</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setTheme("dark")} className="flex items-center gap-2">
+                        <Moon className="h-4 w-4" />
+                        <span>Dark</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="flex items-center gap-2 text-red-600 focus:text-red-600"
+                        onClick={handleLogout}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Log out</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </SidebarFooter>
+              </Sidebar>
+            )}
+          </div>
+          
           {/* Main Content Area */}
           <div className={`flex-1 flex flex-col`}>
             <main
               className={`w-full ${
-                selected === "Calendar" ? "h-screen" : "p-8"
+                selected === "Calendar" 
+                  ? "h-screen" 
+                  : "p-4 md:p-8 pb-24 md:pb-8 pt-16 md:pt-8" // Add top padding for mobile header, bottom padding for mobile navigation
               }`}
             >
               {renderMainContent()}
             </main>
           </div>
+          
+          {/* Mobile Navigation - Hidden */}
+          {/* <MobileNavigation
+            selected={selected}
+            setSelected={setSelected}
+            isAdmin={isAdmin}
+          /> */}
+          
+          {/* Mobile User Menu */}
+          <MobileUserMenu
+            isOpen={mobileUserMenuOpen}
+            onClose={handleCloseMobileUserMenu}
+            displayName={displayName}
+            displayEmail={displayEmail}
+            onLogout={handleLogout}
+          />
         </div>
       </SidebarProvider>
     </ProtectedRoute>
