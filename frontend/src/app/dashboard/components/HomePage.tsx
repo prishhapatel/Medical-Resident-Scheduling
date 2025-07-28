@@ -92,8 +92,6 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
     setActionLoading(true);
     try {
       const response = await fetch(`${config.apiUrl}/api/swaprequests/${swapId}/approve`, { method: "POST" });
-      const result = await response.json();
-      
       if (response.ok) {
         toast({
           title: "Swap Approved",
