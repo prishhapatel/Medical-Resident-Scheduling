@@ -95,20 +95,11 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
       const result = await response.json();
       
       if (response.ok) {
-        // Check if a resident was promoted to admin
-        if (result.wasPromoted && result.promotedResidentName) {
-          toast({
-            title: "Swap Approved & Resident Promoted",
-            description: `Swap approved! ${result.promotedResidentName} has been promoted to admin and removed from the residents list.`,
-            variant: "success"
-          });
-        } else {
-          toast({
-            title: "Swap Approved",
-            description: "The swap request has been approved successfully.",
-            variant: "success"
-          });
-        }
+        toast({
+          title: "Swap Approved",
+          description: "The swap request has been approved successfully.",
+          variant: "success"
+        });
       }
       
       await refreshDashboard();

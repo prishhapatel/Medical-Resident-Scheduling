@@ -206,43 +206,18 @@ namespace MedicalDemo.Controllers
             requesterDate.ResidentId = requesteeDate.ResidentId;
             requesteeDate.ResidentId = tempResidentId;
 
-            // Get the resident being swapped (the one who will become admin)
-            var residentToPromote = await _context.residents.FirstOrDefaultAsync(r => r.resident_id == swap.RequesteeId);
-            string promotedResidentName = "";
-            if (residentToPromote != null)
-            {
-                promotedResidentName = $"{residentToPromote.first_name} {residentToPromote.last_name}";
-                
-                // Create admin account for the resident being swapped
-                var newAdmin = new Admins
-                {
-                    admin_id = residentToPromote.resident_id,
-                    first_name = residentToPromote.first_name,
-                    last_name = residentToPromote.last_name,
-                    email = residentToPromote.email,
-                    password = residentToPromote.password, // Keep the same password
-                    phone_num = residentToPromote.phone_num
-                };
-
-                // Add the new admin
-                _context.admins.Add(newAdmin);
-
-                // Delete the resident from residents table
-                _context.residents.Remove(residentToPromote);
-            }
-
             swap.Status = "Approved";
             swap.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            // Return response with promotion information
+            // Return response with swap information only
             var response = new
             {
-                swap = swap,
-                promotedResidentName = promotedResidentName,
-                wasPromoted = !string.IsNullOrEmpty(promotedResidentName)
+                Message = "Swap approved and calendar updated successfully.",
+                SwapId = swap.SwapId,
+                RequesterId = swap.RequesterId,
+                RequesteeId = swap.RequesteeId
             };
-
             return Ok(response);
         }
 
