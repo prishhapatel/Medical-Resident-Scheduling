@@ -13,29 +13,29 @@ using MedicalDemo.Models.DTO.Scheduling; //for array min/max
 class Schedule
 {
     // === NEW OVERLOAD METHODS FOR BACKEND INTEGRATION ===
-    public static void Training(int year, List<PGY1> pgy1s, List<PGY2> pgy2s, List<PGY3> pgy3s)
+    public static bool Training(int year, List<PGY1> pgy1s, List<PGY2> pgy2s, List<PGY3> pgy3s)
     {
         ArrayList pgys1 = new ArrayList(pgy1s);
         ArrayList pgys2 = new ArrayList(pgy2s);
         ArrayList pgys3 = new ArrayList(pgy3s);
-        Training(year, pgys1, pgys2, pgys3);
+        return Training(year, pgys1, pgys2, pgys3);
     }
 
-    public static void Part1(int year, List<PGY1> pgy1s, List<PGY2> pgy2s)
+    public static bool Part1(int year, List<PGY1> pgy1s, List<PGY2> pgy2s)
     {
         ArrayList pgys1 = new ArrayList(pgy1s);
         ArrayList pgys2 = new ArrayList(pgy2s);
-        Part1(year, pgys1, pgys2);
+        return Part1(year, pgys1, pgys2);
     }
 
-    public static void Part2(int year, List<PGY1> pgy1s, List<PGY2> pgy2s)
+    public static bool Part2(int year, List<PGY1> pgy1s, List<PGY2> pgy2s)
     {
         ArrayList pgys1 = new ArrayList(pgy1s);
         ArrayList pgys2 = new ArrayList(pgy2s);
-        Part2(year, pgys1, pgys2);
+        return Part2(year, pgys1, pgys2);
     }
     
-    public static void Training(int year, ArrayList pgy1s, ArrayList pgy2s, ArrayList pgy3s)
+    public static bool Training(int year, ArrayList pgy1s, ArrayList pgy2s, ArrayList pgy3s)
     {
         int pgy1 = 8;
         int pgy2 = 8;
@@ -110,6 +110,7 @@ class Schedule
         if (shortCallGraph.getFlow(sourceIndex, sinkIndex) != 3 * pgy1)
         {
             Console.WriteLine("[ERROR] Not able to make valid assignment based on parameters");
+            return false;
         }
         else
         {
@@ -231,6 +232,7 @@ class Schedule
         if (flow != 1 * pgy1)
         {
             Console.WriteLine("[ERROR] Not able to make valid assignment based on parameters");
+            return false;
         }
         else
         {
@@ -352,6 +354,7 @@ class Schedule
         if (sundaysCallGraph.getFlow(sourceIndex, sinkIndex) != 1 * pgy1)
         {
             Console.WriteLine("[ERROR] Not able to make valid assignment based on parameters");
+            return false;
         }
         else
         {
@@ -394,6 +397,7 @@ class Schedule
 
         // save content
         save(AllPgy1s, AllPgy2s, AllPgy3s);
+        return true;
     }
 
     public static void save(ArrayList pgy1s, ArrayList pgy2s, ArrayList pgy3s)
@@ -471,7 +475,7 @@ class Schedule
         }
     }
 
-    public static void Part2(int year, ArrayList pgy1s, ArrayList pgy2s)
+    public static bool Part2(int year, ArrayList pgy1s, ArrayList pgy2s)
     {
         Console.WriteLine("part 2: normal schedule (january through june)");
         int pgy1 = 8;
@@ -518,7 +522,18 @@ class Schedule
         }
 
         // randomly assign shifts until one works
-        while (!randomAssignment(AllPgy1s, AllPgy2s, startDay, endDay, shiftTypeCount, workedDays)) ;
+        int maxTries = 10;
+        bool assigned = false;
+        for (int attempt = 0; attempt < maxTries && !assigned; attempt++)
+        {
+            assigned = randomAssignment(AllPgy1s, AllPgy2s, startDay, endDay, shiftTypeCount, workedDays);
+        }
+
+        if (!assigned)
+        {
+            Console.WriteLine("[ERROR] Could not assign random shifts after retries");
+            return false;
+        }
 
         // save (and commit)
         save(AllPgy1s, AllPgy2s, new ArrayList()); // PGY3s are not used in part 1
@@ -526,9 +541,10 @@ class Schedule
 
         // Print
         print(AllPgy1s, AllPgy2s, new ArrayList()); // PGY3s are not used in part 1
+        return true;
     }
 
-    public static void Part1(int year, ArrayList pgy1s, ArrayList pgy2s)
+    public static bool Part1(int year, ArrayList pgy1s, ArrayList pgy2s)
     {
         Console.WriteLine("part 1: normal schedule (july through december)");
         int pgy1 = 8;
@@ -587,7 +603,18 @@ class Schedule
         }
 
         // randomly assign shifts until one works
-        while (!randomAssignment(AllPgy1s, AllPgy2s, startDay, endDay, shiftTypeCount, workedDays)) ;
+        int maxTries = 10;
+        bool assigned = false;
+        for (int attempt = 0; attempt < maxTries && !assigned; attempt++)
+        {
+            assigned = randomAssignment(AllPgy1s, AllPgy2s, startDay, endDay, shiftTypeCount, workedDays);
+        }
+
+        if (!assigned)
+        {
+            Console.WriteLine("[ERROR] Could not assign random shifts after retries");
+            return false;
+        }
 
         // save (and commit)
         save(AllPgy1s, AllPgy2s, new ArrayList()); // PGY3s are not used in part 1
@@ -595,6 +622,7 @@ class Schedule
 
         // Print
         print(AllPgy1s, AllPgy2s, new ArrayList()); // PGY3s are not used in part 1
+        return true;
     }
     
     
@@ -834,6 +862,7 @@ class Schedule
  
  
      
+     
     public static bool randomAssignment(ArrayList pgy1s, ArrayList pgy2s, DateTime startDay, DateTime endDay, Dictionary<int, int> shiftTypeCount, HashSet<DateTime> workedDays)
     {
         //Console.WriteLine("[DEBUG] Attempting random assignment of shifts...");
@@ -1038,6 +1067,7 @@ class Schedule
  
                         // print the resident who did not handle their shifts
                         Console.WriteLine($"[DEBUG] Resident {residentName} did not handle their shifts properly. Assigned: {edge.flow()}, Expected: {edge.originalCap}");
+                        return false;
                     }
  
                     // give a different resdient the shifts that were not assigned

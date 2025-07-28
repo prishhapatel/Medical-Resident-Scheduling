@@ -12,12 +12,9 @@ namespace MedicalDemo.Controllers
     public class ScheduleController : ControllerBase
     {
         private readonly SchedulerService _schedulerService;
-        private readonly MedicalContext _context;
-
-        // ✅ Combine both dependencies into one constructor
-        public ScheduleController(MedicalContext context, SchedulerService schedulerService)
+        
+        public ScheduleController(SchedulerService schedulerService)
         {
-            _context = context;
             _schedulerService = schedulerService;
         }
 
@@ -26,11 +23,6 @@ namespace MedicalDemo.Controllers
         {
             if (year < DateTime.Now.Year)
                 return BadRequest(new { success = false, error = "Year must be the current year or later." });
-
-            // Delete existing schedules to ensure only one schedule is in the database at all times
-            var existingSchedules = await _context.schedules.ToListAsync();
-            _context.schedules.RemoveRange(existingSchedules);
-            await _context.SaveChangesAsync();
             
             // Generate the new schedule
             var (success, error) = await _schedulerService.GenerateFullSchedule(year);
