@@ -85,3 +85,6 @@ Project Layers
 
 Frontend (React) → API Controller → Repository → Database
 
+
+* Please Note:
+    Our project currently does not use parameterized queries, which poses potential security risks such as SQL injection. To ensure a safe applitcation, the next development team should update all database interactions to use parameterized queries. Fortunately, ASP.NET makes this transition pretty straightforward through libraries like Entity Framework and ADO.NET.
